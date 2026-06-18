@@ -75,7 +75,7 @@ export default function Toolbar({
       <button
         onClick={onBack}
         disabled={history.length === 0}
-        title="Back"
+        title="Back (Backspace)"
         className="
           p-1.5 rounded-md text-gray-600
           hover:bg-gray-100 transition-colors
@@ -166,7 +166,7 @@ export default function Toolbar({
         <button
           onClick={onUpload}
           disabled={!hasBucketSelected}
-          title="Upload File"
+          title="Upload File (Ctrl+U)"
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
             bg-blue-500 text-white
@@ -196,7 +196,7 @@ export default function Toolbar({
         <button
           onClick={onRefresh}
           disabled={!hasBucketSelected}
-          title="Refresh"
+          title="Refresh (F5)"
           className="
             p-1.5 rounded-md text-gray-500
             hover:bg-gray-100 hover:text-gray-700 transition-colors

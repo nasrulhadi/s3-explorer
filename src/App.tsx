@@ -1,11 +1,14 @@
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
+import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
 import AddConnectionModal from "./components/modals/AddConnectionModal";
+import TransferPanel from "./components/layout/TransferPanel";
 import { useNavigationStore } from "./store/navigationStore";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import "./App.css";
 
 // ─── Inner layout (must be inside QueryClientProvider) ──────
@@ -24,22 +27,22 @@ function AppLayout() {
   // Search / filter state (shared between Toolbar and FileList)
   const [filterQuery, setFilterQuery] = useState("");
 
-  // Add Connection modal state
+  // Modal states
   const [showAddConnection, setShowAddConnection] = useState(false);
 
-  // Refresh: invalidate current folder query
+  // ── Callbacks ──────────────────────────────────────────────
+
   const handleRefresh = useCallback(() => {
     if (!connectionId || !bucket) return;
     queryClient.invalidateQueries({
       queryKey: ["s3", "objects", connectionId, bucket, prefix],
     });
+    toast.info("Refreshing…");
   }, [queryClient, connectionId, bucket, prefix]);
 
-  // Breadcrumb navigation: clicking a segment or Home
   const handleNavigate = useCallback(
     (targetPrefix: string) => {
       if (targetPrefix === "") {
-        // Go back to bucket root (not goHome which resets everything)
         setPrefix("");
       } else {
         setPrefix(targetPrefix);
@@ -48,39 +51,80 @@ function AppLayout() {
     [setPrefix],
   );
 
-  // Search filter
   const handleSearchChange = useCallback((query: string) => {
     setFilterQuery(query);
   }, []);
 
+  const handleUpload = useCallback(() => {
+    toast.info("Upload", {
+      description: "Upload dialog coming soon — drag & drop files onto the main area.",
+    });
+  }, []);
+
+  const handleNewFolder = useCallback(() => {
+    toast.info("New Folder", {
+      description: "Create folder dialog coming soon.",
+    });
+  }, []);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────
+
+  useKeyboardShortcuts({
+    onRefresh: handleRefresh,
+    onBack: () => {
+      if (history.length > 0) goBack();
+    },
+    onUpload: handleUpload,
+    onClose: () => {
+      if (showAddConnection) {
+        setShowAddConnection(false);
+      }
+    },
+    onDelete: () => {
+      toast.info("Delete", {
+        description: "Delete selected items — coming soon.",
+      });
+    },
+  });
+
+  // ──────────────────────────────────────────────────────────
+  // RENDER
+  // ──────────────────────────────────────────────────────────
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
-      {/* ── Left panel ──────────────────────────────────── */}
-      <Sidebar onAddConnection={() => setShowAddConnection(true)} />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
+      {/* ── Custom title bar ──────────────────────────────── */}
+      <TitleBar />
 
-      {/* ── Right panel ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Toolbar
-          connectionId={connectionId}
-          bucket={bucket}
-          prefix={prefix}
-          history={history}
-          onBack={goBack}
-          onNavigate={handleNavigate}
-          onRefresh={handleRefresh}
-          onUpload={() => console.debug("Upload modal TBD")}
-          onNewFolder={() => console.debug("NewFolder modal TBD")}
-          onSearchChange={handleSearchChange}
-        />
+      {/* ── Main content row ─────────────────────────────── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left panel */}
+        <Sidebar onAddConnection={() => setShowAddConnection(true)} />
 
-        {/* ── Content area ─────────────────────────────── */}
-        <main className="flex-1 overflow-hidden p-4">
-          {!connectionId || !bucket ? (
-            <EmptyState />
-          ) : (
-            <FileList filterQuery={filterQuery} />
-          )}
-        </main>
+        {/* Right panel */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <Toolbar
+            connectionId={connectionId}
+            bucket={bucket}
+            prefix={prefix}
+            history={history}
+            onBack={goBack}
+            onNavigate={handleNavigate}
+            onRefresh={handleRefresh}
+            onUpload={handleUpload}
+            onNewFolder={handleNewFolder}
+            onSearchChange={handleSearchChange}
+          />
+
+          {/* Content area */}
+          <main className="flex-1 overflow-hidden p-4">
+            {!connectionId || !bucket ? (
+              <EmptyState />
+            ) : (
+              <FileList filterQuery={filterQuery} />
+            )}
+          </main>
+        </div>
       </div>
 
       {/* ── Modals ────────────────────────────────────────── */}
@@ -94,7 +138,7 @@ function AppLayout() {
 /** Shown when no connection/bucket is selected */
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-8">
       <svg
         className="mb-4"
         width="64"
@@ -112,6 +156,20 @@ function EmptyState() {
       <p className="mt-1 text-sm">
         Choose a connection from the sidebar and pick a bucket to get started.
       </p>
+      <div className="mt-4 text-xs text-gray-400 space-y-1">
+        <span className="block">
+          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">F5</kbd>{" "}
+          Refresh
+        </span>
+        <span className="block">
+          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">Backspace</kbd>{" "}
+          Go back
+        </span>
+        <span className="block">
+          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">Ctrl+U</kbd>{" "}
+          Upload
+        </span>
+      </div>
     </div>
   );
 }
@@ -122,6 +180,7 @@ export default function App() {
   return (
     <>
       <AppLayout />
+      <TransferPanel />
       <Toaster
         position="bottom-right"
         richColors

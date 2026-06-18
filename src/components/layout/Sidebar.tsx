@@ -127,7 +127,7 @@ export default function Sidebar({ onAddConnection }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 h-screen flex flex-col bg-[#1a1a2e] text-white select-none">
+    <aside className="w-64 h-full flex flex-col bg-[#1a1a2e] text-white select-none">
       {/* ── Header ──────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 h-14 border-b border-white/10">
         <h1 className="font-semibold text-sm tracking-wide">S3 Explorer</h1>
