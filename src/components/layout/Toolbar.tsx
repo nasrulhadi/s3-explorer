@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Search,
   ChevronRight,
+  MoreHorizontal,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────
@@ -66,6 +67,15 @@ export default function Toolbar({
     return items;
   }, [bucket, prefix]);
 
+  // Truncate breadcrumb: show max 3 last folders, collapse earlier ones into "…"
+  const MAX_VISIBLE = 1;
+  const collapsedCount = Math.max(0, breadcrumbItems.length - MAX_VISIBLE);
+  const visibleItems = collapsedCount > 0 ? breadcrumbItems.slice(collapsedCount) : breadcrumbItems;
+  const hiddenItems = collapsedCount > 0 ? breadcrumbItems.slice(0, collapsedCount) : [];
+
+  // Collapsed dropdown state
+  const [showCollapsed, setShowCollapsed] = useState(false);
+
   // Buttons disabled when no bucket is selected
   const hasBucketSelected = !!connectionId && !!bucket;
 
@@ -113,7 +123,45 @@ export default function Toolbar({
           </>
         )}
 
-        {breadcrumbItems.map((item) => {
+        {/* Collapsed "…" dropdown (when more than MAX_VISIBLE folders) */}
+        {hiddenItems.length > 0 && (
+          <>
+            <ChevronRight size={14} className="shrink-0 text-gray-400" />
+            <div className="relative flex items-center">
+              <button
+                onClick={() => setShowCollapsed((v) => !v)}
+                className="rounded px-1 py-0.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                title="Show hidden folders"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              {showCollapsed && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div className="fixed inset-0 z-10" onClick={() => setShowCollapsed(false)} />
+                  <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                    {hiddenItems.map((item) => (
+                      <button
+                        key={item.prefix}
+                        onClick={() => {
+                          onNavigate(item.prefix);
+                          setShowCollapsed(false);
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors truncate"
+                        title={item.label}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Visible breadcrumb items (last MAX_VISIBLE) */}
+        {visibleItems.map((item) => {
           const isLast = item.prefix === prefix;
           return (
             <span key={item.prefix} className="flex items-center gap-1">
@@ -121,10 +169,10 @@ export default function Toolbar({
               <button
                 onClick={() => onNavigate(item.prefix)}
                 className={`
-                  truncate max-w-[140px] rounded px-1.5 py-0.5 transition-colors
+                  rounded px-1.5 py-0.5 transition-colors
                   ${isLast
                     ? "text-gray-800 font-medium"
-                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"}
+                    : "truncate max-w-[140px] text-gray-500 hover:text-blue-600 hover:bg-blue-50"}
                 `}
                 title={item.label}
               >

@@ -1,1 +1,1 @@
-A React-based desktop interface for managing S3-compatible storage connections, browsing buckets, and performing file transfers.
+A React-based desktop application for browsing, uploading, and managing files across multiple S3-compatible storage providers.

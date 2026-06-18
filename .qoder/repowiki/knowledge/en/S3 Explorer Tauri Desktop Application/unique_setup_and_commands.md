@@ -1,2 +1,0 @@
-- Development is initiated via `pnpm tauri dev`, which automatically starts the Vite dev server and launches the Tauri desktop window.
-- Production builds are executed via `pnpm tauri build`, compiling the Rust binary and bundling the optimized frontend assets.

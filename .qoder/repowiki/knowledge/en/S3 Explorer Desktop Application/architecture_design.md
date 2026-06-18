@@ -1,0 +1,3 @@
+- The root module acts as the build and runtime orchestrator, using `tauri.conf.json` to wire the Vite-dev server (frontend) to the Rust binary (backend).
+- Communication is enforced via the Tauri IPC bridge, where the frontend invokes backend commands defined in `src-tauri/src/lib.rs`.
+- Isolation is maintained by separating web assets (`src/`) from native capabilities (`src-tauri/`), with the build process bundling them into a single executable.

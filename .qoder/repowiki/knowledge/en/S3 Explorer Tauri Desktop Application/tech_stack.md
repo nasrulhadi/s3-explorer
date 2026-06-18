@@ -1,1 +1,0 @@
-Tauri v2 framework bridging a React/Vite frontend with a Rust/Cargo backend.

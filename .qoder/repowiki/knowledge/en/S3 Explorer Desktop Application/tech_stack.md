@@ -1,0 +1,1 @@
+Tauri v2 framework bridging React 19 (Vite) and Rust (Cargo).

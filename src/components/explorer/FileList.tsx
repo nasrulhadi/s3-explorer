@@ -23,7 +23,7 @@ const SKELETON_COUNT = 8;
 
 function SkeletonRow() {
   return (
-    <div className={`${ROW_GRID} h-[${ROW_HEIGHT}px] px-3 gap-2`}>
+    <div className={`${ROW_GRID} min-h-10 px-3 gap-2 items-center border-b border-gray-100`}>
       <div className="h-4 w-4 rounded bg-gray-200 animate-pulse" />
       <div className="h-4 w-2/3 rounded bg-gray-200 animate-pulse" />
       <div className="h-4 w-12 rounded bg-gray-100 animate-pulse justify-self-end" />
@@ -58,7 +58,7 @@ export default function FileList({ filterQuery }: FileListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   // ── Data query ─────────────────────────────────────────────
-  const { data, isLoading, isError, error } = listObjects(
+  const { data, isLoading, isFetching, isError, error } = listObjects(
     connectionId,
     bucket,
     prefix,
@@ -195,12 +195,12 @@ export default function FileList({ filterQuery }: FileListProps) {
   // RENDER
   // ──────────────────────────────────────────────────────────
 
-  // ── Loading ────────────────────────────────────────────────
-  if (isLoading) {
+  // ── Loading (first load or refetch) ───────────────────────
+  if (isLoading || isFetching) {
     return (
       <div className="h-full flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden">
         <ColumnHeader disabled />
-        <div className="flex-1 divide-y divide-gray-100">
+        <div className="flex-1">
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
             <SkeletonRow key={i} />
           ))}

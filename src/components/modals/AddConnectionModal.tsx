@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { X, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
-import { ListBucketsCommand } from "@aws-sdk/client-s3";
+import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { toast } from "sonner";
 import { createS3Client } from "../../lib/s3Client";
 import { useConnectionStore } from "../../store/connectionStore";
+import { useNavigationStore } from "../../store/navigationStore";
 import type { S3Provider, S3Connection, S3ConnectionFormData } from "../../types";
 
 // ─── Constants ──────────────────────────────────────────────
@@ -43,6 +44,7 @@ interface FormErrors {
   region?: string;
   accessKeyId?: string;
   secretAccessKey?: string;
+  bucket?: string;
 }
 
 type TestStatus = "idle" | "testing" | "success" | "error";
@@ -51,26 +53,35 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 
 interface AddConnectionModalProps {
   onClose: () => void;
+  /** If provided, the modal opens in edit mode with pre-filled data */
+  editConnection?: S3Connection;
 }
 
-export default function AddConnectionModal({ onClose }: AddConnectionModalProps) {
+export default function AddConnectionModal({ onClose, editConnection }: AddConnectionModalProps) {
   const addConnection = useConnectionStore((s) => s.addConnection);
+  const updateConnection = useConnectionStore((s) => s.updateConnection);
+  const isEditMode = !!editConnection;
 
   // ── Form state ─────────────────────────────────────────────
-  const [name, setName] = useState("");
-  const [provider, setProvider] = useState<S3Provider>("aws");
-  const [endpoint, setEndpoint] = useState("");
-  const [region, setRegion] = useState("us-east-1");
-  const [accessKeyId, setAccessKeyId] = useState("");
-  const [secretAccessKey, setSecretAccessKey] = useState("");
+  const [name, setName] = useState(editConnection?.name ?? "");
+  const [provider, setProvider] = useState<S3Provider>(editConnection?.provider ?? "aws");
+  const [endpoint, setEndpoint] = useState(editConnection?.endpoint ?? "");
+  const [region, setRegion] = useState(editConnection?.region ?? "us-east-1");
+  const [accessKeyId, setAccessKeyId] = useState(editConnection?.accessKeyId ?? "");
+  const [secretAccessKey, setSecretAccessKey] = useState(editConnection?.secretAccessKey ?? "");
   const [showSecret, setShowSecret] = useState(false);
+  const [bucket, setBucket] = useState("");
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
   const [testMessage, setTestMessage] = useState("");
 
+  // Disable provider dropdown in edit mode (changing provider could break things)
+  const providerLocked = isEditMode;
+
   // ── Show/hide endpoint based on provider ───────────────────
   const showEndpoint = provider !== "aws";
+  const showBucket = provider === "r2";
 
   // Reset endpoint when switching to AWS
   useEffect(() => {
@@ -104,6 +115,8 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
     if (!accessKeyId.trim()) e.accessKeyId = "Access Key ID is required.";
     if (!secretAccessKey.trim())
       e.secretAccessKey = "Secret Access Key is required.";
+    if (showBucket && !bucket.trim())
+      e.bucket = "Bucket name is required for R2.";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -132,6 +145,56 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
 
     try {
       const client = createS3Client(buildTestConnection());
+
+      // Cloudflare R2 doesn't support ListBuckets — if a bucket name is provided,
+      // validate by trying ListObjectsV2 on it; otherwise fall back to ListBuckets.
+      if (provider === "r2") {
+        if (bucket.trim()) {
+          try {
+            const res = await client.send(
+              new ListObjectsV2Command({ Bucket: bucket.trim(), MaxKeys: 1 }),
+            );
+            const count = res.KeyCount ?? 0;
+            setTestStatus("success");
+            setTestMessage(
+              `Connected! Bucket "${bucket.trim()}" is accessible${count > 0 ? ` (${count}+ objects)` : " (empty)"}.`,
+            );
+          } catch (err) {
+            const msg = (err as Error).message;
+            if (msg.includes("AccessDenied") || msg.includes("Access Denied")) {
+              setTestStatus("error");
+              setTestMessage(
+                `Access denied to bucket "${bucket.trim()}". Check your API token permissions.`,
+              );
+            } else if (msg.includes("NoSuchBucket")) {
+              setTestStatus("error");
+              setTestMessage(`Bucket "${bucket.trim()}" does not exist.`);
+            } else {
+              setTestStatus("error");
+              setTestMessage(msg);
+            }
+          }
+        } else {
+          try {
+            const res = await client.send(new ListBucketsCommand({}));
+            const count = res.Buckets?.length ?? 0;
+            setTestStatus("success");
+            setTestMessage(`Connected! Found ${count} bucket${count !== 1 ? "s" : ""}.`);
+          } catch (err) {
+            const msg = (err as Error).message;
+            if (msg.includes("AccessDenied") || msg.includes("Access Denied")) {
+              setTestStatus("success");
+              setTestMessage(
+                "Connection OK! R2 doesn't support bucket listing — you'll enter bucket names manually.",
+              );
+            } else {
+              throw err;
+            }
+          }
+        }
+        return;
+      }
+
       const res = await client.send(new ListBucketsCommand({}));
       const count = res.Buckets?.length ?? 0;
       setTestStatus("success");
@@ -157,12 +220,25 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
         secretAccessKey: secretAccessKey.trim(),
       };
 
-      addConnection(data);
-      toast.success(`Connection "${data.name}" saved.`);
+      if (!isEditMode) {
+        const newId = addConnection(data);
+
+        // For R2: auto-select the bucket in navigation after saving
+        if (showBucket && bucket.trim()) {
+          useConnectionStore.getState().setActiveConnection(newId);
+          useNavigationStore.getState().setBucket(newId, bucket.trim());
+        }
+
+        toast.success(`Connection "${data.name}" saved.`);
+      } else {
+        updateConnection(editConnection!.id, data);
+        toast.success(`Connection "${data.name}" updated.`);
+      }
+
       onClose();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [name, provider, endpoint, region, accessKeyId, secretAccessKey, showEndpoint, addConnection, onClose],
+    [name, provider, endpoint, region, accessKeyId, secretAccessKey, showEndpoint, showBucket, bucket, isEditMode, addConnection, updateConnection, onClose],
   );
 
   // ──────────────────────────────────────────────────────────
@@ -180,7 +256,7 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
         {/* ── Header ──────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">
-            Add S3 Connection
+            {isEditMode ? "Edit Connection" : "Add S3 Connection"}
           </h2>
           <button
             onClick={onClose}
@@ -208,7 +284,8 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
             <select
               value={provider}
               onChange={(e) => setProvider(e.target.value as S3Provider)}
-              className={INPUT_CLASS}
+              disabled={providerLocked}
+              className={`${INPUT_CLASS} ${providerLocked ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -290,6 +367,19 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
             </div>
           </Field>
 
+          {/* Bucket Name (R2 only) */}
+          {showBucket && (
+            <Field label="Bucket Name" error={errors.bucket}>
+              <input
+                type="text"
+                value={bucket}
+                onChange={(e) => setBucket(e.target.value)}
+                placeholder="my-bucket"
+                className={INPUT_CLASS}
+              />
+            </Field>
+          )}
+
           {/* ── Test Connection result ──────────────────── */}
           {testStatus !== "idle" && (
             <div
@@ -336,7 +426,7 @@ export default function AddConnectionModal({ onClose }: AddConnectionModalProps)
                 hover:bg-blue-600 transition-colors
               "
             >
-              Save Connection
+              {isEditMode ? "Save Changes" : "Save Connection"}
             </button>
           </div>
 

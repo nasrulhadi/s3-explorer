@@ -1,0 +1,1 @@
+Orchestrates the React frontend and Rust Tauri backend into a unified cross-platform desktop application for S3 storage management.

@@ -3,6 +3,8 @@
 <cite>
 **Referenced Files in This Document**
 - [useS3.ts](file://src/hooks/useS3.ts)
+- [useKeyboardShortcuts.ts](file://src/hooks/useKeyboardShortcuts.ts)
+- [useDownload.ts](file://src/hooks/useDownload.ts)
 - [s3Client.ts](file://src/lib/s3Client.ts)
 - [utils.ts](file://src/lib/utils.ts)
 - [connectionStore.ts](file://src/store/connectionStore.ts)
@@ -13,8 +15,16 @@
 - [FileList.tsx](file://src/components/explorer/FileList.tsx)
 - [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
 - [App.tsx](file://src/App.tsx)
+- [TransferPanel.tsx](file://src/components/layout/TransferPanel.tsx)
 - [main.tsx](file://src/main.tsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added documentation for new useKeyboardShortcuts hook for global keyboard shortcuts
+- Added documentation for new useDownload hook for file download management with progress tracking
+- Updated architecture diagrams to reflect the expanded hook ecosystem
+- Enhanced component integration patterns to show how new hooks work with existing infrastructure
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -28,11 +38,11 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the React Hooks architecture powering S3 Explorer, with a focus on the useS3 hook as the central orchestrator for all S3 operations. The hook integrates TanStack Query (React Query) for data fetching and caching, encapsulates AWS SDK commands, and coordinates with local state stores for connections, navigation, and transfers. It provides typed query and mutation APIs for listing buckets, listing objects, uploading, downloading, renaming, deleting, and obtaining presigned URLs, while handling parameter validation, error propagation, and S3 item processing utilities.
+This document explains the React Hooks architecture powering S3 Explorer, with a focus on the useS3 hook as the central orchestrator for all S3 operations. The architecture has been expanded to include useKeyboardShortcuts for global keyboard shortcuts and useDownload for comprehensive file download management with real-time progress tracking. The hooks integrate TanStack Query for data fetching and caching, encapsulate AWS SDK commands, and coordinate with local state stores for connections, navigation, and transfers. They provide typed query and mutation APIs for listing buckets, listing objects, uploading, downloading, renaming, deleting, and obtaining presigned URLs, while handling parameter validation, error propagation, and S3 item processing utilities.
 
 ## Project Structure
 The application follows a feature-based structure with clear separation of concerns:
-- Hooks: Central orchestration logic for S3 operations
+- Hooks: Central orchestration logic for S3 operations, UI interactions, and file operations
 - Libraries: S3 client creation and shared utilities
 - Stores: Global state for connections, navigation, and transfers
 - Components: UI building blocks that consume hooks and stores
@@ -48,9 +58,12 @@ APP["App.tsx<br/>Layout & Composition"]
 SIDEBAR["Sidebar.tsx<br/>Connections & Buckets"]
 FILELIST["FileList.tsx<br/>Objects Listing"]
 TOOLBAR["Toolbar.tsx<br/>Navigation & Actions"]
+TRANSFER_PANEL["TransferPanel.tsx<br/>Progress Tracking"]
 end
 subgraph "Hooks"
 USE_S3["useS3.ts<br/>TanStack Query Orchestration"]
+USE_KEYBOARD["useKeyboardShortcuts.ts<br/>Global Keyboard Shortcuts"]
+USE_DOWNLOAD["useDownload.ts<br/>Download Management"]
 end
 subgraph "Libraries"
 S3_CLIENT["s3Client.ts<br/>AWS SDK Client Factory"]
@@ -68,14 +81,19 @@ MAIN --> APP
 APP --> SIDEBAR
 APP --> TOOLBAR
 APP --> FILELIST
+APP --> TRANSFER_PANEL
 SIDEBAR --> USE_S3
 FILELIST --> USE_S3
 TOOLBAR --> NAV_STORE
 SIDEBAR --> CONN_STORE
 FILELIST --> NAV_STORE
+TRANSFER_PANEL --> USE_DOWNLOAD
+USE_KEYBOARD --> APP
 USE_S3 --> S3_CLIENT
 USE_S3 --> CONN_STORE
 USE_S3 --> UTILS
+USE_DOWNLOAD --> CONN_STORE
+USE_DOWNLOAD --> TRANSFER_STORE
 CONN_STORE --> TYPES
 NAV_STORE --> TYPES
 TRANSFER_STORE --> TYPES
@@ -83,11 +101,14 @@ TRANSFER_STORE --> TYPES
 
 **Diagram sources**
 - [main.tsx:1-26](file://src/main.tsx#L1-L26)
-- [App.tsx:1-136](file://src/App.tsx#L1-L136)
+- [App.tsx:1-270](file://src/App.tsx#L1-L270)
 - [Sidebar.tsx:1-184](file://src/components/layout/Sidebar.tsx#L1-L184)
 - [FileList.tsx:1-402](file://src/components/explorer/FileList.tsx#L1-L402)
 - [Toolbar.tsx:1-212](file://src/components/layout/Toolbar.tsx#L1-L212)
+- [TransferPanel.tsx:1-208](file://src/components/layout/TransferPanel.tsx#L1-L208)
 - [useS3.ts:1-410](file://src/hooks/useS3.ts#L1-L410)
+- [useKeyboardShortcuts.ts:1-109](file://src/hooks/useKeyboardShortcuts.ts#L1-L109)
+- [useDownload.ts:1-203](file://src/hooks/useDownload.ts#L1-L203)
 - [s3Client.ts:1-83](file://src/lib/s3Client.ts#L1-L83)
 - [utils.ts:1-197](file://src/lib/utils.ts#L1-L197)
 - [connectionStore.ts:1-88](file://src/store/connectionStore.ts#L1-L88)
@@ -97,8 +118,10 @@ TRANSFER_STORE --> TYPES
 
 **Section sources**
 - [main.tsx:1-26](file://src/main.tsx#L1-L26)
-- [App.tsx:1-136](file://src/App.tsx#L1-L136)
+- [App.tsx:1-270](file://src/App.tsx#L1-L270)
 - [useS3.ts:1-410](file://src/hooks/useS3.ts#L1-L410)
+- [useKeyboardShortcuts.ts:1-109](file://src/hooks/useKeyboardShortcuts.ts#L1-L109)
+- [useDownload.ts:1-203](file://src/hooks/useDownload.ts#L1-L203)
 
 ## Core Components
 - useS3: Central hook exporting TanStack Query-powered queries and mutations for S3 operations. It manages:
@@ -106,6 +129,8 @@ TRANSFER_STORE --> TYPES
   - Parameter validation and error handling
   - S3 item processing utilities
   - Connection resolution from the Zustand store
+- useKeyboardShortcuts: Global keyboard shortcut manager that handles F5/Ctrl+R refresh, Backspace navigation, Ctrl+U upload, Delete selection, and Escape close actions while respecting text input contexts
+- useDownload: Comprehensive download management system with real-time progress tracking, cancellation support, and large file handling
 - s3Client: Creates configured S3 clients per provider with endpoint resolution and path-style addressing
 - Utilities: Formatting helpers and S3 item name extraction
 - Stores: Zustand stores for connections, navigation, and transfers
@@ -113,6 +138,8 @@ TRANSFER_STORE --> TYPES
 
 **Section sources**
 - [useS3.ts:47-410](file://src/hooks/useS3.ts#L47-L410)
+- [useKeyboardShortcuts.ts:19-109](file://src/hooks/useKeyboardShortcuts.ts#L19-L109)
+- [useDownload.ts:13-203](file://src/hooks/useDownload.ts#L13-L203)
 - [s3Client.ts:51-83](file://src/lib/s3Client.ts#L51-L83)
 - [utils.ts:13-197](file://src/lib/utils.ts#L13-L197)
 - [connectionStore.ts:10-88](file://src/store/connectionStore.ts#L10-L88)
@@ -122,11 +149,13 @@ TRANSFER_STORE --> TYPES
 
 ## Architecture Overview
 The architecture centers around the useS3 hook, which:
-- Uses TanStack Query’s useQuery/useMutation to manage server state
+- Uses TanStack Query's useQuery/useMutation to manage server state
 - Resolves S3 connections from the Zustand connection store
 - Builds AWS SDK clients via s3Client with provider-specific endpoints
 - Processes S3 items into normalized S3Item structures
 - Integrates with navigation and transfer stores for UI state and progress tracking
+- Complements useKeyboardShortcuts for global keyboard interaction
+- Complements useDownload for comprehensive file operation management
 
 ```mermaid
 sequenceDiagram
@@ -250,6 +279,69 @@ Hook-->>Comp : UseQueryResult(items, isTruncated, continuationToken)
 - [connectionStore.ts:20-34](file://src/store/connectionStore.ts#L20-L34)
 - [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
 
+### useKeyboardShortcuts: Global Keyboard Interaction
+The useKeyboardShortcuts hook provides global keyboard shortcuts that are automatically disabled when users are typing in text inputs, textareas, or contenteditable elements. It handles the following shortcuts:
+
+- **F5**: Refresh current view
+- **Ctrl+R**: Refresh current view  
+- **Backspace**: Navigate back (when not in an input)
+- **Ctrl+U**: Open upload dialog
+- **Delete**: Delete selected items (optional handler)
+- **Escape**: Close modal / deselect
+
+Implementation details:
+- Uses `isEditable()` helper to detect when user is typing in form inputs
+- Prevents default browser behavior for handled shortcuts
+- Accepts callback handlers for each shortcut action
+- Automatically cleans up event listeners on component unmount
+
+Integration pattern:
+- Used in App.tsx to provide global keyboard shortcuts for the entire application
+- Handlers are passed from parent components to maintain separation of concerns
+- Respects text input contexts to avoid interfering with user typing
+
+**Section sources**
+- [useKeyboardShortcuts.ts:19-109](file://src/hooks/useKeyboardShortcuts.ts#L19-L109)
+- [App.tsx:75-92](file://src/App.tsx#L75-L92)
+
+### useDownload: Comprehensive Download Management
+The useDownload hook manages file downloads with real-time progress tracking via the Zustand transferStore. It provides:
+
+**Features:**
+- Real-time progress tracking with byte-level updates
+- Cancellation support with AbortController
+- Large file detection (threshold: 10MB)
+- Browser-based streaming downloads with ReadableStream
+- Toast notifications for success/error/cancel events
+- Automatic cleanup of resources
+
+**Download Strategies:**
+- **Files < 10MB**: Browser `fetch` with `ReadableStream` for chunk-by-chunk progress updates
+- **Files ≥ 10MB**: Currently falls back to browser download (Tauri Rust command planned for future)
+
+**API:**
+```typescript
+const { startDownload, cancelDownload } = useDownload();
+const transferId = await startDownload(connectionId, bucket, key);
+cancelDownload(transferId);
+```
+
+**Internal mechanisms:**
+- Generates unique transfer IDs using crypto.randomUUID or fallback
+- Extracts file names from S3 keys using `nameFromKey()`
+- Registers transfers in transferStore with initial status "active"
+- Streams download progress and updates transferStore
+- Handles AbortError for cancellations and other errors for failure reporting
+
+**Integration with TransferPanel:**
+- Used by TransferPanel.tsx to display download progress
+- Provides cancelDownload functionality for active transfers
+- Computes real-time download speeds using byte deltas
+
+**Section sources**
+- [useDownload.ts:13-203](file://src/hooks/useDownload.ts#L13-L203)
+- [TransferPanel.tsx:30-147](file://src/components/layout/TransferPanel.tsx#L30-L147)
+
 ### S3 Client Factory
 The s3Client module builds provider-aware S3 clients:
 - Endpoint resolution for AWS, MinIO, Cloudflare R2, Backblaze B2, and custom providers
@@ -307,6 +399,8 @@ The hook integrates with Zustand stores for:
 graph LR
 USE_S3["useS3"] --> CONN["connectionStore"]
 USE_S3 --> NAV["navigationStore"]
+USE_DOWNLOAD["useDownload"] --> CONN["connectionStore"]
+USE_DOWNLOAD --> TRANSFER["transferStore"]
 FILELIST["FileList"] --> NAV
 SIDEBAR["Sidebar"] --> CONN
 TRANSFERS["transferStore"] -.-> FILELIST
@@ -314,12 +408,14 @@ TRANSFERS["transferStore"] -.-> FILELIST
 
 **Diagram sources**
 - [useS3.ts:22-34](file://src/hooks/useS3.ts#L22-L34)
+- [useDownload.ts:54-91](file://src/hooks/useDownload.ts#L54-L91)
 - [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
 - [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
 - [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
 
 **Section sources**
 - [useS3.ts:22-34](file://src/hooks/useS3.ts#L22-L34)
+- [useDownload.ts:54-91](file://src/hooks/useDownload.ts#L54-L91)
 - [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
 - [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
 - [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
@@ -328,7 +424,8 @@ TRANSFERS["transferStore"] -.-> FILELIST
 - Sidebar: Uses listBuckets to render bucket lists and sets active bucket via navigation store
 - FileList: Consumes listObjects and applies local filtering/sorting; virtualizes rows for performance
 - Toolbar: Manages breadcrumbs and refresh actions; triggers query invalidation
-- App: Coordinates layout and provides global refresh via QueryClient
+- App: Coordinates layout and provides global refresh via QueryClient, manages keyboard shortcuts
+- TransferPanel: Displays download progress and allows cancellation
 
 ```mermaid
 sequenceDiagram
@@ -362,10 +459,20 @@ FileList->>Query : invalidateQueries on refresh
   - AWS SDK for S3 operations and signed URL generation
   - Zustand stores for connection and navigation state
   - Local utilities for item processing
+- useKeyboardShortcuts depends on:
+  - React useEffect for event listener management
+  - DOM API for keyboard event handling
+- useDownload depends on:
+  - AWS SDK for S3 operations and signed URL generation
+  - Zustand transferStore for progress tracking
+  - Sonner for toast notifications
+  - Browser APIs for streaming downloads
 - s3Client depends on:
   - AWS SDK S3Client and endpoint resolver logic
 - Components depend on:
   - useS3 for data and mutations
+  - useKeyboardShortcuts for keyboard interactions
+  - useDownload for download operations
   - Zustand stores for state updates
 
 ```mermaid
@@ -376,32 +483,47 @@ USE_S3 --> PRESIGNER["@aws-sdk/s3-request-presigner"]
 USE_S3 --> ZUSTAND_CONN["connectionStore.ts"]
 USE_S3 --> ZUSTAND_NAV["navigationStore.ts"]
 USE_S3 --> UTILS["utils.ts"]
+USE_KEYBOARD["useKeyboardShortcuts.ts"] --> REACT["React"]
+USE_DOWNLOAD["useDownload.ts"] --> AWS_SDK
+USE_DOWNLOAD --> ZUSTAND_TRANSFER["transferStore.ts"]
+USE_DOWNLOAD --> SONNER["sonner"]
+USE_DOWNLOAD --> ZUSTAND_CONN
 S3_CLIENT["s3Client.ts"] --> AWS_SDK
 FILELIST["FileList.tsx"] --> USE_S3
 SIDEBAR["Sidebar.tsx"] --> USE_S3
-APP["App.tsx"] --> FILELIST
+APP["App.tsx"] --> USE_KEYBOARD
+APP --> FILELIST
 APP --> SIDEBAR
+TRANSFER_PANEL["TransferPanel.tsx"] --> USE_DOWNLOAD
 ```
 
 **Diagram sources**
 - [useS3.ts:1-16](file://src/hooks/useS3.ts#L1-L16)
+- [useKeyboardShortcuts.ts:1](file://src/hooks/useKeyboardShortcuts.ts#L1)
+- [useDownload.ts:1-11](file://src/hooks/useDownload.ts#L1-L11)
 - [s3Client.ts:1-2](file://src/lib/s3Client.ts#L1-L2)
 - [connectionStore.ts:1-3](file://src/store/connectionStore.ts#L1-L3)
 - [navigationStore.ts:1-3](file://src/store/navigationStore.ts#L1-L3)
+- [transferStore.ts:1-3](file://src/store/transferStore.ts#L1-L3)
 - [utils.ts:1-3](file://src/lib/utils.ts#L1-L3)
 - [FileList.tsx:11-15](file://src/components/explorer/FileList.tsx#L11-L15)
 - [Sidebar.tsx:13](file://src/components/layout/Sidebar.tsx#L13)
-- [App.tsx:4-8](file://src/App.tsx#L4-L8)
+- [App.tsx:4-12](file://src/App.tsx#L4-L12)
+- [TransferPanel.tsx:13-16](file://src/components/layout/TransferPanel.tsx#L13-L16)
 
 **Section sources**
 - [useS3.ts:1-16](file://src/hooks/useS3.ts#L1-L16)
+- [useKeyboardShortcuts.ts:1](file://src/hooks/useKeyboardShortcuts.ts#L1)
+- [useDownload.ts:1-11](file://src/hooks/useDownload.ts#L1-L11)
 - [s3Client.ts:1-2](file://src/lib/s3Client.ts#L1-L2)
 - [connectionStore.ts:1-3](file://src/store/connectionStore.ts#L1-L3)
 - [navigationStore.ts:1-3](file://src/store/navigationStore.ts#L1-L3)
+- [transferStore.ts:1-3](file://src/store/transferStore.ts#L1-L3)
 - [utils.ts:1-3](file://src/lib/utils.ts#L1-L3)
 - [FileList.tsx:11-15](file://src/components/explorer/FileList.tsx#L11-L15)
 - [Sidebar.tsx:13](file://src/components/layout/Sidebar.tsx#L13)
-- [App.tsx:4-8](file://src/App.tsx#L4-L8)
+- [App.tsx:4-12](file://src/App.tsx#L4-L12)
+- [TransferPanel.tsx:13-16](file://src/components/layout/TransferPanel.tsx#L13-L16)
 
 ## Performance Considerations
 - Caching and retries: QueryClient defaults configure staleTime and retry to balance freshness and resilience
@@ -409,8 +531,9 @@ APP --> SIDEBAR
 - Conditional queries: enabled flags prevent unnecessary network calls
 - Batch invalidation: Refresh action invalidates only the current folder query key
 - Provider-specific client settings: forcePathStyle for non-AWS endpoints improves compatibility
-
-[No sources needed since this section provides general guidance]
+- Streaming downloads: useDownload leverages ReadableStream for efficient memory usage during large file downloads
+- Event cleanup: useKeyboardShortcuts automatically removes event listeners to prevent memory leaks
+- Transfer cleanup: useDownload automatically cleans up AbortControllers and resources after completion
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -419,6 +542,9 @@ Common issues and resolutions:
 - Invalid folder name: createFolder rejects empty or slash-containing names
 - HTTP failures: Mutations check response status codes and surface errors
 - Pagination: listObjects returns isTruncated and continuationToken for incremental loading
+- Keyboard shortcuts not working: Ensure user is not typing in text inputs when expecting shortcuts
+- Download progress not updating: Verify transferStore is properly initialized and useDownload is registered
+- Large file downloads: Currently falls back to browser download; Tauri integration planned for future versions
 
 **Section sources**
 - [useS3.ts:22-34](file://src/hooks/useS3.ts#L22-L34)
@@ -426,6 +552,9 @@ Common issues and resolutions:
 - [useS3.ts:274-278](file://src/hooks/useS3.ts#L274-L278)
 - [useS3.ts:220-225](file://src/hooks/useS3.ts#L220-L225)
 - [useS3.ts:137-142](file://src/hooks/useS3.ts#L137-L142)
+- [useKeyboardShortcuts.ts:56-107](file://src/hooks/useKeyboardShortcuts.ts#L56-L107)
+- [useDownload.ts:54-60](file://src/hooks/useDownload.ts#L54-L60)
+- [useDownload.ts:94-105](file://src/hooks/useDownload.ts#L94-L105)
 
 ## Conclusion
-The useS3 hook serves as the backbone of S3 Explorer’s data layer, seamlessly integrating TanStack Query, AWS SDK, and local state management. Its query and mutation patterns provide a robust, type-safe foundation for S3 operations, while utilities and stores ensure consistent item processing and UI state. The architecture balances performance, reliability, and developer experience, enabling scalable enhancements such as transfer progress tracking and advanced filtering.
+The useS3 hook serves as the backbone of S3 Explorer's data layer, seamlessly integrating TanStack Query, AWS SDK, and local state management. The addition of useKeyboardShortcuts and useDownload expands the hook ecosystem to provide comprehensive UI interaction and file operation capabilities. These new hooks complement the existing architecture by offering global keyboard shortcuts, real-time download progress tracking, and efficient resource management. The architecture balances performance, reliability, and developer experience, enabling scalable enhancements such as transfer progress tracking, advanced filtering, and improved user interaction patterns.

@@ -1,14 +1,16 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast, Toaster } from "sonner";
 import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
-import AddConnectionModal from "./components/modals/AddConnectionModal";
+import ConnectionFormPage from "./components/ConnectionFormPage";
+import SettingsPage from "./components/SettingsPage";
 import TransferPanel from "./components/layout/TransferPanel";
 import { useConnectionStore } from "./store/connectionStore";
 import { useNavigationStore } from "./store/navigationStore";
+import { useSettingsStore } from "./store/settingsStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import "./App.css";
 
@@ -31,8 +33,25 @@ function AppLayout() {
   // Search / filter state (shared between Toolbar and FileList)
   const [filterQuery, setFilterQuery] = useState("");
 
-  // Modal states
-  const [showAddConnection, setShowAddConnection] = useState(false);
+  // View state: replaces separate modal booleans
+  type View = "main" | "addConnection" | "editConnection" | "settings";
+  const [view, setView] = useState<View>("main");
+  const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
+
+  // Store actions for delete
+  const removeConnection = useConnectionStore((s) => s.removeConnection);
+  const connections = useConnectionStore((s) => s.connections);
+
+  // ── Startup: check settings for session restore ────────────
+  const restoreLastSession = useSettingsStore((s) => s.restoreLastSession);
+  const goHome = useNavigationStore((s) => s.goHome);
+  useEffect(() => {
+    if (!restoreLastSession) {
+      goHome();
+    }
+  // Run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Callbacks ──────────────────────────────────────────────
 
@@ -41,7 +60,6 @@ function AppLayout() {
     queryClient.invalidateQueries({
       queryKey: ["s3", "objects", connectionId, bucket, prefix],
     });
-    toast.info("Refreshing…");
   }, [queryClient, connectionId, bucket, prefix]);
 
   const handleNavigate = useCallback(
@@ -80,8 +98,9 @@ function AppLayout() {
     },
     onUpload: handleUpload,
     onClose: () => {
-      if (showAddConnection) {
-        setShowAddConnection(false);
+      if (view !== "main") {
+        setView("main");
+        setEditingConnectionId(null);
       }
     },
     onDelete: () => {
@@ -90,6 +109,47 @@ function AppLayout() {
       });
     },
   });
+
+  // ── Edit / Delete connection handlers ───────────────────────
+
+  const handleEditConnection = useCallback((id: string) => {
+    setEditingConnectionId(id);
+    setView("editConnection");
+  }, []);
+
+  const handleDeleteConnection = useCallback((id: string) => {
+    const conn = connections.find((c) => c.id === id);
+    if (!conn) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${conn.name}"?\n\nThis action cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    removeConnection(id);
+    toast.success(`Connection "${conn.name}" deleted.`);
+
+    // If we deleted the active connection, reset navigation
+    if (connectionId === id) {
+      useNavigationStore.getState().goHome();
+    }
+  }, [connections, removeConnection, connectionId]);
+
+  // Handlers to open the connection form page
+  const openAddConnection = useCallback(() => {
+    setEditingConnectionId(null);
+    setView("addConnection");
+  }, []);
+
+  const closeConnectionForm = useCallback(() => {
+    setView("main");
+    setEditingConnectionId(null);
+  }, []);
+
+  // Find the connection being edited
+  const editingConnection = editingConnectionId
+    ? connections.find((c) => c.id === editingConnectionId) ?? undefined
+    : undefined;
 
   // ──────────────────────────────────────────────────────────
   // RENDER
@@ -101,46 +161,57 @@ function AppLayout() {
       <TitleBar />
 
       {/* ── Welcome screen (no connections at all) ───────── */}
-      {!hasConnections ? (
-        <WelcomeScreen onAddConnection={() => setShowAddConnection(true)} />
+      {!hasConnections && view === "main" ? (
+        <WelcomeScreen onAddConnection={openAddConnection} />
       ) : (
         <>
           {/* ── Main content row ─────────────────────────────── */}
           <div className="flex flex-1 overflow-hidden">
             {/* Left panel */}
-            <Sidebar onAddConnection={() => setShowAddConnection(true)} />
+            <Sidebar
+              onAddConnection={openAddConnection}
+              onEditConnection={handleEditConnection}
+              onDeleteConnection={handleDeleteConnection}
+              onOpenSettings={() => setView("settings")}
+            />
 
             {/* Right panel */}
             <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-              <Toolbar
-                connectionId={connectionId}
-                bucket={bucket}
-                prefix={prefix}
-                history={history}
-                onBack={goBack}
-                onNavigate={handleNavigate}
-                onRefresh={handleRefresh}
-                onUpload={handleUpload}
-                onNewFolder={handleNewFolder}
-                onSearchChange={handleSearchChange}
-              />
+              {view === "addConnection" || view === "editConnection" ? (
+                <ConnectionFormPage
+                  onDone={closeConnectionForm}
+                  editConnection={editingConnection ?? undefined}
+                />
+              ) : view === "settings" ? (
+                <SettingsPage onDone={() => setView("main")} />
+              ) : (
+                <>
+                  <Toolbar
+                    connectionId={connectionId}
+                    bucket={bucket}
+                    prefix={prefix}
+                    history={history}
+                    onBack={goBack}
+                    onNavigate={handleNavigate}
+                    onRefresh={handleRefresh}
+                    onUpload={handleUpload}
+                    onNewFolder={handleNewFolder}
+                    onSearchChange={handleSearchChange}
+                  />
 
-              {/* Content area */}
-              <main className="flex-1 overflow-hidden p-4">
-                {!connectionId || !bucket ? (
-                  <EmptyState />
-                ) : (
-                  <FileList filterQuery={filterQuery} />
-                )}
-              </main>
+                  {/* Content area */}
+                  <main className="flex-1 overflow-hidden p-4">
+                    {!connectionId || !bucket ? (
+                      <EmptyState />
+                    ) : (
+                      <FileList filterQuery={filterQuery} />
+                    )}
+                  </main>
+                </>
+              )}
             </div>
           </div>
         </>
-      )}
-
-      {/* ── Modals ────────────────────────────────────────── */}
-      {showAddConnection && (
-        <AddConnectionModal onClose={() => setShowAddConnection(false)} />
       )}
     </div>
   );
@@ -218,8 +289,8 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-8">
       <svg
         className="mb-4"
-        width="64"
-        height="64"
+        width="56"
+        height="56"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -229,11 +300,11 @@ function EmptyState() {
       >
         <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
       </svg>
-      <p className="text-lg font-medium text-gray-500">No bucket selected</p>
-      <p className="mt-1 text-sm">
-        Choose a connection from the sidebar and pick a bucket to get started.
+      <p className="text-lg font-medium text-gray-500">Select a bucket to browse</p>
+      <p className="mt-1 text-sm text-gray-400 max-w-xs">
+        Click a connection in the sidebar, then select a bucket to view and manage your files.
       </p>
-      <div className="mt-4 text-xs text-gray-400 space-y-1">
+      <div className="mt-6 text-xs text-gray-400 space-y-1">
         <span className="block">
           <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">F5</kbd>{" "}
           Refresh

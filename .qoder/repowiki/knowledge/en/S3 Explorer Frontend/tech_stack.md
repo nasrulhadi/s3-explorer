@@ -1,1 +1,4 @@
-React 18 with TypeScript, Vite build tool, Zustand for state persistence, TanStack Query for server-state management, AWS SDK v3 for S3 operations, and Lucide React for iconography.
+- State Management: Zustand with `persist` middleware for local storage of connections.
+- Data Fetching: TanStack Query (React Query) for caching and async S3 operations.
+- Virtualization: TanStack Virtual for efficient rendering of large file lists.
+- AWS SDK: `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` for S3 interactions.

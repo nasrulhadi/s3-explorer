@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { NavigationState } from "../types";
 
 interface NavigationActions {
@@ -33,53 +34,66 @@ const INITIAL_STATE: NavigationState = {
   history: [],
 };
 
-export const useNavigationStore = create<NavigationStore>()((set, get) => ({
-  // ── State ──────────────────────────────────────────────────
-  ...INITIAL_STATE,
+export const useNavigationStore = create<NavigationStore>()(
+  persist(
+    (set, get) => ({
+      // ── State ──────────────────────────────────────────────────
+      ...INITIAL_STATE,
 
-  // ── Actions ────────────────────────────────────────────────
+      // ── Actions ────────────────────────────────────────────────
 
-  setBucket: (connectionId, bucket) => {
-    const { prefix } = get();
+      setBucket: (connectionId, bucket) => {
+        const { prefix } = get();
 
-    set({
-      connectionId,
-      bucket,
-      prefix: "",
-      // Keep current prefix in history only if we were already inside a bucket
-      history: prefix ? [prefix] : [],
-    });
-  },
+        set({
+          connectionId,
+          bucket,
+          prefix: "",
+          // Keep current prefix in history only if we were already inside a bucket
+          history: prefix ? [prefix] : [],
+        });
+      },
 
-  setPrefix: (prefix) => {
-    const { history: currentHistory, prefix: currentPrefix } = get();
+      setPrefix: (prefix) => {
+        const { history: currentHistory, prefix: currentPrefix } = get();
 
-    set({
-      prefix,
-      history: [...currentHistory, currentPrefix],
-    });
-  },
+        set({
+          prefix,
+          history: [...currentHistory, currentPrefix],
+        });
+      },
 
-  goBack: () => {
-    const { history } = get();
-    if (history.length === 0) return;
+      goBack: () => {
+        const { history } = get();
+        if (history.length === 0) return;
 
-    const newHistory = [...history];
-    const previousPrefix = newHistory.pop() ?? "";
+        const newHistory = [...history];
+        const previousPrefix = newHistory.pop() ?? "";
 
-    set({
-      prefix: previousPrefix,
-      history: newHistory,
-    });
-  },
+        set({
+          prefix: previousPrefix,
+          history: newHistory,
+        });
+      },
 
-  goHome: () => {
-    set(INITIAL_STATE);
-  },
+      goHome: () => {
+        set(INITIAL_STATE);
+      },
 
-  pushHistory: (prefix) => {
-    set((state) => ({
-      history: [...state.history, prefix],
-    }));
-  },
-}));
+      pushHistory: (prefix) => {
+        set((state) => ({
+          history: [...state.history, prefix],
+        }));
+      },
+    }),
+    {
+      name: "s3-explorer-navigation",
+      // Persist connectionId, bucket, prefix — not history (transient data)
+      partialize: (state) => ({
+        connectionId: state.connectionId,
+        bucket: state.bucket,
+        prefix: state.prefix,
+      }),
+    },
+  ),
+);

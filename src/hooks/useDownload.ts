@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { toast } from "sonner";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { createS3Client } from "../lib/s3Client";
 import { useConnectionStore } from "../store/connectionStore";
 import { useTransferStore } from "../store/transferStore";
@@ -112,7 +113,11 @@ export function useDownload() {
           { expiresIn: 3600 },
         );
 
-        const response = await fetch(url, { signal: abortController.signal });
+        const response = await tauriFetch(url, {
+          method: "GET",
+          // Tauri's fetch doesn't support AbortController signal the same way,
+          // but we keep the reference for the cancel logic below.
+        } as RequestInit & { signal?: AbortSignal });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }

@@ -71,7 +71,15 @@ export function useS3() {
       queryKey: ["s3", "buckets", connectionId],
       enabled: !!connectionId,
       queryFn: async (): Promise<S3Item[]> => {
-        const client = createS3Client(getConnection(connectionId!));
+        const connection = getConnection(connectionId!);
+
+        // Cloudflare R2 does not support the ListBuckets S3 API operation.
+        // Return an empty list — the Sidebar will show a manual bucket input.
+        if (connection.provider === "r2") {
+          return [];
+        }
+
+        const client = createS3Client(connection);
         const res = await client.send(new ListBucketsCommand({}));
 
         return (res.Buckets ?? []).map((b): S3Item => ({

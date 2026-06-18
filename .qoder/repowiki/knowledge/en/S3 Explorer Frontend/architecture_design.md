@@ -1,5 +1,5 @@
-- Entry point: `src/main.tsx` bootstraps the React application into the DOM.
-- State Management: Uses Zustand for global state, split into three stores: `connectionStore` (persisted S3 credentials), `navigationStore` (bucket/prefix history), and `transferStore` (upload/download progress).
-- Data Fetching: `useS3` hook in `src/hooks/` wraps AWS SDK v3 commands with TanStack Query (`useQuery`/`useMutation`) for caching and async state management.
-- Service Layer: `src/lib/s3Client.ts` provides a factory for configuring `S3Client` instances across multiple providers (AWS, MinIO, R2, B2) with appropriate endpoint resolution.
-- UI Components: `src/components/layout/Sidebar.tsx` demonstrates the composition pattern, consuming stores and hooks to render connection lists and bucket explorers.
+- Entry point: `src/main.tsx` bootstraps the app with `@tanstack/react-query` for server-state management.
+- State Management: Uses `zustand` for client-side global state, split into three stores: `connectionStore` (persisted S3 credentials), `navigationStore` (current bucket/prefix context), and `transferStore` (upload/download progress).
+- Data Layer: `src/hooks/useS3.ts` encapsulates all AWS SDK interactions (listing, uploading, deleting) using TanStack Query hooks (`useQuery`, `useMutation`).
+- UI Composition: `src/App.tsx` orchestrates layout components (`Sidebar`, `Toolbar`, `FileList`) and modals, conditionally rendering views based on connection and navigation state.
+- Service Abstraction: `src/lib/s3Client.ts` provides a factory for configuring `S3Client` instances, handling provider-specific endpoint resolution (AWS, MinIO, R2, B2).

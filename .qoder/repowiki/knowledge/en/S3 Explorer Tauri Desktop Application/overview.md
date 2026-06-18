@@ -1,1 +1,0 @@
-Orchestrates a React frontend and Rust backend into a unified cross-platform desktop application via the Tauri v2 framework.

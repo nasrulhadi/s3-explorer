@@ -44,6 +44,8 @@ export interface S3Connection {
   region: string;
   accessKeyId: string;
   secretAccessKey: string;
+  /** Default bucket for providers that don't support ListBuckets (e.g. R2). 1 connection = 1 bucket. */
+  defaultBucket?: string;
   createdAt: number;
 }
 
