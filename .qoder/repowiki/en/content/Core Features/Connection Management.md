@@ -2,10 +2,15 @@
 
 <cite>
 **Referenced Files in This Document**
-- [types/index.ts](file://src/types/index.ts)
-- [PROJECT.md](file://PROJECT.md)
-- [src-tauri/src/lib.rs](file://src-tauri/src/lib.rs)
-- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json)
+- [connectionStore.ts](file://src/store/connectionStore.ts)
+- [s3Client.ts](file://src/lib/s3Client.ts)
+- [index.ts](file://src/types/index.ts)
+- [useS3.ts](file://src/hooks/useS3.ts)
+- [Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [navigationStore.ts](file://src/store/navigationStore.ts)
+- [main.tsx](file://src/main.tsx)
+- [lib.rs](file://src-tauri/src/lib.rs)
+- [tauri.conf.json](file://src-tauri/tauri.conf.json)
 </cite>
 
 ## Table of Contents
@@ -18,314 +23,363 @@
 7. [Performance Considerations](#performance-considerations)
 8. [Troubleshooting Guide](#troubleshooting-guide)
 9. [Conclusion](#conclusion)
+10. [Appendices](#appendices)
 
 ## Introduction
-This document explains the S3 Explorer connection management feature. It covers how users add, edit, and delete S3 connections supporting multiple providers (AWS, MinIO, Cloudflare R2, Backblaze B2, and custom endpoints). It documents the credential model, security considerations for sensitive data, connection validation, the connection modal interface, form validation, error handling, and the underlying implementation using a TypeScript interface and Tauri commands for secure storage. Examples of provider configurations and troubleshooting steps are included to help users configure and operate connections reliably.
+This document explains the connection management feature in S3 Explorer. It covers how users add, configure, and manage S3 connections to multiple providers (AWS, MinIO, Cloudflare R2, Backblaze B2, and custom endpoints). It documents the connection store architecture, credential handling, endpoint resolution, and authentication methods. It also provides step-by-step guides for adding connections, testing connectivity, and managing multiple connections, along with error handling strategies and security considerations for credential storage.
 
 ## Project Structure
-The connection management feature is composed of:
-- TypeScript domain models defining the S3 connection structure and related types
-- Frontend UI components for adding and editing connections
-- A Zustand-backed connection store for managing the list of saved connections
-- Tauri commands for secure credential storage and retrieval
-- Provider-specific configuration logic and validation
+The connection management feature spans several layers:
+- Store layer: connection persistence and selection
+- Client layer: provider-aware S3 client creation and endpoint resolution
+- Hooks layer: S3 operations orchestrated via TanStack Query
+- UI layer: sidebar integration and bucket discovery
+- Navigation layer: connection-to-bucket binding
+- Runtime layer: Tauri configuration and plugin initialization
 
 ```mermaid
 graph TB
-subgraph "Frontend"
-UI_Add["AddConnectionModal"]
-UI_Edit["EditConnectionModal"]
-Store["Zustand connectionStore"]
-Types["S3Connection, S3Provider, S3ConnectionFormData"]
+subgraph "UI Layer"
+Sidebar["Sidebar.tsx"]
 end
-subgraph "Backend (Tauri)"
-Cmd_Save["save_connection(command)"]
-Cmd_Load["load_connections(command)"]
-Cmd_Delete["delete_connection(command)"]
-SecureStorage["Secure Credential Storage"]
+subgraph "Store Layer"
+ConnStore["connectionStore.ts"]
+NavStore["navigationStore.ts"]
 end
-UI_Add --> Store
-UI_Edit --> Store
-Store --> Cmd_Save
-Store --> Cmd_Load
-Store --> Cmd_Delete
-Cmd_Save --> SecureStorage
-Cmd_Load --> SecureStorage
-Cmd_Delete --> SecureStorage
-Types --> UI_Add
-Types --> UI_Edit
+subgraph "Hooks Layer"
+UseS3["useS3.ts"]
+end
+subgraph "Client Layer"
+S3Client["s3Client.ts"]
+end
+subgraph "Runtime Layer"
+TauriLib["lib.rs"]
+TauriConf["tauri.conf.json"]
+end
+Sidebar --> ConnStore
+Sidebar --> NavStore
+Sidebar --> UseS3
+UseS3 --> ConnStore
+UseS3 --> S3Client
+ConnStore --> S3Client
+TauriLib --> TauriConf
 ```
 
 **Diagram sources**
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 **Section sources**
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [connectionStore.ts:1-88](file://src/store/connectionStore.ts#L1-L88)
+- [s3Client.ts:1-83](file://src/lib/s3Client.ts#L1-L83)
+- [index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 ## Core Components
-- S3Connection: The primary data model representing a stored S3-compatible connection, including provider, endpoint, region, credentials, and metadata.
-- S3Provider: Enumerated provider types including aws, minio, r2, b2, and custom.
-- S3ConnectionFormData: A form-friendly subset of S3Connection excluding id and createdAt.
-- Zustand connectionStore: A global store for managing the list of connections and current selection.
-- Tauri commands: save_connection, load_connections, delete_connection for secure persistence and retrieval.
+- Connection model and form data define the shape of stored connections and the data accepted for creation/update.
+- Connection store persists connections and active selection, with selective persistence of state.
+- S3 client factory builds provider-aware clients with correct endpoints and credentials.
+- useS3 hook orchestrates S3 operations and uses the active connection to create clients.
+- Sidebar integrates with the connection store to render connections and trigger bucket loading.
+- Navigation store binds a selected connection to a chosen bucket.
 
-Key implementation references:
-- S3Connection interface definition and provider enumeration
-- S3ConnectionFormData type alias
-- Store and modal components location as per project structure
-- Tauri command registration and plugin initialization
+Key responsibilities:
+- Connection model: identity, provider, endpoint, region, credentials, and timestamps
+- Connection store: CRUD operations, active selection, and persistence
+- Endpoint resolution: provider-specific endpoint computation and validation
+- Authentication: access key and secret passed to the AWS SDK client
+- UI integration: sidebar renders connections and triggers bucket queries
 
 **Section sources**
-- [types/index.ts:7-8](file://src/types/index.ts#L7-L8)
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
+- [index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [connectionStore.ts:10-28](file://src/store/connectionStore.ts#L10-L28)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [s3Client.ts:12-49](file://src/lib/s3Client.ts#L12-L49)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
 
 ## Architecture Overview
-The connection management flow integrates frontend UI, a state store, and backend secure storage via Tauri commands. Users open the connection modal, fill out provider-specific fields, and submit. The store validates the form, persists the connection using a Tauri command, and updates the UI. Retrieval and deletion follow similar patterns.
+The connection management architecture connects UI, store, and S3 operations:
 
 ```mermaid
 sequenceDiagram
 participant User as "User"
-participant Modal as "AddConnectionModal"
-participant Store as "Zustand connectionStore"
-participant Tauri as "Tauri Commands"
-participant Storage as "Secure Storage"
-User->>Modal : Open connection modal
-Modal->>Modal : Render provider selector and fields
-Modal->>Store : validateAndSubmit(formData)
-Store->>Tauri : invoke("save_connection", payload)
-Tauri->>Storage : Persist encrypted credentials
-Storage-->>Tauri : OK
-Tauri-->>Store : success
-Store-->>Modal : Update list and close modal
-Modal-->>User : Confirmation
+participant Sidebar as "Sidebar.tsx"
+participant ConnStore as "connectionStore.ts"
+participant UseS3 as "useS3.ts"
+participant S3Client as "s3Client.ts"
+participant S3SDK as "AWS SDK S3Client"
+User->>Sidebar : Click connection
+Sidebar->>ConnStore : setActiveConnection(id)
+Sidebar->>UseS3 : listBuckets(connectionId)
+UseS3->>ConnStore : getConnection(id)
+ConnStore-->>UseS3 : S3Connection
+UseS3->>S3Client : createS3Client(connection)
+S3Client->>S3SDK : new S3Client(config)
+S3SDK-->>UseS3 : client instance
+UseS3->>S3SDK : send(ListBucketsCommand)
+S3SDK-->>UseS3 : buckets
+UseS3-->>Sidebar : buckets data
 ```
 
 **Diagram sources**
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
+- [Sidebar.tsx:124-127](file://src/components/layout/Sidebar.tsx#L124-L127)
+- [connectionStore.ts:71-76](file://src/store/connectionStore.ts#L71-L76)
+- [useS3.ts:69-84](file://src/hooks/useS3.ts#L69-L84)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
 
 ## Detailed Component Analysis
 
-### S3Connection TypeScript Interface
-The S3Connection interface defines the shape of a saved connection:
-- id: Unique identifier
-- name: Human-readable label
-- provider: One of aws, minio, r2, b2, custom
-- endpoint?: Optional custom endpoint for non-AWS providers
-- region: AWS region or compatible region string
-- accessKeyId: Public credential
-- secretAccessKey: Sensitive credential
-- createdAt: Timestamp for creation
-
-S3ConnectionFormData excludes id and createdAt to prevent accidental duplication or tampering during form submission.
-
-```mermaid
-classDiagram
-class S3Connection {
-+string id
-+string name
-+S3Provider provider
-+string? endpoint
-+string region
-+string accessKeyId
-+string secretAccessKey
-+number createdAt
-}
-class S3ConnectionFormData {
-<<type>>
-+string name
-+S3Provider provider
-+string? endpoint
-+string region
-+string accessKeyId
-+string secretAccessKey
-}
-S3ConnectionFormData <|-- S3Connection : "omit(id,createdAt)"
-```
-
-**Diagram sources**
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
-
-**Section sources**
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
-
-### Provider Configuration Matrix
-Supported providers and recommended configuration patterns:
-- AWS: provider=aws, region=<your-aws-region>, endpoint empty or omitted
-- MinIO: provider=minio, region=<compatible-region>, endpoint=https://minio.example.com
-- Cloudflare R2: provider=r2, region=auto, endpoint=https://<account-id>.r2.cloudflarestorage.com
-- Backblaze B2: provider=b2, region=auto, endpoint=https://s3.<region>.backblazeb2.com
-- Custom: provider=custom, region=<your-region>, endpoint=<your-s3-compatible-endpoint>
-
-Notes:
-- For providers requiring custom endpoints, ensure HTTPS URLs and correct hostnames.
-- Region values vary by provider; consult provider documentation for supported values.
-
-**Section sources**
-- [types/index.ts:7-8](file://src/types/index.ts#L7-L8)
-- [PROJECT.md:115-134](file://PROJECT.md#L115-L134)
-
-### Connection Modal Interface and Validation
-The connection modal should:
-- Present provider selector and conditional fields (endpoint for non-AWS)
-- Validate presence of name, provider, region, accessKeyId, and secretAccessKey
-- Validate endpoint URL format when present
-- Prevent duplicate names within the store
-- Show inline errors and disable submit until valid
-
-Form validation logic:
-- Required fields: name, provider, region, accessKeyId, secretAccessKey
-- Endpoint validation: if present, must be a valid absolute URL
-- Duplicate detection: compare against existing connection names
-
-UI behavior:
-- Real-time validation feedback
-- Disabled submit button until all checks pass
-- Clear error messages for each field
-
-[No sources needed since this section provides general guidance]
-
-### Secure Credential Storage and Security Considerations
-Security measures:
-- Store credentials locally using Tauri’s secure storage APIs
-- Encrypt sensitive fields at rest
-- Avoid logging credentials or sending them over unsecured channels
-- Limit credential exposure in memory; clear after use
-- Prefer short-lived tokens or IAM roles where possible
-- Use least-privilege credentials and rotate regularly
-
-Tauri integration:
-- Register Tauri commands for saving, loading, and deleting connections
-- Use tauri-plugin-opener for optional external integrations if needed
-- Keep CSP minimal and avoid inline scripts to reduce XSS risk
-
-**Section sources**
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
-- [src-tauri/tauri.conf.json:20-23](file://src-tauri/tauri.conf.json#L20-L23)
-
-### Connection Lifecycle: Add, Edit, Delete
-Add:
-- Open modal, select provider, fill fields, validate, submit
-- Store persists via save_connection command
-- Update store and refresh UI
-
-Edit:
-- Load existing connection into modal
-- Apply edits, re-validate, submit
-- Replace stored connection with updated data
-
-Delete:
-- Confirm deletion
-- Invoke delete_connection command
-- Remove from store and reset selection
+### Connection Store
+The connection store manages:
+- State: list of connections and the active connection ID
+- Actions: add, update, remove, set active
+- Persistence: selective persistence of state (connections and active ID)
 
 ```mermaid
 flowchart TD
-Start(["Open Add/Edit Modal"]) --> Validate["Validate Form Fields"]
-Validate --> Valid{"Valid?"}
-Valid --> |No| ShowErrors["Show Field Errors"]
-ShowErrors --> Start
-Valid --> |Yes| Submit["Invoke save_connection"]
-Submit --> Persist["Persist to Secure Storage"]
-Persist --> UpdateStore["Update Zustand Store"]
-UpdateStore --> Close["Close Modal and Refresh UI"]
-Close --> End(["Done"])
+Start(["addConnection(data)"]) --> GenId["Generate unique ID"]
+GenId --> BuildConn["Create S3Connection with ID and timestamp"]
+BuildConn --> Append["Append to connections array"]
+Append --> ReturnId["Return new ID"]
+Update(["updateConnection(id, data)"]) --> Map["Map connections replacing matching ID"]
+Map --> SetState["Set updated connections"]
+Remove(["removeConnection(id)"]) --> Filter["Filter out matching ID"]
+Filter --> Deselect{"Was removed ID active?"}
+Deselect --> |Yes| ClearActive["Set activeConnectionId to null"]
+Deselect --> |No| KeepActive["Keep activeConnectionId unchanged"]
+ClearActive --> Done
+KeepActive --> Done
+SetState --> Done(["Done"])
 ```
 
 **Diagram sources**
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
-
-### Zustand Connection Store Implementation
-The connection store manages:
-- List of S3Connection entries
-- Current selected connectionId
-- Actions: addConnection, updateConnection, deleteConnection, selectConnection
-- Validation helpers for form submission
-
-Integration points:
-- UI components subscribe to store changes
-- Store invokes Tauri commands for persistence
-- Store enforces uniqueness and validation rules
-
-[No sources needed since this section provides general guidance]
-
-### Tauri Command Integration
-Commands to implement:
-- save_connection(payload): persists a validated S3Connection
-- load_connections(): retrieves all stored connections
-- delete_connection(id): removes a connection by id
-
-Registration:
-- Commands are registered in the Tauri backend and exposed to the frontend via invoke()
-
-Security:
-- Validate payload on the backend before persisting
-- Use platform-native secure storage APIs
-- Sanitize and log minimally
+- [connectionStore.ts:39-52](file://src/store/connectionStore.ts#L39-L52)
+- [connectionStore.ts:54-60](file://src/store/connectionStore.ts#L54-L60)
+- [connectionStore.ts:62-69](file://src/store/connectionStore.ts#L62-L69)
+- [connectionStore.ts:71-76](file://src/store/connectionStore.ts#L71-L76)
 
 **Section sources**
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
+- [connectionStore.ts:10-28](file://src/store/connectionStore.ts#L10-L28)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+
+### S3 Client Factory and Endpoint Resolution
+The client factory creates provider-aware S3 clients:
+- Endpoint resolution depends on provider and optional overrides
+- Credentials are passed directly to the SDK
+- Path-style addressing is enforced for non-AWS providers
+
+```mermaid
+flowchart TD
+Entry(["resolveEndpoint(connection)"]) --> CheckProvider{"Provider"}
+CheckProvider --> |aws| AWS["Return undefined (let SDK resolve)"]
+CheckProvider --> |minio| MinIO{"Has endpoint?"}
+MinIO --> |No| ErrMinIO["Throw error: endpoint required"]
+MinIO --> |Yes| UseMinIO["Return endpoint"]
+CheckProvider --> |r2| R2{"Has endpoint?"}
+R2 --> |No| ErrR2["Throw error: endpoint required"]
+R2 --> |Yes| UseR2["Return endpoint"]
+CheckProvider --> |b2| B2{"Has endpoint?"}
+B2 --> |Yes| UseB2["Return endpoint"]
+B2 --> |No| Region{"Has region?"}
+Region --> |No| ErrB2["Throw error: region required"]
+Region --> |Yes| BuildB2["Return https://s3.{region}.backblazeb2.com"]
+CheckProvider --> |custom| Custom{"Has endpoint?"}
+Custom --> |No| ErrCustom["Throw error: endpoint required"]
+Custom --> |Yes| UseCustom["Return endpoint"]
+CheckProvider --> |default| ErrDefault["Throw error: unsupported provider"]
+```
+
+**Diagram sources**
+- [s3Client.ts:12-49](file://src/lib/s3Client.ts#L12-L49)
+
+**Section sources**
+- [s3Client.ts:12-49](file://src/lib/s3Client.ts#L12-L49)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+
+### Provider-Specific Configuration Options
+Supported providers and their configuration:
+- aws: default region used if none provided; endpoint not overridden
+- minio: requires endpoint URL
+- r2: requires endpoint URL (account-based)
+- b2: requires either endpoint URL or region to construct endpoint
+- custom: requires endpoint URL
+
+Validation ensures required fields per provider are present before creating the client.
+
+**Section sources**
+- [s3Client.ts:15-48](file://src/lib/s3Client.ts#L15-L48)
+- [index.ts:7-8](file://src/types/index.ts#L7-L8)
+
+### Credential Handling and Security Considerations
+- Credentials are stored in the connection model as plain strings
+- The client factory passes credentials directly to the AWS SDK
+- Persistence uses selective state serialization to avoid storing actions
+- Considerations:
+  - Avoid logging sensitive fields
+  - Prefer least-privilege credentials
+  - Review persistence strategy if storing secrets long-term
+
+**Section sources**
+- [index.ts:45-46](file://src/types/index.ts#L45-L46)
+- [connectionStore.ts:78-85](file://src/store/connectionStore.ts#L78-L85)
+
+### UI Integration and Navigation Binding
+- Sidebar displays connections and toggles expansion to show buckets
+- On selecting a connection, the active connection is set
+- Bucket lists are fetched via useS3 and bound to the active connection
+- Navigation store associates a connection with a bucket
+
+```mermaid
+sequenceDiagram
+participant Sidebar as "Sidebar.tsx"
+participant ConnStore as "connectionStore.ts"
+participant NavStore as "navigationStore.ts"
+participant UseS3 as "useS3.ts"
+Sidebar->>ConnStore : setActiveConnection(id)
+Sidebar->>UseS3 : listBuckets(id)
+UseS3-->>Sidebar : buckets
+Sidebar->>NavStore : setBucket(id, bucketName)
+```
+
+**Diagram sources**
+- [Sidebar.tsx:124-127](file://src/components/layout/Sidebar.tsx#L124-L127)
+- [connectionStore.ts:71-76](file://src/store/connectionStore.ts#L71-L76)
+- [useS3.ts:69-84](file://src/hooks/useS3.ts#L69-L84)
+- [navigationStore.ts:42-52](file://src/store/navigationStore.ts#L42-L52)
+
+**Section sources**
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [useS3.ts:69-84](file://src/hooks/useS3.ts#L69-L84)
+- [navigationStore.ts:42-52](file://src/store/navigationStore.ts#L42-L52)
 
 ## Dependency Analysis
-High-level dependencies:
-- Frontend depends on TypeScript types and Zustand store
-- Store depends on Tauri commands for persistence
-- Backend depends on Tauri runtime and secure storage plugins
+The following diagram shows how components depend on each other:
 
 ```mermaid
 graph LR
-Types["types/index.ts"] --> Store["Zustand Store"]
-Store --> TauriCmds["Tauri Commands"]
-TauriCmds --> SecureStorage["Secure Storage"]
-UI["Connection Modals"] --> Store
-UI --> Types
+Sidebar["Sidebar.tsx"] --> ConnStore["connectionStore.ts"]
+Sidebar --> NavStore["navigationStore.ts"]
+Sidebar --> UseS3["useS3.ts"]
+UseS3 --> ConnStore
+UseS3 --> S3Client["s3Client.ts"]
+ConnStore --> S3Client
+S3Client --> Types["index.ts"]
+UseS3 --> Types
+NavStore --> Types
+Main["main.tsx"] --> UseS3
+TauriLib["lib.rs"] --> TauriConf["tauri.conf.json"]
 ```
 
 **Diagram sources**
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 **Section sources**
-- [types/index.ts:38-51](file://src/types/index.ts#L38-L51)
-- [PROJECT.md:20-60](file://PROJECT.md#L20-L60)
-- [src-tauri/src/lib.rs:1-14](file://src-tauri/src/lib.rs#L1-L14)
+- [index.ts:38-51](file://src/types/index.ts#L38-L51)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 ## Performance Considerations
-- Minimize store updates to reduce re-renders
-- Debounce validation for real-time feedback
-- Batch operations for bulk deletes or updates
-- Cache frequently accessed connections in memory
-- Use efficient list rendering for large connection lists
+- Client reuse: The client factory creates a new S3Client per operation; consider caching clients keyed by connection properties if repeated calls become frequent.
+- Query defaults: TanStack Query is configured with a short stale time and retries to balance freshness and resilience.
+- Endpoint resolution: Minimal overhead; ensure endpoint URLs are pre-validated to avoid runtime errors.
 
 [No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- Authentication failures
-  - Verify accessKeyId and secretAccessKey
-  - Confirm provider and region correctness
-  - Test endpoint URL for typos or SSL issues
-- Endpoint connectivity
-  - Ensure HTTPS for custom endpoints
-  - Check firewall and proxy settings
-  - Validate DNS resolution and TLS certificates
-- Duplicate names
-  - Change the connection name to be unique
-- Permission errors
-  - Confirm IAM policies or service account permissions
-  - Use least-privilege credentials
-- Store corruption or missing data
-  - Re-add connections via the modal
-  - Check secure storage permissions on the OS level
+- Unsupported provider: Ensure the provider is one of the supported values; otherwise, endpoint resolution throws an error.
+- Missing endpoint or region: Provider-specific validation enforces required fields; supply endpoint for MinIO/R2/Custom and region for Backblaze B2 when endpoint is not provided.
+- Active connection mismatch: If a connection disappears, attempting to use it throws an error; reselect a valid connection.
+- Bucket loading failures: Errors from bucket listing are surfaced in the UI; verify credentials and endpoint reachability.
 
 **Section sources**
-- [PROJECT.md:115-134](file://PROJECT.md#L115-L134)
+- [s3Client.ts:15-48](file://src/lib/s3Client.ts#L15-L48)
+- [useS3.ts:21-34](file://src/hooks/useS3.ts#L21-L34)
+- [Sidebar.tsx:68-75](file://src/components/layout/Sidebar.tsx#L68-L75)
 
 ## Conclusion
-S3 Explorer’s connection management provides a robust, secure way to manage S3-compatible connections across multiple providers. By combining a clear TypeScript model, a validated UI, a Zustand store, and Tauri-backed secure storage, the system ensures reliable operation and strong security for sensitive credentials. Following the configuration examples and troubleshooting steps helps users quickly set up and maintain their connections.
+S3 Explorer’s connection management provides a robust foundation for working with multiple S3-compatible providers. The store persists connections and tracks the active selection, the client factory handles provider-specific endpoint resolution and authentication, and the UI integrates seamlessly with TanStack Query for responsive operations. By following the steps below, users can add, test, and manage connections effectively while adhering to security best practices.
+
+## Appendices
+
+### Step-by-Step: Adding a New Connection
+1. Open the Add Connection dialog (placeholder action wired in the sidebar).
+2. Select a provider from the supported list.
+3. Fill in required fields:
+   - For AWS: region is used if endpoint is not overridden.
+   - For MinIO: provide endpoint URL.
+   - For Cloudflare R2: provide endpoint URL.
+   - For Backblaze B2: provide endpoint URL or region.
+   - For Custom: provide endpoint URL.
+4. Enter credentials (access key and secret).
+5. Save the connection; the store generates an ID and timestamp.
+6. Select the newly saved connection to activate it.
+
+**Section sources**
+- [index.ts:7-8](file://src/types/index.ts#L7-L8)
+- [s3Client.ts:15-48](file://src/lib/s3Client.ts#L15-L48)
+- [connectionStore.ts:39-52](file://src/store/connectionStore.ts#L39-L52)
+
+### Step-by-Step: Testing Connectivity
+1. Select an active connection in the sidebar.
+2. Trigger a bucket listing operation via the UI.
+3. Observe results:
+   - Success: buckets appear in the UI.
+   - Failure: error message is shown; inspect provider configuration and credentials.
+
+**Section sources**
+- [Sidebar.tsx:52-75](file://src/components/layout/Sidebar.tsx#L52-L75)
+- [useS3.ts:69-84](file://src/hooks/useS3.ts#L69-L84)
+
+### Managing Multiple Connections
+- Add multiple connections with distinct names and providers.
+- Switch between connections by clicking in the sidebar; the active connection drives subsequent operations.
+- Remove unused connections to keep the list manageable.
+
+**Section sources**
+- [connectionStore.ts:62-69](file://src/store/connectionStore.ts#L62-L69)
+- [connectionStore.ts:71-76](file://src/store/connectionStore.ts#L71-L76)
+- [Sidebar.tsx:163-174](file://src/components/layout/Sidebar.tsx#L163-L174)
+
+### Relationship to Other System Components
+- Store layer: connectionStore and navigationStore coordinate state.
+- Hooks layer: useS3 orchestrates S3 operations using the active connection.
+- Client layer: s3Client constructs provider-aware clients.
+- UI layer: Sidebar renders connections and triggers bucket queries.
+- Runtime layer: Tauri initializes plugins and runs the app.
+
+**Section sources**
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [Sidebar.tsx:117-120](file://src/components/layout/Sidebar.tsx#L117-L120)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)

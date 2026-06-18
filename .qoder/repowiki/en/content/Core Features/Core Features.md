@@ -2,13 +2,19 @@
 
 <cite>
 **Referenced Files in This Document**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
-- [src-tauri/gen/schemas/desktop-schema.json](file://src-tauri/gen/schemas/desktop-schema.json)
-- [src-tauri/gen/schemas/windows-schema.json](file://src-tauri/gen/schemas/windows-schema.json)
-- [src/App.tsx](file://src/App.tsx)
-- [src/main.tsx](file://src/main.tsx)
+- [App.tsx](file://src/App.tsx)
+- [main.tsx](file://src/main.tsx)
+- [Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+- [useS3.ts](file://src/hooks/useS3.ts)
+- [s3Client.ts](file://src/lib/s3Client.ts)
+- [utils.ts](file://src/lib/utils.ts)
+- [connectionStore.ts](file://src/store/connectionStore.ts)
+- [navigationStore.ts](file://src/store/navigationStore.ts)
+- [transferStore.ts](file://src/store/transferStore.ts)
+- [index.ts](file://src/types/index.ts)
+- [main.rs](file://src-tauri/src/main.rs)
+- [tauri.conf.json](file://src-tauri/tauri.conf.json)
 </cite>
 
 ## Table of Contents
@@ -23,401 +29,394 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains S3 Explorer’s core features and implementation patterns. The application is a desktop file manager for S3-compatible storage (AWS S3, MinIO, Cloudflare R2, Backblaze B2, and others) built with Tauri v2 (Rust backend) and React + TypeScript (frontend). It supports multi-provider connections, a virtualized file browser, robust file operations (upload, download, delete, rename), a context menu with quick actions, and transfer management with progress tracking. The frontend leverages AWS SDK JS v3, Zustand for state, TanStack Query for async data, Radix UI for context menus, TanStack Virtual for performance, and Sonner for notifications.
+This document explains S3 Explorer’s core features with a focus on four pillars: Connection Management, File Browser Interface, File Operations, and State Management. It describes the purpose, key functionalities, user workflows, UI elements, interaction patterns, and data models. Practical examples illustrate how features integrate to deliver a cohesive user experience, balancing beginner-friendly guidance with technical implementation details.
 
 ## Project Structure
-The repository follows a clear separation of concerns:
-- Frontend (React + TypeScript): located under src/
-- Backend (Tauri + Rust): located under src-tauri/
-- Documentation and type definitions: PROJECT.md and related type files
-
-High-level structure and technology stack:
-- Desktop framework: Tauri v2 (Rust)
-- Frontend: React 18 + TypeScript + Tailwind CSS v4
-- AWS SDK: @aws-sdk/client-s3 (JS v3)
-- State management: Zustand
-- Async data: TanStack Query (React Query v5)
-- Context menu: Radix UI (@radix-ui/react-context-menu)
-- Icons: Lucide React
-- Virtualized list: TanStack Virtual
-- Notifications: Sonner
-
-```mermaid
-graph TB
-subgraph "Frontend (React)"
-APP["App.tsx"]
-MAIN["main.tsx"]
-TYPES["TypeScript Types<br/>S3Connection, S3Item, Transfer"]
-STATE["Zustand Stores<br/>connectionStore, navigationStore, transferStore"]
-QUERIES["TanStack Query<br/>React Query v5"]
-CMENU["Radix UI Context Menu"]
-VLIST["TanStack Virtual<br/>FileList.tsx"]
-ICONS["Lucide React Icons"]
-TOAST["Sonner Notifications"]
-end
-subgraph "Backend (Tauri/Rust)"
-TMAIN["src-tauri/src/main.rs"]
-SCHEMA_WIN["Windows Schema"]
-SCHEMA_DESKTOP["Desktop Schema"]
-end
-subgraph "External Services"
-AWS["@aws-sdk/client-s3"]
-end
-APP --> STATE
-APP --> QUERIES
-APP --> CMENU
-APP --> VLIST
-APP --> ICONS
-APP --> TOAST
-MAIN --> APP
-STATE --> AWS
-QUERIES --> AWS
-CMENU --> TOAST
-VLIST --> TOAST
-TMAIN --> SCHEMA_WIN
-TMAIN --> SCHEMA_DESKTOP
-AWS --> TMAIN
-```
-
-**Diagram sources**
-- [src/App.tsx](file://src/App.tsx)
-- [src/main.tsx](file://src/main.tsx)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
-- [src-tauri/gen/schemas/desktop-schema.json](file://src-tauri/gen/schemas/desktop-schema.json)
-- [src-tauri/gen/schemas/windows-schema.json](file://src-tauri/gen/schemas/windows-schema.json)
-- [package.json](file://package.json)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
-- [src-tauri/gen/schemas/desktop-schema.json](file://src-tauri/gen/schemas/desktop-schema.json)
-- [src-tauri/gen/schemas/windows-schema.json](file://src-tauri/gen/schemas/windows-schema.json)
-- [src/App.tsx](file://src/App.tsx)
-- [src/main.tsx](file://src/main.tsx)
-
-## Core Components
-This section outlines the five primary feature areas and their implementation patterns.
-
-### 1) Connection Management with Multi-Provider Support
-- Purpose: Save, manage, and switch between S3-compatible connections with provider-specific endpoints and credentials.
-- Types: S3Connection defines provider, endpoint, region, and credentials.
-- Storage: Zustand store for persisted connection list.
-- UX: Add/Edit/Delete via modal dialogs; selection updates active connection and drives navigation and S3 operations.
-- Provider support: aws, minio, r2, b2, custom with optional endpoint override.
-
-User workflows:
-- Add connection: Open AddConnectionModal, fill provider and credentials, save.
-- Switch connection: Select from sidebar; triggers bucket listing.
-- Edit/delete: Right-click connection row or use dedicated actions.
-
-Integration points:
-- Frontend state: connectionStore.ts
-- Types: index.ts
-- UI: AddConnectionModal.tsx and Sidebar.tsx (referenced in project overview)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### 2) File Browser Interface with Virtualized Lists
-- Purpose: Efficiently render large bucket listings with smooth scrolling and responsive UI.
-- Implementation: TanStack Virtual powers FileList.tsx; FileRow.tsx/FolderRow.tsx represent individual rows.
-- Navigation: BreadcrumbNav.tsx reflects current prefix; Toolbar.tsx provides actions.
-- UX: Click folders to navigate deeper; click files to trigger context menu actions.
-
-User workflows:
-- Browse buckets: After selecting a connection, list buckets appear in sidebar.
-- Navigate folders: Click a folder row to enter; breadcrumb updates.
-- Scroll performance: Virtualization handles thousands of items efficiently.
-
-Integration points:
-- Virtualized list: FileList.tsx
-- Rows: FileRow.tsx, FolderRow.tsx
-- Navigation: BreadcrumbNav.tsx, useNavigation.ts
-- Async data: useS3.ts (TanStack Query)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### 3) File Operations: Upload, Download, Delete, Rename
-- Upload: Drag-and-drop or button action; uses PutObjectCommand or multipart uploads for large files.
-- Download: GetObjectCommand streamed to disk via Tauri for reliability (especially large files).
-- Delete: DeleteObjectCommand or batch DeleteObjectsCommand for folders.
-- Rename: Implemented as CopyObjectCommand followed by DeleteObjectCommand.
-- Presigned URLs: getSignedUrl + GetObjectCommand for shareable links.
-
-User workflows:
-- Upload: Select files or drag into main area; progress tracked in transfer queue.
-- Download: Right-click file → Download; progress shown.
-- Delete: Right-click → Delete; confirm dialog.
-- Rename: Right-click → Rename; modal captures new name.
-
-Integration points:
-- S3 operations: useS3.ts
-- Commands: download.rs (Rust) for downloads
-- Transfers: transferStore.ts
-- Modals: CreateFolderModal.tsx, RenameModal.tsx, DeleteConfirmModal.tsx
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### 4) Context Menu System with Quick Actions
-- Purpose: Provide per-item actions (file or folder) without cluttering the toolbar.
-- Implementation: Radix UI Context Menu component; actions mapped to S3 operations.
-- Actions (files): Download, Copy URL (presigned), Rename, Delete, Get Info.
-- Actions (folders): Download folder (as ZIP), Delete folder, Get Info.
-
-User workflows:
-- Right-click item → choose action → confirm if needed → observe feedback.
-
-Integration points:
-- Context menu: ContextMenu.tsx
-- Toast notifications: Sonner
-- Presigned URL generation: @aws-sdk/s3-request-presigner
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-
-### 5) Transfer Management with Progress Tracking
-- Purpose: Queue and monitor upload/download progress with status transitions.
-- Implementation: Transfer model tracks id, type, filename, sizes, status, and optional error.
-- State: Zustand transferStore manages queue and updates.
-- UX: Progress bars and notifications; errors surfaced with Sonner.
-
-User workflows:
-- Start operation → add to transfer queue → show progress → completion/error.
-
-Integration points:
-- Transfer model: types/index.ts
-- Store: store/transferStore.ts
-- Downloads: Rust download.rs command
-- UI: ProgressBar.tsx, Sonner toasts
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-## Architecture Overview
-The system combines a React frontend with Tauri commands for sensitive operations (like large downloads) and AWS SDK for S3 interactions. State is centralized via Zustand stores, and async data is managed with TanStack Query. Radix UI provides context menus, and TanStack Virtual ensures smooth rendering.
+S3 Explorer is a Tauri desktop application built with React and TypeScript. The frontend uses TanStack Query for data fetching and caching, Zustand for local state, and TailwindCSS for styling. The backend entrypoint initializes the Tauri runtime. The main UI is composed of a left-hand Sidebar for connections and buckets, a top Toolbar for navigation controls, and a content area that currently displays an “empty” state until the FileList component is integrated.
 
 ```mermaid
 graph TB
 subgraph "Frontend"
-UI["UI Components<br/>FileList, ContextMenu, Breadcrumb"]
-STATE["Zustand Stores<br/>connectionStore, navigationStore, transferStore"]
-QUERY["TanStack Query<br/>queries for S3 data"]
-CMENU["Radix UI Context Menu"]
-VIRT["TanStack Virtual List"]
-TOAST["Sonner Notifications"]
+A["main.tsx<br/>React Root + QueryClientProvider"]
+B["App.tsx<br/>AppLayout + Toasts"]
+C["Sidebar.tsx<br/>Connections & Buckets"]
+D["Toolbar.tsx<br/>Navigation Controls"]
+E["useS3.ts<br/>TanStack Query Hooks"]
+F["s3Client.ts<br/>S3Client Factory"]
+G["connectionStore.ts<br/>Zustand: Connections"]
+H["navigationStore.ts<br/>Zustand: Navigation"]
+I["transferStore.ts<br/>Zustand: Transfers"]
+J["utils.ts<br/>UI Helpers"]
+K["types/index.ts<br/>Domain Types"]
 end
 subgraph "Backend"
-TAURI["Tauri Runtime"]
-CMD_DL["Rust Command: download.rs"]
-CMD_FS["Rust Command: fs.rs"]
+L["main.rs<br/>Tauri Runtime Entry"]
+M["tauri.conf.json<br/>App Config"]
 end
-subgraph "External"
-S3["@aws-sdk/client-s3"]
-PRESIGN["@aws-sdk/s3-request-presigner"]
-end
-UI --> STATE
-UI --> QUERY
-UI --> CMENU
-UI --> VIRT
-UI --> TOAST
-STATE --> S3
-QUERY --> S3
-CMENU --> TOAST
-TAURI --> CMD_DL
-TAURI --> CMD_FS
-S3 --> TAURI
-PRESIGN --> UI
+A --> B
+B --> C
+B --> D
+C --> E
+D --> H
+E --> F
+E --> G
+E --> J
+G --> K
+H --> K
+I --> K
+J --> K
+L --> M
 ```
 
 **Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [main.tsx:1-26](file://src/main.tsx#L1-L26)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [utils.ts:1-197](file://src/lib/utils.ts#L1-L197)
+- [index.ts:1-166](file://src/types/index.ts#L1-L166)
+- [main.rs:4-7](file://src-tauri/src/main.rs#L4-L7)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+
+**Section sources**
+- [main.tsx:1-26](file://src/main.tsx#L1-L26)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [utils.ts:1-197](file://src/lib/utils.ts#L1-L197)
+- [index.ts:1-166](file://src/types/index.ts#L1-L166)
+- [main.rs:4-7](file://src-tauri/src/main.rs#L4-L7)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+
+## Core Components
+- Connection Management: Persisted, selectable S3 connections with provider-specific endpoint resolution and active selection.
+- File Browser Interface: Sidebar-driven connection and bucket selection, breadcrumb navigation, and toolbar controls.
+- File Operations: TanStack Query-backed CRUD and metadata operations (list, upload, download, delete, rename, info).
+- State Management: Centralized stores for connections, navigation, and transfers with persistence and typed models.
+
+**Section sources**
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+
+## Architecture Overview
+The application follows a layered architecture:
+- UI Layer: React components (Sidebar, Toolbar, AppLayout) orchestrate user interactions.
+- State Layer: Zustand stores manage domain state (connections, navigation, transfers).
+- Data Access Layer: useS3 exposes TanStack Query hooks wrapping AWS SDK commands.
+- Client Layer: s3Client builds provider-aware S3Client instances.
+- Backend Layer: Tauri runtime initializes the native host.
+
+```mermaid
+graph TB
+UI["App.tsx + Sidebar.tsx + Toolbar.tsx"]
+State["Zustand Stores<br/>connectionStore.ts<br/>navigationStore.ts<br/>transferStore.ts"]
+Hooks["useS3.ts<br/>TanStack Query Hooks"]
+Client["s3Client.ts<br/>S3Client Factory"]
+SDK["@aws-sdk/client-s3"]
+Tauri["main.rs + tauri.conf.json"]
+UI --> State
+UI --> Hooks
+Hooks --> Client
+Client --> SDK
+Tauri --> UI
+```
+
+**Diagram sources**
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [main.rs:4-7](file://src-tauri/src/main.rs#L4-L7)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 ## Detailed Component Analysis
 
 ### Connection Management
-- Responsibilities: Persist and switch active S3 connections; drive bucket and object listing.
-- Patterns: Modal-driven creation/editing; Zustand store for persistence; provider-aware client initialization.
-- Security: Credentials stored securely; avoid hardcoding.
+Purpose
+- Allow users to define, select, and persist multiple S3-compatible connections with provider-specific configuration.
+
+Key Functionalities
+- Add/update/remove connections with typed forms.
+- Activate a single connection to drive downstream operations.
+- Persist connections and active selection across sessions.
+
+User Workflow
+- Open the Add Connection action in the Sidebar header.
+- Fill provider, region, credentials, and optional endpoint.
+- Save; the new connection appears in the list and becomes active.
+- Click a connection to expand and view buckets.
+
+Integration
+- Sidebar renders the list and triggers bucket loading via useS3.listBuckets.
+- Active connection ID flows into navigation and file operations.
+
+Data Model
+- S3Connection and S3ConnectionFormData define the persisted model and form shape.
+
+Implementation Notes
+- Endpoint resolution depends on provider; non-AWS providers force path-style addressing.
+- Active connection validation prevents invalid selections.
+
+```mermaid
+classDiagram
+class ConnectionStore {
++string[] connections
++string activeConnectionId
++addConnection(data)
++updateConnection(id, data)
++removeConnection(id)
++setActiveConnection(id)
+}
+class S3Connection {
++string id
++string name
++string provider
++string region
++string accessKeyId
++string secretAccessKey
++string endpoint
++number createdAt
+}
+ConnectionStore --> S3Connection : "manages"
+```
+
+**Diagram sources**
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [index.ts:38-48](file://src/types/index.ts#L38-L48)
+
+**Section sources**
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [index.ts:38-51](file://src/types/index.ts#L38-L51)
+
+### File Browser Interface
+Purpose
+- Provide a hierarchical view of buckets and folders, enabling navigation and refresh.
+
+Key Functionalities
+- Expand/collapse connections to reveal buckets.
+- Select a bucket to enter the root prefix.
+- Navigate deeper into prefixes (folders).
+- Back navigation using history.
+- Refresh current folder contents.
+
+User Workflow
+- Choose an active connection; expand to see buckets.
+- Select a bucket to initialize navigation state.
+- Click breadcrumb segments or use Back to move up.
+- Use Refresh to re-fetch current prefix.
+
+Integration
+- Sidebar lists buckets and invokes navigation actions.
+- AppLayout coordinates navigation state and refresh triggers.
+- Toolbar forwards navigation events to the layout.
+
+```mermaid
+sequenceDiagram
+participant U as "User"
+participant SB as "Sidebar"
+participant NS as "navigationStore"
+participant AL as "AppLayout"
+participant TL as "Toolbar"
+U->>SB : "Click connection"
+SB->>NS : "setActiveConnection(id)"
+SB->>SB : "Expand connection"
+U->>SB : "Click bucket"
+SB->>NS : "setBucket(id, bucket)"
+NS-->>AL : "connectionId, bucket"
+AL->>TL : "Render toolbar with history"
+U->>TL : "Click Back"
+TL->>NS : "goBack()"
+NS-->>AL : "prefix, history"
+AL->>AL : "Recompute breadcrumbs"
+```
+
+**Diagram sources**
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+
+**Section sources**
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+
+### File Operations
+Purpose
+- Provide a unified, reactive API surface for S3 operations with robust error handling and metadata retrieval.
+
+Key Functionalities
+- List buckets and objects (files and virtual folders).
+- Upload single files with automatic key composition.
+- Download files via presigned URLs.
+- Delete objects and create virtual folders.
+- Rename/move objects and fetch object metadata.
+
+User Workflow
+- Upload a file from the current prefix.
+- View metadata via “Get Info.”
+- Download a file or copy a presigned URL.
+- Delete or rename items as needed.
+
+Integration
+- useS3 composes TanStack Query hooks and mutations.
+- s3Client constructs provider-aware clients.
+- UI components trigger mutations and queries.
+
+```mermaid
+sequenceDiagram
+participant UI as "UI Component"
+participant US as "useS3"
+participant SC as "s3Client"
+participant S3 as "AWS S3"
+UI->>US : "uploadFile().mutateAsync({connectionId,bucket,prefix,file})"
+US->>SC : "createS3Client(connection)"
+SC-->>US : "S3Client"
+US->>S3 : "PutObjectCommand"
+S3-->>US : "Response"
+US-->>UI : "Success/Error"
+UI->>US : "downloadFile().mutateAsync({connectionId,bucket,key})"
+US->>SC : "createS3Client(connection)"
+SC-->>US : "S3Client"
+US->>S3 : "GetObjectCommand (presigned)"
+S3-->>US : "Blob"
+US-->>UI : "Trigger browser download"
+```
+
+**Diagram sources**
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+
+**Section sources**
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [utils.ts:136-197](file://src/lib/utils.ts#L136-L197)
+
+### State Management
+Purpose
+- Manage cross-component state consistently with minimal boilerplate and persistence.
+
+Components
+- Connection Store: holds connections and active selection.
+- Navigation Store: tracks connectionId, bucket, prefix, and history.
+- Transfer Store: tracks uploads/downloads with progress and status.
+
+User Workflow
+- Select a connection; navigate to a bucket and folder.
+- Perform operations; observe updates in stores and UI.
 
 ```mermaid
 flowchart TD
-Start(["Open AddConnectionModal"]) --> Fill["Fill provider, endpoint, region,<br/>access key, secret key"]
-Fill --> Validate{"Credentials valid?"}
-Validate --> |No| ShowError["Show error via Sonner"]
-ShowError --> Fill
-Validate --> |Yes| Save["Save to connectionStore"]
-Save --> Select["Select connection in Sidebar"]
-Select --> ListBuckets["List Buckets via S3"]
-ListBuckets --> Ready(["Ready for browsing"])
+Start(["App Start"]) --> LoadStores["Load persisted stores"]
+LoadStores --> RenderUI["Render Sidebar + Toolbar + Content"]
+RenderUI --> NavChange{"Navigation change?"}
+NavChange --> |Yes| UpdateNav["Update navigationStore"]
+NavChange --> |No| Idle["Idle"]
+UpdateNav --> InvalidateQuery["Invalidate TanStack Query cache"]
+InvalidateQuery --> RenderUI
+Idle --> Operation{"Operation?"}
+Operation --> |Upload/Download| UpdateTransfers["Update transferStore"]
+Operation --> |List/Other| QueryS3["useS3 queries/mutations"]
+UpdateTransfers --> RenderUI
+QueryS3 --> RenderUI
 ```
 
 **Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
 
 **Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### File Browser and Navigation
-- Responsibilities: Render hierarchical file/folder listings; maintain navigation state; support breadcrumbs and back navigation.
-- Patterns: Virtualized list for performance; TanStack Query for caching and refetching; delimiter-based listing for virtual folders.
-
-```mermaid
-sequenceDiagram
-participant User as "User"
-participant UI as "FileList.tsx"
-participant Nav as "useNavigation.ts"
-participant S3Hook as "useS3.ts"
-participant AWS as "@aws-sdk/client-s3"
-User->>UI : Click folder row
-UI->>Nav : updatePrefix(newPrefix)
-Nav-->>UI : new navigation state
-UI->>S3Hook : invalidateQueries + fetchObjects(prefix)
-S3Hook->>AWS : ListObjectsV2(Bucket, Prefix, Delimiter="/")
-AWS-->>S3Hook : {CommonPrefixes=folders, Contents=files}
-S3Hook-->>UI : normalized items
-UI-->>User : Updated file list + breadcrumb
-```
-
-**Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### Context Menu Actions
-- Responsibilities: Provide per-item actions with immediate feedback.
-- Patterns: Action handlers dispatch S3 operations; Radix UI ensures accessibility; Sonner displays outcomes.
-
-```mermaid
-sequenceDiagram
-participant User as "User"
-participant Ctx as "ContextMenu.tsx"
-participant S3Hook as "useS3.ts"
-participant AWS as "@aws-sdk/client-s3"
-participant Toast as "Sonner"
-User->>Ctx : Right-click item
-Ctx->>Ctx : Show actions (Download/Copy URL/Rename/Delete/Info)
-Ctx->>S3Hook : Invoke selected action
-S3Hook->>AWS : Perform S3 operation
-AWS-->>S3Hook : Result or error
-S3Hook-->>Toast : Notify success/error
-Toast-->>User : Show message
-```
-
-**Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### Transfer Management and Progress
-- Responsibilities: Track uploads/downloads; update progress; surface errors.
-- Patterns: Transfer model with status lifecycle; Rust-backed downloads for large files; UI updates via Zustand.
-
-```mermaid
-flowchart TD
-OpStart["Operation Started"] --> Enqueue["Add to transferStore"]
-Enqueue --> StatusActive["Set status='active'"]
-StatusActive --> Update["Update transferredBytes"]
-Update --> DoneOrErr{"Completed or Error?"}
-DoneOrErr --> |No| Update
-DoneOrErr --> |Yes| Finalize["Set status='done'/'error'<br/>Attach error if any"]
-Finalize --> Notify["Show toast via Sonner"]
-Notify --> OpEnd["Operation Complete"]
-```
-
-**Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
-
-### File Operations: Upload, Download, Delete, Rename
-- Responsibilities: Implement CRUD-like operations on S3 objects with rename simulated via copy + delete.
-- Patterns: Use PutObjectCommand for small files; multipart for large; GetObjectCommand streamed via Tauri for large downloads; batch deletes for folders.
-
-```mermaid
-sequenceDiagram
-participant User as "User"
-participant UI as "UI"
-participant S3Hook as "useS3.ts"
-participant AWS as "@aws-sdk/client-s3"
-participant Rust as "download.rs"
-User->>UI : Choose Upload
-UI->>S3Hook : putObject(multipart if needed)
-S3Hook->>AWS : PutObjectCommand
-AWS-->>S3Hook : ETag/Result
-S3Hook-->>UI : Success
-User->>UI : Choose Download
-UI->>S3Hook : getObjectStream
-S3Hook->>Rust : invoke download command
-Rust-->>S3Hook : Stream to disk
-S3Hook-->>UI : Progress updates
-User->>UI : Delete/Rename
-UI->>S3Hook : delete/rename (copy + delete)
-S3Hook->>AWS : DeleteObject/CopyObject
-AWS-->>S3Hook : Confirm
-S3Hook-->>UI : Success
-```
-
-**Diagram sources**
-- [PROJECT.md](file://PROJECT.md)
-- [package.json](file://package.json)
-
-**Section sources**
-- [PROJECT.md](file://PROJECT.md)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
 
 ## Dependency Analysis
-- Frontend dependencies include AWS SDK, Radix UI, TanStack Query/Virtual, Sonner, and Zustand.
-- Tauri schemas define capability permissions for menus and opener plugins.
-- Backend entry point initializes the Tauri runtime.
+- UI depends on stores and useS3 hooks.
+- useS3 depends on s3Client and AWS SDK commands.
+- Stores depend on typed models from index.ts.
+- Tauri runtime initializes the native host.
 
 ```mermaid
 graph LR
-PJSON["package.json deps"] --> AWS["@aws-sdk/client-s3"]
-PJSON --> RADIX["@radix-ui/react-context-menu"]
-PJSON --> QUERY["@tanstack/react-query"]
-PJSON --> VIRT["@tanstack/react-virtual"]
-PJSON --> ZUSTAND["zustand"]
-PJSON --> SONNER["sonner"]
-SCHEMA_WIN["windows-schema.json"] --> TAURI["Tauri Capabilities"]
-SCHEMA_DESKTOP["desktop-schema.json"] --> TAURI
-TMAIN["src-tauri/src/main.rs"] --> TAURI
+UI["App.tsx / Sidebar.tsx / Toolbar.tsx"] --> CS["connectionStore.ts"]
+UI --> NS["navigationStore.ts"]
+UI --> TS["transferStore.ts"]
+UI --> US["useS3.ts"]
+US --> SC["s3Client.ts"]
+US --> SDK["@aws-sdk/*"]
+CS --> T["types/index.ts"]
+NS --> T
+TS --> T
+SC --> T
 ```
 
 **Diagram sources**
-- [package.json](file://package.json)
-- [src-tauri/gen/schemas/windows-schema.json](file://src-tauri/gen/schemas/windows-schema.json)
-- [src-tauri/gen/schemas/desktop-schema.json](file://src-tauri/gen/schemas/desktop-schema.json)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [App.tsx:11-124](file://src/App.tsx#L11-L124)
+- [Sidebar.tsx:117-184](file://src/components/layout/Sidebar.tsx#L117-L184)
+- [Toolbar.tsx](file://src/components/layout/Toolbar.tsx)
+- [connectionStore.ts:30-88](file://src/store/connectionStore.ts#L30-L88)
+- [navigationStore.ts:36-86](file://src/store/navigationStore.ts#L36-L86)
+- [transferStore.ts:28-62](file://src/store/transferStore.ts#L28-L62)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
+- [index.ts:1-166](file://src/types/index.ts#L1-L166)
 
 **Section sources**
-- [package.json](file://package.json)
-- [src-tauri/gen/schemas/windows-schema.json](file://src-tauri/gen/schemas/windows-schema.json)
-- [src-tauri/gen/schemas/desktop-schema.json](file://src-tauri/gen/schemas/desktop-schema.json)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [index.ts:1-166](file://src/types/index.ts#L1-L166)
+- [useS3.ts:62-410](file://src/hooks/useS3.ts#L62-L410)
+- [s3Client.ts:60-83](file://src/lib/s3Client.ts#L60-L83)
 
 ## Performance Considerations
-- Virtualized lists: TanStack Virtual reduces DOM nodes and improves scroll performance for large directories.
-- Caching and invalidation: TanStack Query caches S3 responses and invalidates on navigation changes.
-- Streaming downloads: Rust-backed download command streams large files reliably.
-- Debounced/focused refresh: Avoid rapid successive requests; implement exponential backoff for retries.
-- Minimal re-renders: Zustand stores isolate state slices; memoized selectors prevent unnecessary updates.
+- Query caching: TanStack Query is configured with a short stale time and retries to balance freshness and resilience.
+- Provider-specific client behavior: Non-AWS providers use path-style addressing to avoid bucket endpoint rewriting overhead.
+- UI responsiveness: Breadcrumb navigation and refresh invalidate targeted queries to keep views consistent without unnecessary reloads.
+- Large downloads: The hook documents that very large files should use a dedicated Rust command rather than browser-based presigned URLs.
+
+[No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
-- Authentication failures: Verify provider, region, and credentials; check secure storage configuration.
-- Large download issues: Prefer Rust-backed download command for files larger than a threshold.
-- Permission errors: Review Tauri capability schemas for required permissions (menus, opener).
-- Network timeouts: Implement retry with exponential backoff; reduce concurrent operations.
-- UI freezes: Confirm virtualization is enabled; avoid rendering non-virtualized lists for thousands of items.
+Common Issues and Resolutions
+- Missing endpoint for non-AWS providers: Ensure endpoint is provided for MinIO, R2, B2, or custom providers.
+- Region requirement for B2: Provide a valid region when using B2 without a custom endpoint.
+- Invalid folder name: Creating a folder requires a non-empty name without slashes.
+- Rename failures: The rename operation copies then deletes; errors occur if copy fails or keys are identical.
+- Upload/download errors: Inspect mutation error messages and HTTP status codes returned by the service.
+
+Operational Tips
+- Use “Refresh” to re-fetch current folder contents after external changes.
+- Verify active connection and bucket selection before performing operations.
+- For large downloads, prefer the Rust command pathway indicated by the code comments.
+
+**Section sources**
+- [s3Client.ts:12-49](file://src/lib/s3Client.ts#L12-L49)
+- [useS3.ts:274-287](file://src/hooks/useS3.ts#L274-L287)
+- [useS3.ts:332-359](file://src/hooks/useS3.ts#L332-L359)
+- [useS3.ts:220-225](file://src/hooks/useS3.ts#L220-L225)
+- [useS3.ts:170-187](file://src/hooks/useS3.ts#L170-L187)
 
 ## Conclusion
-S3 Explorer integrates Tauri and React to deliver a performant, extensible desktop application for S3-compatible storage. Its modular architecture—multi-provider connections, virtualized browsing, robust file operations, context menu actions, and transfer management—relies on modern frontend libraries and a secure backend. By following the documented patterns and leveraging the referenced components, developers can extend functionality while maintaining reliability and usability.
+S3 Explorer’s core features are designed around a clean separation of concerns: UI orchestration, persistent state, reactive data access, and provider-aware client construction. Connection Management establishes the identity of operations; the File Browser Interface enables intuitive navigation; File Operations provide a robust, typed API surface; and State Management ensures consistency across components. Together, these pieces deliver a scalable foundation for future enhancements such as the FileList component, advanced filtering, and transfer progress tracking.

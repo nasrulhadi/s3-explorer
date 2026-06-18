@@ -1,0 +1,3 @@
+- Zustand stores are defined using the `create<StoreType>()` pattern with explicit `State` and `Actions` interfaces merged into a single exported type.
+- S3 operations are encapsulated within a custom `useS3` hook that returns an object of TanStack Query hooks, keeping components free from direct SDK calls.
+- Utility functions in `src/lib/utils.ts` are pure, side-effect-free helpers for formatting data (sizes, dates) and deriving UI properties (icons, names) from S3 keys.

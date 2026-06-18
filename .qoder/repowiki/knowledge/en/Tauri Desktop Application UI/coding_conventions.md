@@ -1,3 +1,0 @@
-- Functional components with React Hooks (useState) for state management.
-- Inline event handlers for form submission and input changes.
-- Utility-first CSS classes (Tailwind) combined with custom CSS modules for specific component styling.

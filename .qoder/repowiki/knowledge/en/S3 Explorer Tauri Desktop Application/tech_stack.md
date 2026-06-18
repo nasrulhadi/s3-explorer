@@ -1,1 +1,1 @@
-Tauri v2, Vite, pnpm, Rust, React
+Tauri v2 framework bridging a React/Vite frontend with a Rust/Cargo backend.

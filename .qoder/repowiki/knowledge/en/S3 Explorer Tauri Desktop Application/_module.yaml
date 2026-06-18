@@ -2,9 +2,9 @@ schema_version: 1
 module_path: ""
 title: S3 Explorer Tauri Desktop Application
 scope:
-    - .gitignore
-    - PROJECT.md
     - README.md
+    - PROJECT.md
+    - .gitignore
     - index.html
     - package.json
     - pnpm-lock.yaml
@@ -12,7 +12,42 @@ scope:
     - tsconfig.json
     - tsconfig.node.json
     - vite.config.ts
+    - .qoder\repowiki\en\content\API Reference.md
+    - .qoder\repowiki\en\content\Architecture Overview.md
+    - .qoder\repowiki\en\content\Configuration.md
+    - .qoder\repowiki\en\content\Core Features\Connection Management.md
+    - .qoder\repowiki\en\content\Core Features\Context Menu System.md
+    - .qoder\repowiki\en\content\Core Features\Core Features.md
+    - .qoder\repowiki\en\content\Core Features\File Browser Interface.md
+    - .qoder\repowiki\en\content\Core Features\File Operations.md
+    - .qoder\repowiki\en\content\Core Features\Transfer Management.md
+    - .qoder\repowiki\en\content\Development Guide.md
+    - .qoder\repowiki\en\content\Getting Started.md
+    - .qoder\repowiki\en\content\Project Overview.md
+    - .qoder\repowiki\en\content\Technical Implementation\Backend Integration.md
+    - .qoder\repowiki\en\content\Technical Implementation\Build & Deployment.md
+    - .qoder\repowiki\en\content\Technical Implementation\Frontend Architecture.md
+    - .qoder\repowiki\en\content\Technical Implementation\Technical Implementation.md
+    - .qoder\repowiki\en\content\Troubleshooting.md
+    - .qoder\repowiki\en\meta\repowiki-metadata.json
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Backend\_module.yaml
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Backend\architecture_design.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Backend\overview.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Backend\tech_stack.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Backend\unique_setup_and_commands.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Desktop Application\_module.yaml
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Desktop Application\architecture_design.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Desktop Application\overview.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Desktop Application\tech_stack.md
+    - .qoder\repowiki\knowledge\en\S3 Explorer Tauri Desktop Application\unique_setup_and_commands.md
+    - .qoder\repowiki\knowledge\en\Tauri Desktop Application UI\_module.yaml
+    - .qoder\repowiki\knowledge\en\Tauri Desktop Application UI\architecture_design.md
+    - .qoder\repowiki\knowledge\en\Tauri Desktop Application UI\coding_conventions.md
+    - .qoder\repowiki\knowledge\en\Tauri Desktop Application UI\overview.md
+    - .qoder\repowiki\knowledge\en\Tauri Desktop Application UI\tech_stack.md
+    - .qoder\repowiki\knowledge\en\_index.yaml
     - .vscode\extensions.json
+    - LICENSE
     - public\tauri.svg
     - public\vite.svg
     - src-tauri\.gitignore
@@ -46,7 +81,15 @@ scope:
     - src\App.css
     - src\App.tsx
     - src\assets\react.svg
+    - src\components\layout\Sidebar.tsx
+    - src\hooks\useS3.ts
+    - src\lib\s3Client.ts
+    - src\lib\utils.ts
     - src\main.tsx
+    - src\store\connectionStore.ts
+    - src\store\navigationStore.ts
+    - src\store\transferStore.ts
+    - src\types\index.ts
     - src\vite-env.d.ts
 source_files: []
 depends_on: []

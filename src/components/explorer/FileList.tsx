@@ -13,6 +13,7 @@ import { useNavigationStore } from "../../store/navigationStore";
 import type { S3Item, SortField, SortDirection } from "../../types";
 import FileRow, { ROW_HEIGHT, ROW_GRID } from "./FileRow";
 import FolderRow from "./FolderRow";
+import ItemContextMenu from "./ContextMenu";
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -37,11 +38,9 @@ function SkeletonRow() {
 interface FileListProps {
   /** Text filter applied to item names */
   filterQuery: string;
-  /** Fired on right-click — will be wired to Radix ContextMenu later */
-  onContextMenu?: (item: S3Item, e: React.MouseEvent) => void;
 }
 
-export default function FileList({ filterQuery, onContextMenu }: FileListProps) {
+export default function FileList({ filterQuery }: FileListProps) {
   const { listObjects } = useS3();
 
   // Navigation state from Zustand
@@ -287,37 +286,37 @@ export default function FileList({ filterQuery, onContextMenu }: FileListProps) 
             const isFocused = virtualRow.index === focusIndex;
 
             return (
-              <div
-                key={item.key}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-                className="border-b border-gray-100"
-              >
-                {item.type === "folder" ? (
-                  <FolderRow
-                    item={item}
-                    isSelected={isSelected}
-                    isFocused={isFocused}
-                    onSelect={toggleSelect}
-                    onOpen={openFolder}
-                    onContextMenu={onContextMenu}
-                  />
-                ) : (
-                  <FileRow
-                    item={item}
-                    isSelected={isSelected}
-                    isFocused={isFocused}
-                    onSelect={toggleSelect}
-                    onContextMenu={onContextMenu}
-                  />
-                )}
-              </div>
+              <ItemContextMenu item={item}>
+                <div
+                  key={item.key}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                  className="border-b border-gray-100"
+                >
+                  {item.type === "folder" ? (
+                    <FolderRow
+                      item={item}
+                      isSelected={isSelected}
+                      isFocused={isFocused}
+                      onSelect={toggleSelect}
+                      onOpen={openFolder}
+                    />
+                  ) : (
+                    <FileRow
+                      item={item}
+                      isSelected={isSelected}
+                      isFocused={isFocused}
+                      onSelect={toggleSelect}
+                    />
+                  )}
+                </div>
+              </ItemContextMenu>
             );
           })}
         </div>

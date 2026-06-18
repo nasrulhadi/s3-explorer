@@ -1,3 +1,3 @@
-- The root `tauri.conf.json` defines the build pipeline, instructing the Tauri CLI to execute `pnpm dev`/`pnpm build` for the frontend before launching or bundling the Rust backend.
-- Vite is configured with a fixed port (1420) and strict HMR settings to ensure reliable communication with the Tauri webview during development.
-- The Rust backend (`src-tauri`) exposes commands and plugins that the React frontend invokes through the `@tauri-apps/api` bridge, maintaining isolation between UI logic and system-level operations.
+- The root `package.json` and `vite.config.ts` configure the development server (Vite) to run on a fixed port (1420), which the Tauri backend (`src-tauri/tauri.conf.json`) loads as the webview source.
+- The Tauri CLI (`pnpm tauri`) acts as the primary orchestrator, managing the concurrent execution of the Rust backend build and the Vite frontend dev server.
+- Communication between the React frontend and Rust backend is established through Tauri's IPC mechanism, where frontend commands invoke Rust handlers defined in `src-tauri/src/lib.rs`.

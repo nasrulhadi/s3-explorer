@@ -1,0 +1,1 @@
+React 18 with TypeScript, Vite build tool, Zustand for state persistence, TanStack Query for server-state management, AWS SDK v3 for S3 operations, and Lucide React for iconography.

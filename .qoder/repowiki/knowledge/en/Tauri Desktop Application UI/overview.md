@@ -1,1 +1,0 @@
-Provides the React-based user interface for a Tauri desktop application, handling user input and invoking backend commands.

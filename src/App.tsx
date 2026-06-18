@@ -4,8 +4,8 @@ import { Toaster } from "sonner";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
+import AddConnectionModal from "./components/modals/AddConnectionModal";
 import { useNavigationStore } from "./store/navigationStore";
-import type { S3Item } from "./types";
 import "./App.css";
 
 // ─── Inner layout (must be inside QueryClientProvider) ──────
@@ -24,12 +24,8 @@ function AppLayout() {
   // Search / filter state (shared between Toolbar and FileList)
   const [filterQuery, setFilterQuery] = useState("");
 
-  // Context menu handler (will be wired to Radix ContextMenu later)
-  const handleContextMenu = useCallback((item: S3Item, e: React.MouseEvent) => {
-    e.preventDefault();
-    // eslint-disable-next-line no-console
-    console.debug("[ContextMenu]", item.type, item.name, `(${e.clientX}, ${e.clientY})`);
-  }, []);
+  // Add Connection modal state
+  const [showAddConnection, setShowAddConnection] = useState(false);
 
   // Refresh: invalidate current folder query
   const handleRefresh = useCallback(() => {
@@ -60,7 +56,7 @@ function AppLayout() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
       {/* ── Left panel ──────────────────────────────────── */}
-      <Sidebar onAddConnection={() => console.debug("AddConnection modal TBD")} />
+      <Sidebar onAddConnection={() => setShowAddConnection(true)} />
 
       {/* ── Right panel ─────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -82,13 +78,15 @@ function AppLayout() {
           {!connectionId || !bucket ? (
             <EmptyState />
           ) : (
-            <FileList
-              filterQuery={filterQuery}
-              onContextMenu={handleContextMenu}
-            />
+            <FileList filterQuery={filterQuery} />
           )}
         </main>
       </div>
+
+      {/* ── Modals ────────────────────────────────────────── */}
+      {showAddConnection && (
+        <AddConnectionModal onClose={() => setShowAddConnection(false)} />
+      )}
     </div>
   );
 }

@@ -4,19 +4,19 @@
 **Referenced Files in This Document**
 - [package.json](file://package.json)
 - [vite.config.ts](file://vite.config.ts)
-- [tsconfig.json](file://tsconfig.json)
-- [tsconfig.node.json](file://tsconfig.node.json)
-- [src-tauri/Cargo.toml](file://src-tauri/Cargo.toml)
-- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json)
-- [src-tauri/src/lib.rs](file://src-tauri/src/lib.rs)
-- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
-- [src-tauri/capabilities/default.json](file://src-tauri/capabilities/default.json)
-- [src/App.tsx](file://src/App.tsx)
-- [src/main.tsx](file://src/main.tsx)
-- [src/App.css](file://src/App.css)
-- [index.html](file://index.html)
+- [Cargo.toml](file://src-tauri/Cargo.toml)
+- [tauri.conf.json](file://src-tauri/tauri.conf.json)
 - [README.md](file://README.md)
-- [PROJECT.md](file://PROJECT.md)
+- [src/main.tsx](file://src/main.tsx)
+- [src/App.tsx](file://src/App.tsx)
+- [src/lib/s3Client.ts](file://src/lib/s3Client.ts)
+- [src/hooks/useS3.ts](file://src/hooks/useS3.ts)
+- [src/store/connectionStore.ts](file://src/store/connectionStore.ts)
+- [src/types/index.ts](file://src/types/index.ts)
+- [src/components/layout/Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [src/lib/utils.ts](file://src/lib/utils.ts)
+- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [src-tauri/src/lib.rs](file://src-tauri/src/lib.rs)
 </cite>
 
 ## Table of Contents
@@ -24,355 +24,565 @@
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
-5. [Development Environment Setup](#development-environment-setup)
-6. [Build Process](#build-process)
-7. [Contribution Workflow](#contribution-workflow)
-8. [Code Standards](#code-standards)
+5. [Detailed Component Analysis](#detailed-component-analysis)
+6. [Dependency Analysis](#dependency-analysis)
+7. [Development Environment Setup](#development-environment-setup)
+8. [Build and Deployment](#build-and-deployment)
 9. [Testing Procedures](#testing-procedures)
-10. [Release Process](#release-process)
-11. [Extending Functionality](#extending-functionality)
-12. [Adding New S3 Providers](#adding-new-s3-providers)
-13. [Backward Compatibility Guidelines](#backward-compatibility-guidelines)
-14. [Troubleshooting Guide](#troubleshooting-guide)
-15. [Performance Considerations](#performance-considerations)
-16. [Conclusion](#conclusion)
+10. [Debugging Techniques](#debugging-techniques)
+11. [Performance Considerations](#performance-considerations)
+12. [Contribution Guidelines](#contribution-guidelines)
+13. [Extending the Application](#extending-the-application)
+14. [Version Management and Releases](#version-management-and-releases)
+15. [Maintenance Practices](#maintenance-practices)
+16. [Troubleshooting Guide](#troubleshooting-guide)
+17. [Conclusion](#conclusion)
 
 ## Introduction
-This development guide provides comprehensive instructions for contributors and maintainers working on S3 Explorer. It covers environment setup, development workflows, build processes, contribution standards, testing, releases, extension strategies, and troubleshooting. The project is a Tauri v2 desktop application with a React + TypeScript frontend and a Rust backend, designed to manage S3-compatible object storage systems.
+This guide provides a comprehensive development workflow for contributors and maintainers of S3 Explorer. It covers environment setup, project structure, coding standards, build/deployment processes, testing, debugging, performance optimization, and extension guidelines for adding new S3 providers, UI components, and features. The application is a Tauri desktop app built with React, TypeScript, Vite, TailwindCSS, and integrates AWS SDK v3 for S3 operations.
 
 ## Project Structure
 The repository follows a hybrid frontend/backend structure:
-- Frontend: React + TypeScript with Vite for development and bundling
-- Backend: Tauri v2 (Rust) for native capabilities and system integration
-- Shared configuration: TypeScript compiler options, Vite configuration, and Tauri app configuration
+- Frontend (React + TypeScript): resides under src/
+- Native runtime (Rust/Tauri): resides under src-tauri/
+
+Key areas:
+- src/main.tsx initializes the React root and React Query client
+- src/App.tsx defines the top-level layout and integrates stores and UI
+- src/lib/s3Client.ts builds S3 clients per provider
+- src/hooks/useS3.ts encapsulates S3 operations via TanStack Query
+- src/store/* manages application state (connections, navigation, transfers)
+- src/types/index.ts defines shared domain models and UI types
+- src/components/layout/Sidebar.tsx renders the left navigation panel
+- src/lib/utils.ts provides UI helpers (formatting, icon mapping)
+- src-tauri/Cargo.toml and src-tauri/tauri.conf.json configure the native bundle
+- vite.config.ts configures Vite with HMR and Tauri integration
 
 ```mermaid
 graph TB
-subgraph "Frontend (React + TypeScript)"
-FE_Main["src/main.tsx"]
-FE_App["src/App.tsx"]
-FE_CSS["src/App.css"]
-FE_HTML["index.html"]
-FE_TSConfig["tsconfig.json"]
-FE_TSNode["tsconfig.node.json"]
-FE_Vite["vite.config.ts"]
-FE_Pkg["package.json"]
+subgraph "Frontend (React)"
+M["src/main.tsx"]
+A["src/App.tsx"]
+L["src/lib/s3Client.ts"]
+H["src/hooks/useS3.ts"]
+CS["src/store/connectionStore.ts"]
+T["src/types/index.ts"]
+U["src/lib/utils.ts"]
+SB["src/components/layout/Sidebar.tsx"]
 end
-subgraph "Backend (Tauri + Rust)"
-BE_Cfg["src-tauri/tauri.conf.json"]
-BE_Cargo["src-tauri/Cargo.toml"]
-BE_LibRS["src-tauri/src/lib.rs"]
-BE_MainRS["src-tauri/src/main.rs"]
-BE_Cap["src-tauri/capabilities/default.json"]
+subgraph "Native (Tauri/Rust)"
+CR["src-tauri/Cargo.toml"]
+TC["src-tauri/tauri.conf.json"]
+MR["src-tauri/src/main.rs"]
+LR["src-tauri/src/lib.rs"]
 end
-FE_Pkg --> FE_Vite
-FE_TSConfig --> FE_Vite
-FE_TSNode --> FE_Vite
-FE_Vite --> FE_App
-FE_App --> FE_Main
-FE_HTML --> FE_Main
-FE_CSS --> FE_App
-BE_Cfg --> BE_LibRS
-BE_Cargo --> BE_LibRS
-BE_LibRS --> BE_MainRS
-BE_Cap --> BE_LibRS
+subgraph "Tooling"
+PJ["package.json"]
+VC["vite.config.ts"]
+end
+PJ --> VC
+PJ --> CR
+PJ --> TC
+M --> A
+A --> SB
+A --> H
+H --> L
+H --> CS
+H --> T
+SB --> CS
+SB --> H
+U --> A
+U --> SB
+MR --> LR
+LR --> TC
+CR --> LR
 ```
 
 **Diagram sources**
-- [src/main.tsx:1-10](file://src/main.tsx#L1-L10)
-- [src/App.tsx:1-56](file://src/App.tsx#L1-L56)
-- [src/App.css:1-118](file://src/App.css#L1-L118)
-- [index.html:1-15](file://index.html#L1-L15)
-- [tsconfig.json:1-26](file://tsconfig.json#L1-L26)
-- [tsconfig.node.json:1-11](file://tsconfig.node.json#L1-L11)
-- [vite.config.ts:1-34](file://vite.config.ts#L1-L34)
-- [package.json:1-37](file://package.json#L1-L37)
-- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
-- [src-tauri/Cargo.toml:1-26](file://src-tauri/Cargo.toml#L1-L26)
-- [src-tauri/src/lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [src-tauri/src/main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
-- [src-tauri/capabilities/default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
+- [src/main.tsx](file://src/main.tsx)
+- [src/App.tsx](file://src/App.tsx)
+- [src/lib/s3Client.ts](file://src/lib/s3Client.ts)
+- [src/hooks/useS3.ts](file://src/hooks/useS3.ts)
+- [src/store/connectionStore.ts](file://src/store/connectionStore.ts)
+- [src/types/index.ts](file://src/types/index.ts)
+- [src/components/layout/Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [src/lib/utils.ts](file://src/lib/utils.ts)
+- [src-tauri/Cargo.toml](file://src-tauri/Cargo.toml)
+- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json)
+- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [src-tauri/src/lib.rs](file://src-tauri/src/lib.rs)
+- [package.json](file://package.json)
+- [vite.config.ts](file://vite.config.ts)
 
 **Section sources**
-- [PROJECT.md:20-68](file://PROJECT.md#L20-L68)
-- [package.json:1-37](file://package.json#L1-L37)
-- [vite.config.ts:1-34](file://vite.config.ts#L1-L34)
-- [tsconfig.json:1-26](file://tsconfig.json#L1-L26)
-- [tsconfig.node.json:1-11](file://tsconfig.node.json#L1-L11)
-- [src-tauri/Cargo.toml:1-26](file://src-tauri/Cargo.toml#L1-L26)
-- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
-- [src-tauri/src/lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [src-tauri/src/main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
-- [src-tauri/capabilities/default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- [src/App.tsx:1-56](file://src/App.tsx#L1-L56)
-- [src/main.tsx:1-10](file://src/main.tsx#L1-L10)
-- [src/App.css:1-118](file://src/App.css#L1-L118)
-- [index.html:1-15](file://index.html#L1-L15)
+- [package.json](file://package.json)
+- [vite.config.ts](file://vite.config.ts)
+- [src-tauri/Cargo.toml](file://src-tauri/Cargo.toml)
+- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json)
+- [src/main.tsx](file://src/main.tsx)
+- [src/App.tsx](file://src/App.tsx)
+- [src/lib/s3Client.ts](file://src/lib/s3Client.ts)
+- [src/hooks/useS3.ts](file://src/hooks/useS3.ts)
+- [src/store/connectionStore.ts](file://src/store/connectionStore.ts)
+- [src/types/index.ts](file://src/types/index.ts)
+- [src/components/layout/Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [src/lib/utils.ts](file://src/lib/utils.ts)
+- [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
+- [src-tauri/src/lib.rs](file://src-tauri/src/lib.rs)
 
 ## Core Components
-- Frontend entry point initializes React and mounts the root component.
-- The main App component demonstrates Tauri command invocation via the invoke API.
-- Tauri backend exposes a greet command and integrates with the opener plugin.
-- Capabilities define permissions for the main window, including core and opener defaults.
+- State Management: Zustand-backed stores for connections and navigation
+- S3 Operations: Centralized hooks for list, upload, download, delete, rename, and metadata retrieval
+- UI Layout: App shell with Sidebar and Toolbar; placeholder content area
+- Utilities: Formatting helpers and icon mapping for file types
+- Native Integration: Tauri commands and plugins for desktop features
 
 Key implementation references:
-- Frontend initialization and root mounting
-  - [src/main.tsx:1-10](file://src/main.tsx#L1-L10)
-  - [index.html:10-12](file://index.html#L10-L12)
-- App component with Tauri invoke usage
-  - [src/App.tsx:10-12](file://src/App.tsx#L10-L12)
-- Tauri command definition and application runner
-  - [src-tauri/src/lib.rs:2-5](file://src-tauri/src/lib.rs#L2-L5)
-  - [src-tauri/src/lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
-- Capability permissions
-  - [src-tauri/capabilities/default.json:6-9](file://src-tauri/capabilities/default.json#L6-L9)
+- [React Query initialization:6-17](file://src/main.tsx#L6-L17)
+- [App layout and toolbar integration:11-82](file://src/App.tsx#L11-L82)
+- [S3 client factory and endpoint resolution:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [useS3 hook exports and operations:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [Connection store actions and persistence:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [Shared types and enums:7-166](file://src/types/index.ts#L7-L166)
+- [Sidebar rendering and bucket loading:17-108](file://src/components/layout/Sidebar.tsx#L17-L108)
+- [Utility helpers:13-196](file://src/lib/utils.ts#L13-L196)
 
 **Section sources**
-- [src/main.tsx:1-10](file://src/main.tsx#L1-L10)
-- [index.html:10-12](file://index.html#L10-L12)
-- [src/App.tsx:10-12](file://src/App.tsx#L10-L12)
-- [src-tauri/src/lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [src-tauri/capabilities/default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
+- [src/main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [src/App.tsx:11-82](file://src/App.tsx#L11-L82)
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [src/hooks/useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [src/store/connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [src/types/index.ts:7-166](file://src/types/index.ts#L7-L166)
+- [src/components/layout/Sidebar.tsx:17-108](file://src/components/layout/Sidebar.tsx#L17-L108)
+- [src/lib/utils.ts:13-196](file://src/lib/utils.ts#L13-L196)
 
 ## Architecture Overview
-The application uses a classic Tauri architecture pattern:
-- Frontend runs in a web engine controlled by Tauri
-- Tauri bridges JavaScript and Rust via a command handler
-- Plugins enable additional native capabilities (e.g., opening URLs)
+The app uses a layered architecture:
+- UI Layer: React components and stores
+- Domain Layer: S3 operations via useS3 hook
+- Infrastructure Layer: AWS SDK client creation and configuration
+- Native Layer: Tauri runtime and commands
+
+```mermaid
+graph TB
+UI["UI Components<br/>src/components/*"] --> Hooks["Domain Hooks<br/>src/hooks/useS3.ts"]
+Hooks --> Client["S3 Client Factory<br/>src/lib/s3Client.ts"]
+Client --> AWS["@aws-sdk/client-s3"]
+UI --> Stores["Zustand Stores<br/>src/store/*"]
+Stores --> UI
+UI --> Types["Shared Types<br/>src/types/index.ts"]
+UI --> Utils["Utilities<br/>src/lib/utils.ts"]
+Native["Tauri Runtime<br/>src-tauri/src/lib.rs"] --> UI
+Native --> Config["Tauri Config<br/>src-tauri/tauri.conf.json"]
+```
+
+**Diagram sources**
+- [src/hooks/useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [src/store/connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [src/types/index.ts:7-166](file://src/types/index.ts#L7-L166)
+- [src/lib/utils.ts:13-196](file://src/lib/utils.ts#L13-L196)
+- [src-tauri/src/lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
+- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+
+## Detailed Component Analysis
+
+### S3 Client Factory
+The S3 client factory creates provider-aware clients with endpoint overrides and path-style addressing for non-AWS providers.
+
+```mermaid
+flowchart TD
+Start(["createS3Client(connection)"]) --> Resolve["resolveEndpoint(connection)"]
+Resolve --> Endpoint{"Endpoint provided?"}
+Endpoint --> |No| AWSDefault["AWS: omit endpoint"]
+Endpoint --> |Yes| SetEndpoint["Set custom endpoint"]
+AWSDefault --> Config["Build S3ClientConfig"]
+SetEndpoint --> PathStyle{"Provider == 'aws'?"}
+PathStyle --> |Yes| Config
+PathStyle --> |No| ForcePath["forcePathStyle = true"]
+ForcePath --> Config
+Config --> NewClient["new S3Client(config)"]
+NewClient --> End(["Return client"])
+```
+
+**Diagram sources**
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+
+**Section sources**
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+
+### useS3 Hook Operations
+The hook exposes TanStack Query-powered queries and mutations for S3 operations, including pagination and error handling.
 
 ```mermaid
 sequenceDiagram
-participant Browser as "Browser Runtime"
-participant TauriJS as "Tauri JS API"
-participant TauriRS as "Rust Backend"
-participant Plugin as "Opener Plugin"
-Browser->>TauriJS : "invoke('greet', payload)"
-TauriJS->>TauriRS : "Dispatch command"
-TauriRS->>TauriRS : "Execute greet()"
-TauriRS->>Plugin : "Open URL (optional)"
-Plugin-->>TauriRS : "Result"
-TauriRS-->>TauriJS : "Return response"
-TauriJS-->>Browser : "Resolve promise"
+participant UI as "UI Component"
+participant Store as "Zustand Store"
+participant Hook as "useS3 Hook"
+participant Client as "S3 Client"
+participant AWS as "@aws-sdk/client-s3"
+UI->>Hook : listObjects(connectionId, bucket, prefix)
+Hook->>Store : getConnection(connectionId)
+Store-->>Hook : S3Connection
+Hook->>Client : createS3Client(connection)
+Client-->>Hook : S3Client
+Hook->>AWS : send(ListObjectsV2Command)
+AWS-->>Hook : ListObjectsV2Output
+Hook-->>UI : UseQueryResult<ListObjectsResult>
 ```
 
 **Diagram sources**
-- [src/App.tsx:10-12](file://src/App.tsx#L10-L12)
-- [src-tauri/src/lib.rs:2-5](file://src-tauri/src/lib.rs#L2-L5)
-- [src-tauri/src/lib.rs:10-11](file://src-tauri/src/lib.rs#L10-L11)
+- [src/hooks/useS3.ts:69-144](file://src/hooks/useS3.ts#L69-L144)
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [src/store/connectionStore.ts:22-34](file://src/store/connectionStore.ts#L22-L34)
 
 **Section sources**
-- [src/App.tsx:10-12](file://src/App.tsx#L10-L12)
-- [src-tauri/src/lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
+- [src/hooks/useS3.ts:69-144](file://src/hooks/useS3.ts#L69-L144)
+- [src/lib/s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [src/store/connectionStore.ts:22-34](file://src/store/connectionStore.ts#L22-L34)
+
+### Sidebar Component
+The Sidebar renders connections and lazy-loads buckets, integrating with the S3 hook and navigation store.
+
+```mermaid
+classDiagram
+class Sidebar {
++props onAddConnection
++state expandedId
++handleConnectionClick(id)
+}
+class ConnectionItem {
++props connection
++props isActive
++props isExpanded
++props onSelect
+}
+class BucketList {
++props connectionId
++listBuckets(connectionId)
+}
+Sidebar --> ConnectionItem : "renders"
+Sidebar --> BucketList : "renders"
+BucketList --> useS3 : "calls"
+BucketList --> navigationStore : "reads active"
+```
+
+**Diagram sources**
+- [src/components/layout/Sidebar.tsx:18-108](file://src/components/layout/Sidebar.tsx#L18-L108)
+
+**Section sources**
+- [src/components/layout/Sidebar.tsx:18-108](file://src/components/layout/Sidebar.tsx#L18-L108)
+
+### Data Models
+The types module defines providers, item types, navigation state, transfers, and UI-related interfaces.
+
+```mermaid
+classDiagram
+class S3Connection {
++string id
++string name
++S3Provider provider
++string? endpoint
++string region
++string accessKeyId
++string secretAccessKey
++number createdAt
+}
+class S3Item {
++string key
++string name
++ItemType type
++number? size
++Date? lastModified
++string? etag
++string? storageClass
+}
+class NavigationState {
++string|nil connectionId
++string|nil bucket
++string prefix
++string[] history
+}
+S3Connection --> S3Item : "used by"
+NavigationState --> S3Item : "displays"
+```
+
+**Diagram sources**
+- [src/types/index.ts:38-72](file://src/types/index.ts#L38-L72)
+
+**Section sources**
+- [src/types/index.ts:38-72](file://src/types/index.ts#L38-L72)
+
+## Dependency Analysis
+External dependencies and their roles:
+- Frontend: React, React DOM, TanStack React Query, Zustand, Radix UI, Sonner, Lucide React
+- AWS SDK: client-s3 and s3-request-presigner
+- Tooling: Vite, TailwindCSS, TypeScript, Tauri CLI
+
+Internal dependencies:
+- UI components depend on stores and hooks
+- Hooks depend on the S3 client factory and types
+- Native layer depends on Tauri runtime and plugins
+
+```mermaid
+graph LR
+PJ["package.json"] --> FE["Frontend deps"]
+PJ --> AWS["@aws-sdk/*"]
+PJ --> TOOL["Vite/Tailwind/TS"]
+PJ --> TAURI["Tauri CLI"]
+FE --> UI["React UI"]
+UI --> STORE["Zustand Stores"]
+UI --> QUERY["TanStack Query"]
+UI --> UTIL["Utils"]
+AWS --> HOOKS["useS3 Hook"]
+HOOKS --> CLIENT["S3 Client Factory"]
+CLIENT --> TYPES["Types"]
+TAURI --> NATIVE["Tauri Runtime"]
+NATIVE --> CONF["tauri.conf.json"]
+```
+
+**Diagram sources**
+- [package.json:12-35](file://package.json#L12-L35)
+- [src/hooks/useS3.ts:1-15](file://src/hooks/useS3.ts#L1-L15)
+- [src/lib/s3Client.ts:1-2](file://src/lib/s3Client.ts#L1-L2)
+- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+
+**Section sources**
+- [package.json:12-35](file://package.json#L12-L35)
+- [src/hooks/useS3.ts:1-15](file://src/hooks/useS3.ts#L1-L15)
+- [src/lib/s3Client.ts:1-2](file://src/lib/s3Client.ts#L1-L2)
+- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
 
 ## Development Environment Setup
-Required tools and prerequisites:
-- Node.js LTS (as referenced in project documentation)
-- Rust stable (as referenced in project documentation)
-- pnpm (as referenced in project documentation)
-- IDE extensions recommended by the project documentation
+Prerequisites:
+- Node.js and pnpm (as indicated by lock file and scripts)
+- Rust toolchain (required by Tauri)
+- Platform-specific prerequisites (Windows/macOS/Linux) as per Tauri docs
 
-IDE configuration recommendations:
-- VS Code with Tauri and rust-analyzer extensions (as recommended by the project documentation)
+Recommended IDE extensions:
+- VS Code with Tauri and rust-analyzer extensions
 
 Environment variables:
-- TAURI_DEV_HOST enables remote HMR when set during development
+- Optional TAURI_DEV_HOST for remote HMR host support
+
+Scripts:
+- dev: runs Vite dev server
+- build: compiles TypeScript then builds frontend
+- preview: serves built assets locally
+- tauri: invokes Tauri CLI
+
+Vite configuration highlights:
+- Fixed port 1420 with strictPort
+- HMR configuration supports remote host via TAURI_DEV_HOST
+- Ignores src-tauri during watch
+
+Tauri configuration highlights:
+- Dev URL points to Vite dev server
+- Bundling targets all platforms with specified icons
 
 **Section sources**
 - [README.md:5-8](file://README.md#L5-L8)
-- [PROJECT.md:194-198](file://PROJECT.md#L194-L198)
-- [vite.config.ts:5-6](file://vite.config.ts#L5-L6)
-
-## Build Process
-Development and production build scripts:
-- Development: Vite dev server with hot module replacement
-- Production: TypeScript compile followed by Vite build
-- Preview: Local static preview of built assets
-
-Cross-platform bundling:
-- Tauri bundle targets all platforms configured in the Tauri configuration
-
-Build pipeline references:
-- Scripts and dependencies
-  - [package.json:6-11](file://package.json#L6-L11)
-  - [package.json:26-35](file://package.json#L26-L35)
-- Vite configuration for Tauri development
-  - [vite.config.ts:9-33](file://vite.config.ts#L9-L33)
-- Tauri build configuration and frontend distribution
-  - [src-tauri/tauri.conf.json:6-11](file://src-tauri/tauri.conf.json#L6-L11)
-- Cargo crate configuration for Rust backend
-  - [src-tauri/Cargo.toml:10-15](file://src-tauri/Cargo.toml#L10-L15)
-
-Hot reload and development server:
-- Fixed port 1420 for Vite
-- Optional HMR configuration when TAURI_DEV_HOST is set
-- Ignored watch patterns for Rust sources
-
-**Section sources**
 - [package.json:6-11](file://package.json#L6-L11)
-- [vite.config.ts:17-32](file://vite.config.ts#L17-L32)
+- [vite.config.ts:9-33](file://vite.config.ts#L9-L33)
 - [src-tauri/tauri.conf.json:6-11](file://src-tauri/tauri.conf.json#L6-L11)
-- [src-tauri/Cargo.toml:10-15](file://src-tauri/Cargo.toml#L10-L15)
 
-## Contribution Workflow
-Recommended workflow aligned with project documentation:
-- Fork and branch from the main branch
-- Follow code conventions (functional components, strict TypeScript, PascalCase for components)
-- Run installation and development commands as documented
-- Submit pull requests with clear descriptions
+## Build and Deployment
+Development build:
+- Run frontend dev server via Vite
+- Tauri launches the dev URL and proxies frontend assets
 
-Reference:
-- [PROJECT.md:187-192](file://PROJECT.md#L187-L192)
-
-**Section sources**
-- [PROJECT.md:187-192](file://PROJECT.md#L187-L192)
-
-## Code Standards
-Coding conventions and linting:
-- Functional React components with hooks
-- Strict TypeScript mode enabled
-- Naming conventions: PascalCase for components, camelCase for hooks/utilities
-- Error handling with try/catch and user-visible notifications
-- Loading states with spinners/skeletons
-- Avoid using the any type
-
-Compiler options:
-- ES2020 target with DOM libraries
-- Bundler module resolution
-- Strict mode with unused variable and parameter checks
-
-References:
-- Conventions and guidelines
-  - [PROJECT.md:178-186](file://PROJECT.md#L178-L186)
-- TypeScript configuration
-  - [tsconfig.json:2-22](file://tsconfig.json#L2-L22)
-  - [tsconfig.node.json:2-8](file://tsconfig.node.json#L2-L8)
-
-**Section sources**
-- [PROJECT.md:178-186](file://PROJECT.md#L178-L186)
-- [tsconfig.json:1-26](file://tsconfig.json#L1-L26)
-- [tsconfig.node.json:1-11](file://tsconfig.node.json#L1-L11)
-
-## Testing Procedures
-Testing strategy:
-- Unit tests for TypeScript utilities and hooks
-- Integration tests for Tauri commands and S3 operations
-- Manual verification of UI interactions and context menus
-- Cross-platform validation on Windows, macOS, and Linux
-
-Note: Specific test files are not present in the current repository snapshot. Implement tests alongside new features and ensure coverage for critical paths.
-
-[No sources needed since this section provides general guidance]
-
-## Release Process
-Release steps:
-- Ensure all changes are merged to the main branch
-- Verify builds for all target platforms
-- Tag releases and publish installers via Tauri bundler
+Production build:
+- Frontend: TypeScript compilation followed by Vite build
+- Native: Tauri bundler packages the app with configured icons and targets
 
 Bundle configuration:
 - Targets all platforms
-- Includes multiple icon sizes and formats
-
-References:
-- Bundle configuration
-  - [src-tauri/tauri.conf.json:24-34](file://src-tauri/tauri.conf.json#L24-L34)
-- Build scripts
-  - [package.json:6-11](file://package.json#L6-L11)
+- Icons included for multiple formats
 
 **Section sources**
-- [src-tauri/tauri.conf.json:24-34](file://src-tauri/tauri.conf.json#L24-L34)
 - [package.json:6-11](file://package.json#L6-L11)
+- [src-tauri/tauri.conf.json:24-34](file://src-tauri/tauri.conf.json#L24-L34)
 
-## Extending Functionality
-Extension points:
-- Add new Tauri commands in the Rust backend
-- Extend React components in the frontend
-- Integrate additional plugins via Tauri capabilities
+## Testing Procedures
+Current state:
+- No dedicated test files are present in the repository snapshot
 
-Command registration:
-- Define commands in the Rust library and register handlers
+Recommended approach:
+- Unit tests for hooks and utilities using React Testing Library and Vitest
+- Mock AWS SDK for S3 operations
+- Snapshot tests for UI components
+- Integration tests for navigation and store interactions
 
-References:
-- Command definition and handler registration
-  - [src-tauri/src/lib.rs:2-5](file://src-tauri/src/lib.rs#L2-L5)
-  - [src-tauri/src/lib.rs:11-12](file://src-tauri/src/lib.rs#L11-L12)
-
-**Section sources**
-- [src-tauri/src/lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-
-## Adding New S3 Providers
-Provider support:
-- Define provider types and endpoints in shared TypeScript types
-- Configure S3 client initialization per provider
-- Implement provider-specific authentication and endpoint handling
-
-References:
-- Provider types and S3 operations
-  - [PROJECT.md:76-168](file://PROJECT.md#L76-L168)
+Testing references:
+- [src/hooks/useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [src/lib/utils.ts:13-196](file://src/lib/utils.ts#L13-L196)
 
 **Section sources**
-- [PROJECT.md:76-168](file://PROJECT.md#L76-L168)
+- [src/hooks/useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [src/lib/utils.ts:13-196](file://src/lib/utils.ts#L13-L196)
 
-## Backward Compatibility Guidelines
-Guidelines:
-- Maintain stable APIs for Tauri commands
-- Version dependencies carefully and document breaking changes
-- Keep configuration files compatible across Tauri versions
+## Debugging Techniques
+Common debugging strategies:
+- React DevTools for component inspection
+- React Query Devtools for query state and caching behavior
+- Browser network tab for S3 API calls
+- Console logging in hooks and components
+- Tauri devtools and logs for native integration
 
-References:
-- Tauri configuration and capability schema
-  - [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
-  - [src-tauri/capabilities/default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-
-**Section sources**
-- [src-tauri/tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
-- [src-tauri/capabilities/default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-
-## Troubleshooting Guide
-Common development issues and resolutions:
-- Port conflicts during development
-  - Vite uses a fixed port; ensure port 1420 is available or adjust configuration
-  - References:
-    - [vite.config.ts:17-19](file://vite.config.ts#L17-L19)
-- Hot module replacement not working
-  - Set TAURI_DEV_HOST to enable remote HMR
-  - References:
-    - [vite.config.ts:5-6](file://vite.config.ts#L5-L6)
-- Tauri dev/build URL mismatch
-  - Confirm dev URL matches Vite configuration
-  - References:
-    - [src-tauri/tauri.conf.json:7-9](file://src-tauri/tauri.conf.json#L7-L9)
-- Rust compilation errors
-  - Clear screen is disabled to show Rust errors clearly
-  - References:
-    - [vite.config.ts:14-15](file://vite.config.ts#L14-L15)
-- Missing dependencies
-  - Install with pnpm as per project documentation
-  - References:
-    - [PROJECT.md](file://PROJECT.md#L189)
+Relevant code locations:
+- QueryClient defaults in main.tsx
+- S3 operations in useS3 hook
+- UI feedback via Sonner toasts
 
 **Section sources**
-- [vite.config.ts:5-6](file://vite.config.ts#L5-L6)
-- [vite.config.ts:14-19](file://vite.config.ts#L14-L19)
-- [src-tauri/tauri.conf.json:7-9](file://src-tauri/tauri.conf.json#L7-L9)
-- [PROJECT.md](file://PROJECT.md#L189)
+- [src/main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [src/hooks/useS3.ts:152-188](file://src/hooks/useS3.ts#L152-L188)
+- [src/App.tsx:115-121](file://src/App.tsx#L115-L121)
 
 ## Performance Considerations
-Optimization techniques:
-- Use virtualized lists for large datasets
-- Implement efficient S3 operations with pagination and delimiter-based folder traversal
-- Leverage caching and background synchronization
-- Minimize unnecessary re-renders with proper state management
+Optimization strategies:
+- Use TanStack Query’s staleTime to avoid unnecessary refetches
+- Enable retry with bounded attempts for transient failures
+- Disable window focus refetch for desktop apps
+- Use virtualization for large lists (react-virtual is available)
+- Prefer presigned URLs for large downloads
+- Lazy-load bucket lists and only enable queries when identifiers are present
 
 References:
-- UI virtualization and async data handling
-  - [PROJECT.md:17-18](file://PROJECT.md#L17-L18)
-- S3 operations and rate limiting
-  - [PROJECT.md:143-205](file://PROJECT.md#L143-L205)
+- [QueryClient defaults:6-17](file://src/main.tsx#L6-L17)
+- [listObjects query enabled condition:96-98](file://src/hooks/useS3.ts#L96-L98)
+- [downloadFile presigned URL generation:164-168](file://src/hooks/useS3.ts#L164-L168)
 
 **Section sources**
-- [PROJECT.md:17-18](file://PROJECT.md#L17-L18)
-- [PROJECT.md:143-205](file://PROJECT.md#L143-L205)
+- [src/main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [src/hooks/useS3.ts:96-98](file://src/hooks/useS3.ts#L96-L98)
+- [src/hooks/useS3.ts:164-168](file://src/hooks/useS3.ts#L164-L168)
+
+## Contribution Guidelines
+Coding standards:
+- TypeScript strict mode enforced by project configuration
+- Consistent naming for hooks (useX), stores (useXStore), and components (PascalCase)
+- Centralized S3 operations in useS3 hook
+- Shared types in types/index.ts
+
+Branching and PR workflow:
+- Feature branches per task
+- Clear commit messages and PR descriptions
+- Review and approval before merging
+
+Documentation:
+- Update README if major setup changes occur
+- Add inline comments for complex logic
+
+**Section sources**
+- [src/types/index.ts:1-10](file://src/types/index.ts#L1-L10)
+- [src/hooks/useS3.ts:62-61](file://src/hooks/useS3.ts#L62-L61)
+
+## Extending the Application
+
+### Adding a New S3 Provider
+Steps:
+- Extend provider union in types
+- Add a new case in resolveEndpoint with endpoint logic and validation
+- Ensure forcePathStyle for non-AWS providers when needed
+- Test with real endpoints
+
+References:
+- [S3Provider union:7-8](file://src/types/index.ts#L7-L8)
+- [resolveEndpoint switch:12-48](file://src/lib/s3Client.ts#L12-L48)
+- [forcePathStyle usage:74-78](file://src/lib/s3Client.ts#L74-L78)
+
+**Section sources**
+- [src/types/index.ts:7-8](file://src/types/index.ts#L7-L8)
+- [src/lib/s3Client.ts:12-48](file://src/lib/s3Client.ts#L12-L48)
+- [src/lib/s3Client.ts:74-78](file://src/lib/s3Client.ts#L74-L78)
+
+### Extending UI Components
+Guidelines:
+- Place new components under src/components
+- Use consistent props and event handlers
+- Integrate with existing stores and hooks
+- Respect Tailwind utility classes and theme tokens
+
+Example references:
+- [Sidebar component structure:117-183](file://src/components/layout/Sidebar.tsx#L117-L183)
+- [App layout composition:49-81](file://src/App.tsx#L49-L81)
+
+**Section sources**
+- [src/components/layout/Sidebar.tsx:117-183](file://src/components/layout/Sidebar.tsx#L117-L183)
+- [src/App.tsx:49-81](file://src/App.tsx#L49-L81)
+
+### Implementing New Features
+Recommendations:
+- Define types in types/index.ts
+- Implement operations in useS3 hook
+- Wire UI via stores and components
+- Add utilities in lib/utils.ts if reusable
+
+References:
+- [Types module:38-166](file://src/types/index.ts#L38-L166)
+- [useS3 hook:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [utils helpers:13-196](file://src/lib/utils.ts#L13-L196)
+
+**Section sources**
+- [src/types/index.ts:38-166](file://src/types/index.ts#L38-L166)
+- [src/hooks/useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [src/lib/utils.ts:13-196](file://src/lib/utils.ts#L13-L196)
+
+## Version Management and Releases
+Version fields:
+- Frontend and Tauri share version 0.1.0
+
+Release procedure:
+- Update version in package.json and src-tauri/Cargo.toml
+- Tag git commits appropriately
+- Build production bundles and publish artifacts
+
+References:
+- [package.json version](file://package.json#L4)
+- [Cargo.toml version](file://src-tauri/Cargo.toml#L3)
+- [tauri.conf.json version](file://src-tauri/tauri.conf.json#L4)
+
+**Section sources**
+- [package.json](file://package.json#L4)
+- [src-tauri/Cargo.toml](file://src-tauri/Cargo.toml#L3)
+- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json#L4)
+
+## Maintenance Practices
+- Keep dependencies updated (check package.json and Cargo.toml)
+- Monitor AWS SDK updates and compatibility
+- Review Tauri CLI and plugin versions regularly
+- Audit security policies and CSP settings
+- Validate bundling targets and icons
+
+References:
+- [package.json dependencies:12-25](file://package.json#L12-L25)
+- [src-tauri/Cargo.toml dependencies:20-25](file://src-tauri/Cargo.toml#L20-L25)
+- [tauri.conf.json security:20-22](file://src-tauri/tauri.conf.json#L20-L22)
+
+**Section sources**
+- [package.json:12-25](file://package.json#L12-L25)
+- [src-tauri/Cargo.toml:20-25](file://src-tauri/Cargo.toml#L20-L25)
+- [src-tauri/tauri.conf.json:20-22](file://src-tauri/tauri.conf.json#L20-L22)
+
+## Troubleshooting Guide
+Common issues and resolutions:
+- Vite HMR not working remotely: ensure TAURI_DEV_HOST is set and matches host configuration
+- Port conflicts: Vite enforces strictPort 1420; change or free the port
+- S3 endpoint errors: verify provider-specific endpoint requirements and region for non-AWS
+- Bucket listing fails: confirm credentials and permissions; check query enabled conditions
+- Native bundling issues: validate tauri.conf.json build and bundle settings
+
+References:
+- [Vite server config:17-32](file://vite.config.ts#L17-L32)
+- [resolveEndpoint validations:21-47](file://src/lib/s3Client.ts#L21-L47)
+- [listBuckets enabled:69-85](file://src/hooks/useS3.ts#L69-L85)
+
+**Section sources**
+- [vite.config.ts:17-32](file://vite.config.ts#L17-L32)
+- [src/lib/s3Client.ts:21-47](file://src/lib/s3Client.ts#L21-L47)
+- [src/hooks/useS3.ts:69-85](file://src/hooks/useS3.ts#L69-L85)
 
 ## Conclusion
-This guide consolidates essential development practices for S3 Explorer, covering environment setup, build processes, contribution workflows, code standards, testing, releases, extensibility, and troubleshooting. By following these guidelines and leveraging the provided references, contributors can efficiently develop and maintain the application across platforms.
+This guide outlines the development workflow, architecture, and extension practices for S3 Explorer. By following the setup, build, testing, and contribution guidelines, contributors can efficiently add new S3 providers, enhance UI components, and implement robust features while maintaining performance and reliability.

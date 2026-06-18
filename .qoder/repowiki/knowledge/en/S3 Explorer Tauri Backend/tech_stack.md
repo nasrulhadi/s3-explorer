@@ -1,1 +1,1 @@
-Tauri v2 with `tauri-plugin-opener` v2; serde/serde_json for serialization; Rust 2021 edition.
+Rust 2021 edition with Tauri v2 and `tauri-plugin-opener` v2; serialization via `serde`/`serde_json`.

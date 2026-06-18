@@ -2,17 +2,20 @@
 
 <cite>
 **Referenced Files in This Document**
-- [tauri.conf.json](file://src-tauri/tauri.conf.json)
-- [Cargo.toml](file://src-tauri/Cargo.toml)
-- [lib.rs](file://src-tauri/src/lib.rs)
-- [main.rs](file://src-tauri/src/main.rs)
-- [default.json](file://src-tauri/capabilities/default.json)
-- [build.rs](file://src-tauri/build.rs)
-- [vite.config.ts](file://vite.config.ts)
-- [package.json](file://package.json)
 - [main.tsx](file://src/main.tsx)
 - [App.tsx](file://src/App.tsx)
-- [capabilities.json](file://src-tauri/gen/schemas/capabilities.json)
+- [Sidebar.tsx](file://src/components/layout/Sidebar.tsx)
+- [useS3.ts](file://src/hooks/useS3.ts)
+- [s3Client.ts](file://src/lib/s3Client.ts)
+- [connectionStore.ts](file://src/store/connectionStore.ts)
+- [navigationStore.ts](file://src/store/navigationStore.ts)
+- [transferStore.ts](file://src/store/transferStore.ts)
+- [index.ts](file://src/types/index.ts)
+- [main.rs](file://src-tauri/src/main.rs)
+- [lib.rs](file://src-tauri/src/lib.rs)
+- [tauri.conf.json](file://src-tauri/tauri.conf.json)
+- [Cargo.toml](file://src-tauri/Cargo.toml)
+- [package.json](file://package.json)
 </cite>
 
 ## Table of Contents
@@ -23,285 +26,362 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Dependency Analysis](#dependency-analysis)
 7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+8. [Security Considerations](#security-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes the hybrid desktop architecture of S3 Explorer built with Tauri v2, featuring a React frontend and Rust backend. It explains how Tauri commands enable secure native functionality access, documents the IPC communication mechanism, and traces the data flow from the user interface through the Tauri bridge to AWS SDK integration. The document also outlines system boundaries, the Tauri capabilities security model, and the role of each major architectural layer.
+This document describes the architecture of S3 Explorer, a hybrid desktop application built with React for the frontend and Tauri/Rust for the backend. The system separates concerns between a browser-rendered UI and a native-capable runtime that exposes controlled APIs to JavaScript. The application integrates with S3-compatible storage services through a factory-configured SDK client and manages state locally using lightweight stores. It also leverages a command bridge pattern to communicate between frontend and backend layers, enabling secure and efficient operations.
 
 ## Project Structure
-The project follows a clear separation of concerns:
-- Frontend: React application bootstrapped with Vite and TypeScript
-- Backend: Tauri v2 application written in Rust, exposing commands to the frontend
-- Configuration: Tauri configuration, capabilities, and build scripts
-- AWS Integration: AWS SDK clients and presigner for S3 operations
+The repository follows a clear separation of concerns:
+- Frontend (React + TypeScript):
+  - Application bootstrap and global query client configuration
+  - UI layout, components, and state stores
+  - Hooks encapsulating S3 operations and TanStack Query integration
+  - Shared types and models
+- Backend (Tauri/Rust):
+  - Application entry points and command registration
+  - Runtime configuration and plugin setup
+  - Build and packaging metadata
 
 ```mermaid
 graph TB
 subgraph "Frontend (React)"
-FE_Main["main.tsx"]
-FE_App["App.tsx"]
-FE_Invoke["@tauri-apps/api invoke"]
+A_main["src/main.tsx"]
+A_app["src/App.tsx"]
+A_sidebar["src/components/layout/Sidebar.tsx"]
+A_hooks["src/hooks/useS3.ts"]
+A_client["src/lib/s3Client.ts"]
+A_store_conn["src/store/connectionStore.ts"]
+A_store_nav["src/store/navigationStore.ts"]
+A_store_trans["src/store/transferStore.ts"]
+A_types["src/types/index.ts"]
 end
-subgraph "Tauri Bridge (Rust)"
-RS_Lib["lib.rs<br/>commands + Builder"]
-RS_Main["main.rs<br/>entry point"]
-RS_Cap["capabilities/default.json"]
-RS_Build["build.rs"]
+subgraph "Backend (Tauri/Rust)"
+B_main["src-tauri/src/main.rs"]
+B_lib["src-tauri/src/lib.rs"]
+B_conf["src-tauri/tauri.conf.json"]
+B_cargo["src-tauri/Cargo.toml"]
 end
-subgraph "AWS Integration"
-AWS_SDK["@aws-sdk/client-s3"]
-AWS_Presigner["@aws-sdk/s3-request-presigner"]
-end
-FE_Main --> FE_App
-FE_App --> FE_Invoke
-FE_Invoke --> RS_Lib
-RS_Lib --> RS_Main
-RS_Lib --> RS_Cap
-RS_Lib --> AWS_SDK
-RS_Lib --> AWS_Presigner
+A_main --> A_app
+A_app --> A_sidebar
+A_sidebar --> A_hooks
+A_hooks --> A_client
+A_hooks --> A_store_conn
+A_hooks --> A_store_nav
+A_hooks --> A_store_trans
+A_app --> A_store_nav
+A_sidebar --> A_store_conn
+A_sidebar --> A_store_nav
+A_app --> A_types
+B_main --> B_lib
+B_conf --> B_lib
+B_cargo --> B_lib
 ```
 
 **Diagram sources**
-- [main.tsx:1-10](file://src/main.tsx#L1-L10)
-- [App.tsx:1-56](file://src/App.tsx#L1-L56)
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
+- [main.tsx:1-26](file://src/main.tsx#L1-L26)
+- [App.tsx:1-124](file://src/App.tsx#L1-L124)
+- [Sidebar.tsx:1-184](file://src/components/layout/Sidebar.tsx#L1-L184)
+- [useS3.ts:1-410](file://src/hooks/useS3.ts#L1-L410)
+- [s3Client.ts:1-83](file://src/lib/s3Client.ts#L1-L83)
+- [connectionStore.ts:1-88](file://src/store/connectionStore.ts#L1-L88)
+- [navigationStore.ts:1-86](file://src/store/navigationStore.ts#L1-L86)
+- [transferStore.ts:1-62](file://src/store/transferStore.ts#L1-L62)
+- [index.ts:1-166](file://src/types/index.ts#L1-L166)
 - [main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- [build.rs:1-4](file://src-tauri/build.rs#L1-L4)
+- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+- [Cargo.toml:1-26](file://src-tauri/Cargo.toml#L1-L26)
 
 **Section sources**
-- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
-- [vite.config.ts:1-34](file://vite.config.ts#L1-L34)
+- [main.tsx:1-26](file://src/main.tsx#L1-L26)
 - [package.json:1-37](file://package.json#L1-L37)
+- [tauri.conf.json:1-36](file://src-tauri/tauri.conf.json#L1-L36)
+- [Cargo.toml:1-26](file://src-tauri/Cargo.toml#L1-L26)
 
 ## Core Components
-- React Frontend
-  - Bootstrapped via Vite and TypeScript
-  - Uses @tauri-apps/api for invoking backend commands
-  - Provides a simple greet flow demonstrating IPC invocation
-- Tauri Backend (Rust)
-  - Defines Tauri commands and registers them with the invoke handler
-  - Initializes plugins (e.g., opener) and runs the Tauri runtime
-  - Enforces capability-based permissions for window access and plugin usage
-- AWS SDK Integration
-  - Includes client and presigner packages for S3 operations
-  - Positioned conceptually behind the Tauri command boundary for secure access
-
-Key implementation references:
-- Frontend invoke usage: [App.tsx:10-12](file://src/App.tsx#L10-L12)
-- Command definition and registration: [lib.rs:2-14](file://src-tauri/src/lib.rs#L2-L14)
-- Capability permissions: [default.json:6-9](file://src-tauri/capabilities/default.json#L6-L9)
-- Build configuration: [build.rs:1-4](file://src-tauri/build.rs#L1-L4)
+- React application bootstrap initializes a TanStack Query client with caching and retry policies, ensuring robust data fetching and offline-friendly behavior.
+- The App component orchestrates layout, toolbar, and navigation state, delegating S3 operations to a dedicated hook.
+- The Sidebar component renders connections and buckets, integrating with S3 operations via the hook and navigation state.
+- The useS3 hook encapsulates S3 operations as TanStack Query queries and mutations, returning typed results and managing errors.
+- The S3 client factory builds provider-aware clients with endpoint resolution and credential injection.
+- Zustand stores manage connection, navigation, and transfer state with persistence and local updates.
 
 **Section sources**
-- [App.tsx:1-56](file://src/App.tsx#L1-L56)
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- [build.rs:1-4](file://src-tauri/build.rs#L1-L4)
+- [main.tsx:6-25](file://src/main.tsx#L6-L25)
+- [App.tsx:11-82](file://src/App.tsx#L11-L82)
+- [Sidebar.tsx:117-183](file://src/components/layout/Sidebar.tsx#L117-L183)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [transferStore.ts:28-61](file://src/store/transferStore.ts#L28-L61)
 
 ## Architecture Overview
-The system architecture adheres to Tauri v2's hybrid desktop pattern:
-- Frontend renders the UI and triggers actions
-- IPC invokes Rust commands via @tauri-apps/api
-- Commands execute in the Rust backend with explicit capability permissions
-- AWS SDK integration is invoked from Rust to maintain security isolation
+The system employs a hybrid architecture:
+- Frontend: React components render UI and manage local state. TanStack Query handles remote data fetching and caching.
+- Backend: Tauri exposes a command bridge to JavaScript, enabling privileged operations and OS integrations.
+- Data flow: UI triggers operations via hooks; hooks use the S3 client factory to call cloud services; state updates propagate through stores and invalidate queries.
 
 ```mermaid
 graph TB
-UI["React UI<br/>App.tsx"] --> IPC["IPC Bridge<br/>@tauri-apps/api"]
-IPC --> CMD["Tauri Command<br/>greet()"]
-CMD --> RUNTIME["Tauri Runtime<br/>Builder + Plugins"]
-RUNTIME --> CAP["Capabilities<br/>default.json"]
-RUNTIME --> AWS["AWS SDK<br/>client/presigner"]
-CAP --> |Permission Gate| RUNTIME
-AWS --> |Secure Access| S3["S3 Service"]
+UI["React UI<br/>App.tsx, Sidebar.tsx"] --> Hooks["useS3.ts<br/>TanStack Query"]
+Hooks --> Client["s3Client.ts<br/>Factory"]
+Client --> S3["S3-Compatible Services"]
+UI --> Stores["Zustand Stores<br/>connectionStore.ts, navigationStore.ts, transferStore.ts"]
+Stores --> UI
+subgraph "Tauri Bridge"
+JS["JavaScript Layer"] <- --> |Invoke Commands| RS["Rust Layer<br/>lib.rs"]
+end
+UI -.->|Optional: Invoke| JS
+JS --> RS
 ```
 
 **Diagram sources**
-- [App.tsx:10-12](file://src/App.tsx#L10-L12)
-- [lib.rs:2-14](file://src-tauri/src/lib.rs#L2-L14)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
+- [App.tsx:11-82](file://src/App.tsx#L11-L82)
+- [Sidebar.tsx:117-183](file://src/components/layout/Sidebar.tsx#L117-L183)
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [transferStore.ts:28-61](file://src/store/transferStore.ts#L28-L61)
+- [lib.rs:8-14](file://src-tauri/src/lib.rs#L8-L14)
 
 ## Detailed Component Analysis
 
-### Frontend Layer (React + Vite)
-- Entry point initializes React app and mounts the root component
-- The greet form demonstrates invoking a Tauri command with typed parameters
-- The invoke pattern is the primary IPC mechanism to Rust
-
-Implementation references:
-- Application bootstrap: [main.tsx:1-10](file://src/main.tsx#L1-L10)
-- IPC invocation example: [App.tsx:10-12](file://src/App.tsx#L10-L12)
+### Command Bridge Pattern (JS-Rust Communication)
+The Tauri command bridge enables invoking Rust functions from JavaScript. The Rust side registers commands and runs the Tauri runtime; the JavaScript side can call these commands through Tauri’s API. This pattern allows the app to perform privileged tasks (e.g., file system access, OS integrations) securely and efficiently.
 
 ```mermaid
 sequenceDiagram
-participant U as "User"
-participant R as "React Component<br/>App.tsx"
-participant I as "IPC Layer<br/>@tauri-apps/api"
-participant C as "Command Handler<br/>lib.rs"
+participant UI as "React UI"
+participant JS as "Tauri JS API"
 participant RT as "Tauri Runtime"
-U->>R : "Submit greet form"
-R->>I : "invoke('greet', {name})"
-I->>C : "Dispatch command"
-C->>RT : "Execute in Rust"
-RT-->>C : "Result"
-C-->>I : "Return value"
-I-->>R : "Resolved promise"
-R-->>U : "Display response"
+participant RS as "Rust Command"
+UI->>JS : "Invoke command"
+JS->>RT : "send(commandName, payload)"
+RT->>RS : "dispatch(greet)"
+RS-->>RT : "result"
+RT-->>JS : "result"
+JS-->>UI : "result"
 ```
 
 **Diagram sources**
-- [App.tsx:10-12](file://src/App.tsx#L10-L12)
 - [lib.rs:2-5](file://src-tauri/src/lib.rs#L2-L5)
+- [lib.rs:10-12](file://src-tauri/src/lib.rs#L10-L12)
+- [main.rs:4-6](file://src-tauri/src/main.rs#L4-L6)
 
 **Section sources**
-- [main.tsx:1-10](file://src/main.tsx#L1-L10)
-- [App.tsx:1-56](file://src/App.tsx#L1-L56)
+- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
+- [main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
+- [tauri.conf.json:6-11](file://src-tauri/tauri.conf.json#L6-L11)
 
-### Backend Layer (Tauri v2 + Rust)
-- Command definition: A single greet command illustrates the pattern for extending functionality
-- Runtime builder: Registers the command handler and initializes plugins
-- Entry point: Delegates to the library run function
-
-Implementation references:
-- Command declaration and handler: [lib.rs:2-5](file://src-tauri/src/lib.rs#L2-L5)
-- Runtime builder and plugin initialization: [lib.rs:9-14](file://src-tauri/src/lib.rs#L9-L14)
-- Application entry point: [main.rs:4-6](file://src-tauri/src/main.rs#L4-L6)
+### S3 Client Factory Pattern
+The S3 client factory encapsulates provider-specific endpoint resolution and SDK configuration. It ensures consistent client creation across the application, supporting AWS, MinIO, Cloudflare R2, Backblaze B2, and custom endpoints.
 
 ```mermaid
 classDiagram
-class LibRs {
-+greet(name) String
-+run() void
+class S3Connection {
++string id
++string name
++string provider
++string endpoint
++string region
++string accessKeyId
++string secretAccessKey
++number createdAt
 }
-class MainRs {
-+main() void
+class S3ClientFactory {
++createS3Client(connection) S3Client
+-resolveEndpoint(connection) string
 }
-class CapabilitiesDefaultJson {
-+identifier String
-+permissions Array
-+windows Array
-}
-LibRs <.. MainRs : "called by"
-LibRs --> CapabilitiesDefaultJson : "enforced by"
+S3ClientFactory --> S3Connection : "uses"
 ```
 
 **Diagram sources**
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [index.ts:38-48](file://src/types/index.ts#L38-L48)
 
 **Section sources**
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [main.rs:1-7](file://src-tauri/src/main.rs#L1-L7)
+- [s3Client.ts:12-49](file://src/lib/s3Client.ts#L12-L49)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [index.ts:7-48](file://src/types/index.ts#L7-L48)
 
-### IPC Communication Mechanism
-- Frontend uses @tauri-apps/api invoke to call named commands
-- Tauri generates a handler for registered commands
-- The bridge ensures type-safe parameter passing and return values
+### Repository Pattern for S3 Operations
+S3 operations are exposed through a cohesive hook that acts as a repository facade. It groups related operations (list buckets, list objects, upload, download, delete, rename, head) and returns TanStack Query primitives for caching, invalidation, and optimistic updates.
 
-References:
-- Invoke usage: [App.tsx:10-12](file://src/App.tsx#L10-L12)
-- Handler registration: [lib.rs](file://src-tauri/src/lib.rs#L11)
+```mermaid
+classDiagram
+class S3Repository {
++listBuckets(connectionId) UseQueryResult
++listObjects(connectionId, bucket, prefix) UseQueryResult
++uploadFile() UseMutationResult
++downloadFile() UseMutationResult
++deleteItem() UseMutationResult
++createFolder() UseMutationResult
++getPresignedUrl() UseMutationResult
++renameItem() UseMutationResult
++headObject() UseMutationResult
+}
+class useS3 {
++expose S3Repository API
+}
+S3Repository <.. useS3 : "implemented by"
+```
+
+**Diagram sources**
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+
+**Section sources**
+- [useS3.ts:62-409](file://src/hooks/useS3.ts#L62-L409)
+
+### Store Pattern for State Management
+Zustand stores manage distinct application domains:
+- Connection store: CRUD operations for S3 connections with persistence.
+- Navigation store: bucket selection, prefix traversal, and back navigation history.
+- Transfer store: lifecycle tracking for uploads/downloads.
+
+```mermaid
+classDiagram
+class ConnectionStore {
++connections : S3Connection[]
++activeConnectionId : string
++addConnection(data) string
++updateConnection(id, data) void
++removeConnection(id) void
++setActiveConnection(id) void
+}
+class NavigationStore {
++connectionId : string
++bucket : string
++prefix : string
++history : string[]
++setBucket(connectionId, bucket) void
++setPrefix(prefix) void
++goBack() void
++goHome() void
++pushHistory(prefix) void
+}
+class TransferStore {
++transfers : Transfer[]
++addTransfer(transfer) void
++updateTransfer(id, data) void
++removeTransfer(id) void
++clearCompleted() void
+}
+```
+
+**Diagram sources**
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
+- [transferStore.ts:28-61](file://src/store/transferStore.ts#L28-L61)
+
+**Section sources**
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:29-85](file://src/store/navigationStore.ts#L29-L85)
+- [transferStore.ts:28-61](file://src/store/transferStore.ts#L28-L61)
+
+### Data Flow Between Layers
+The data flow emphasizes separation of concerns:
+- UI triggers navigation and S3 operations via hooks.
+- Hooks fetch or mutate data using the S3 client factory.
+- Stores update local state; TanStack Query invalidates and refetches as needed.
+- Optional Tauri commands can be invoked for privileged operations.
 
 ```mermaid
 flowchart TD
-Start(["Invoke from React"]) --> Validate["Validate Parameters"]
-Validate --> Dispatch["Dispatch to Command Handler"]
-Dispatch --> Permissions{"Check Capabilities"}
-Permissions --> |Allowed| Execute["Execute Rust Function"]
-Permissions --> |Denied| Deny["Return Permission Error"]
-Execute --> Result["Return Result to Frontend"]
-Deny --> Result
-Result --> End(["Promise Resolved"])
+Start(["User Action"]) --> Nav["Update Navigation State"]
+Nav --> Invalidate["Invalidate TanStack Query Cache"]
+Invalidate --> Fetch["TanStack Query Refetch"]
+Fetch --> S3Op["useS3 Hook Calls S3 Client Factory"]
+S3Op --> Remote["S3-Compatible Service"]
+Remote --> Update["Update Local State (Stores)"]
+Update --> UI["Re-render UI"]
+UI --> End(["Consistent State"])
 ```
 
 **Diagram sources**
-- [App.tsx:10-12](file://src/App.tsx#L10-L12)
-- [lib.rs](file://src-tauri/src/lib.rs#L11)
-- [default.json:6-9](file://src-tauri/capabilities/default.json#L6-L9)
+- [App.tsx:23-41](file://src/App.tsx#L23-L41)
+- [useS3.ts:69-84](file://src/hooks/useS3.ts#L69-L84)
+- [useS3.ts:91-144](file://src/hooks/useS3.ts#L91-L144)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
 
 **Section sources**
-- [App.tsx:1-56](file://src/App.tsx#L1-L56)
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-
-### Security Model and Capabilities
-- Capabilities define which permissions are granted to the main window
-- The default capability grants core permissions and opener plugin access
-- Generated schemas reflect the compiled capability set
-
-References:
-- Capability definition: [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- Generated capability schema: [capabilities.json:1-1](file://src-tauri/gen/schemas/capabilities.json#L1-L1)
-
-**Section sources**
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- [capabilities.json:1-1](file://src-tauri/gen/schemas/capabilities.json#L1-L1)
-
-### AWS SDK Integration Pattern
-- AWS SDK packages are declared in the frontend dependencies
-- Conceptual placement: Commands in Rust would orchestrate AWS operations
-- Security benefit: Native access remains behind the Tauri command boundary
-
-References:
-- AWS SDK dependencies: [package.json:12-25](file://package.json#L12-L25)
-
-**Section sources**
-- [package.json:1-37](file://package.json#L1-L37)
+- [App.tsx:23-41](file://src/App.tsx#L23-L41)
+- [useS3.ts:69-144](file://src/hooks/useS3.ts#L69-L144)
+- [s3Client.ts:60-82](file://src/lib/s3Client.ts#L60-L82)
+- [connectionStore.ts:30-87](file://src/store/connectionStore.ts#L30-L87)
+- [navigationStore.ts:36-85](file://src/store/navigationStore.ts#L36-L85)
 
 ## Dependency Analysis
-The project exhibits clean separation between frontend and backend with explicit IPC boundaries. Dependencies flow as follows:
-- Frontend depends on React, Vite, and @tauri-apps/api for IPC
-- Backend depends on Tauri v2, serde, and optional plugins
-- AWS SDK is included for S3 operations
+External dependencies span frontend and backend:
+- Frontend depends on React, TanStack Query, AWS SDKs, and UI libraries.
+- Backend depends on Tauri and plugins for OS integration.
 
 ```mermaid
 graph LR
-FE["Frontend (React)"] -- "IPC invoke" --> BE["Backend (Tauri)"]
-BE -- "Commands" --> AWS["AWS SDK"]
-FE --> Vite["Vite Dev Server"]
-BE --> Tauri["Tauri Runtime"]
+subgraph "Frontend Dependencies"
+F_react["react"]
+F_query["@tanstack/react-query"]
+F_aws["aws-sdk clients"]
+F_zustand["zustand"]
+F_ui["@radix-ui/*, lucide-react"]
+end
+subgraph "Backend Dependencies"
+B_tauri["tauri"]
+B_plugin["tauri-plugin-opener"]
+end
+F_react --> F_query
+F_query --> F_aws
+F_zustand --> F_react
+F_ui --> F_react
+B_tauri --> B_plugin
 ```
 
 **Diagram sources**
 - [package.json:12-25](file://package.json#L12-L25)
-- [lib.rs:10-11](file://src-tauri/src/lib.rs#L10-L11)
-- [vite.config.ts:17-27](file://vite.config.ts#L17-L27)
+- [Cargo.toml:20-25](file://src-tauri/Cargo.toml#L20-L25)
 
 **Section sources**
-- [package.json:1-37](file://package.json#L1-L37)
-- [vite.config.ts:1-34](file://vite.config.ts#L1-L34)
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
+- [package.json:12-25](file://package.json#L12-L25)
+- [Cargo.toml:20-25](file://src-tauri/Cargo.toml#L20-L25)
 
 ## Performance Considerations
-- Keep IPC payloads minimal to reduce serialization overhead
-- Batch frequent updates from Rust to avoid excessive UI re-renders
-- Use efficient data structures and avoid heavy computations in the frontend
-- Leverage Tauri plugins judiciously to minimize runtime overhead
-
-## Troubleshooting Guide
-Common issues and resolutions:
-- IPC invocation fails due to missing command registration
-  - Ensure the command is included in the generated handler list
-  - Verify the command signature matches the frontend invocation
-  - Reference: [lib.rs](file://src-tauri/src/lib.rs#L11)
-- Permission denied errors
-  - Confirm the capability includes required permissions for the main window
-  - Reference: [default.json:6-9](file://src-tauri/capabilities/default.json#L6-L9)
-- Development server conflicts
-  - Tauri dev expects a fixed port; ensure port 1420 is available
-  - Reference: [vite.config.ts:17-27](file://vite.config.ts#L17-L27)
-- Build failures during Tauri compilation
-  - Run the Tauri build script to generate necessary schemas and bindings
-  - Reference: [build.rs:1-4](file://src-tauri/build.rs#L1-L4)
+- Caching and retries: The global TanStack Query client is configured with a stale time and retry policy to balance responsiveness and network efficiency.
+- Pagination and incremental loading: The S3 list objects operation supports pagination tokens for large directories.
+- Endpoint configuration: Provider-specific endpoint overrides and path-style addressing reduce latency and compatibility issues for non-AWS services.
+- Local state consistency: Zustand stores minimize re-renders by updating only affected slices and coordinating with TanStack Query invalidations.
 
 **Section sources**
-- [lib.rs:1-15](file://src-tauri/src/lib.rs#L1-L15)
-- [default.json:1-11](file://src-tauri/capabilities/default.json#L1-L11)
-- [vite.config.ts:1-34](file://vite.config.ts#L1-L34)
-- [build.rs:1-4](file://src-tauri/build.rs#L1-L4)
+- [main.tsx:6-17](file://src/main.tsx#L6-L17)
+- [useS3.ts:137-142](file://src/hooks/useS3.ts#L137-L142)
+- [s3Client.ts:71-79](file://src/lib/s3Client.ts#L71-L79)
+
+## Security Considerations
+- Credentials handling: Access keys and secrets are stored in connection configurations; ensure secure storage and avoid logging sensitive data.
+- Endpoint validation: Provider-specific endpoint checks prevent misconfiguration and enforce required fields for non-AWS providers.
+- CSP configuration: The Tauri configuration disables CSP; evaluate security implications for production deployments.
+- Privileged operations: Use Tauri commands for OS-level tasks and avoid exposing unnecessary webview permissions.
+
+**Section sources**
+- [s3Client.ts:20-48](file://src/lib/s3Client.ts#L20-L48)
+- [tauri.conf.json:20-22](file://src-tauri/tauri.conf.json#L20-L22)
+
+## Troubleshooting Guide
+- Connection not found errors: The S3 hook throws explicit errors when a connection ID is missing; verify active connection selection and persistence.
+- Provider endpoint issues: Ensure provider-specific endpoint requirements are met (e.g., R2 requires an account-based endpoint; B2 requires a region).
+- Query invalidation: Use the refresh handler to invalidate current folder queries when navigating or performing mutations.
+- Store state resets: Active connection removal clears selection; re-select a valid connection after deletion.
+
+**Section sources**
+- [useS3.ts:21-34](file://src/hooks/useS3.ts#L21-L34)
+- [s3Client.ts:20-48](file://src/lib/s3Client.ts#L20-L48)
+- [App.tsx:23-28](file://src/App.tsx#L23-L28)
+- [connectionStore.ts:62-69](file://src/store/connectionStore.ts#L62-L69)
 
 ## Conclusion
-S3 Explorer employs a robust Tauri v2 hybrid architecture that cleanly separates the React frontend from the Rust backend. The IPC bridge, powered by Tauri commands, enables secure and type-safe access to native functionality. The capability-based security model enforces permission boundaries, while the AWS SDK integration remains protected behind the command boundary. This design provides a scalable foundation for building secure, high-performance desktop applications with modern web technologies.
+S3 Explorer’s architecture cleanly separates the frontend React application from the Tauri backend, leveraging a command bridge for privileged operations and a cohesive S3 repository pattern for data access. The factory pattern for client creation, combined with TanStack Query and Zustand stores, ensures scalable, maintainable, and responsive behavior across diverse S3-compatible services.
