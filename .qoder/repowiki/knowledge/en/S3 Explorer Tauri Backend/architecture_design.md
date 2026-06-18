@@ -1,0 +1,4 @@
+- Entry point: `src/main.rs` delegates to `s3_explorer_lib::run()` in `src/lib.rs`.
+- Core logic: `lib.rs` defines a `greet` Tauri command and bootstraps the app via `tauri::Builder`, registering the `tauri-plugin-opener` and the command handler.
+- Configuration: `tauri.conf.json` sets build hooks (`pnpm dev`/`pnpm build`), window defaults, and bundle icons.
+- Security: `capabilities/default.json` grants `core:default` and `opener:default` permissions to the main window.

@@ -1,0 +1,1 @@
+React 18 with TypeScript, Vite for build tooling, Tailwind CSS for styling, and Tauri API for backend communication.

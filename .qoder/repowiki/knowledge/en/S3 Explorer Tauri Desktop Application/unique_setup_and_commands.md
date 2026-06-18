@@ -1,0 +1,1 @@
+Run `pnpm tauri dev` to launch the full desktop application in development mode, which concurrently starts the Vite dev server and the Rust backend.

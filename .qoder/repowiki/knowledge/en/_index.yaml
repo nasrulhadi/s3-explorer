@@ -1,0 +1,80 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: Q0DeR-MaG1C-BrAnCh-Fo2-NoN-GiT-Or-No-C0MmIt
+exported_at: "2026-06-18T12:46:58Z"
+modules:
+    "":
+        dir_name: S3 Explorer Tauri Desktop Application
+        title: S3 Explorer Tauri Desktop Application
+        scope:
+            - .gitignore
+            - PROJECT.md
+            - README.md
+            - index.html
+            - package.json
+            - pnpm-lock.yaml
+            - pnpm-workspace.yaml
+            - tsconfig.json
+            - tsconfig.node.json
+            - vite.config.ts
+            - .vscode\extensions.json
+            - public\tauri.svg
+            - public\vite.svg
+            - src-tauri\.gitignore
+            - src-tauri\Cargo.lock
+            - src-tauri\Cargo.toml
+            - src-tauri\build.rs
+            - src-tauri\capabilities\default.json
+            - src-tauri\gen\schemas\acl-manifests.json
+            - src-tauri\gen\schemas\capabilities.json
+            - src-tauri\gen\schemas\desktop-schema.json
+            - src-tauri\gen\schemas\windows-schema.json
+            - src-tauri\icons\128x128.png
+            - src-tauri\icons\128x128@2x.png
+            - src-tauri\icons\32x32.png
+            - src-tauri\icons\Square107x107Logo.png
+            - src-tauri\icons\Square142x142Logo.png
+            - src-tauri\icons\Square150x150Logo.png
+            - src-tauri\icons\Square284x284Logo.png
+            - src-tauri\icons\Square30x30Logo.png
+            - src-tauri\icons\Square310x310Logo.png
+            - src-tauri\icons\Square44x44Logo.png
+            - src-tauri\icons\Square71x71Logo.png
+            - src-tauri\icons\Square89x89Logo.png
+            - src-tauri\icons\StoreLogo.png
+            - src-tauri\icons\icon.icns
+            - src-tauri\icons\icon.ico
+            - src-tauri\icons\icon.png
+            - src-tauri\src\lib.rs
+            - src-tauri\src\main.rs
+            - src-tauri\tauri.conf.json
+            - src\App.css
+            - src\App.tsx
+            - src\assets\react.svg
+            - src\main.tsx
+            - src\vite-env.d.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    frontend:
+        dir_name: Tauri Desktop Application UI
+        title: Tauri Desktop Application UI
+        scope:
+            - src/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: tauri_backend
+    tauri_backend:
+        dir_name: S3 Explorer Tauri Backend
+        title: S3 Explorer Tauri Backend
+        scope:
+            - src-tauri/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend

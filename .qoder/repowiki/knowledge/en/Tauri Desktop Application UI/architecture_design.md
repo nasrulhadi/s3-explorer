@@ -1,0 +1,4 @@
+- Entry point: `src/main.tsx` bootstraps the React root.
+- Core Logic: `src/App.tsx` implements the main view, managing local state for user input and using `@tauri-apps/api/core` to invoke backend Rust commands (e.g., `greet`).
+- Styling: `src/App.css` uses Tailwind CSS via `@import` and defines custom dark/light mode styles.
+- Type Definitions: `src/vite-env.d.ts` provides Vite client type references.

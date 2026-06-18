@@ -1,0 +1,1 @@
+Provides the Rust-based desktop backend for the S3 Explorer application using the Tauri v2 framework.

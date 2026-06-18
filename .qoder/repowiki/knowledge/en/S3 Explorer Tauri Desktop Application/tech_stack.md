@@ -1,0 +1,1 @@
+Tauri v2, Vite, pnpm, Rust, React
