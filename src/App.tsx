@@ -1,55 +1,135 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Toaster } from "sonner";
+import Sidebar from "./components/layout/Sidebar";
+import Toolbar from "./components/layout/Toolbar";
+import FileList from "./components/explorer/FileList";
+import { useNavigationStore } from "./store/navigationStore";
+import type { S3Item } from "./types";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+// ─── Inner layout (must be inside QueryClientProvider) ──────
 
-  async function greet() {
-    setGreetMsg(await invoke("greet", { name }));
-  }
+function AppLayout() {
+  const queryClient = useQueryClient();
+
+  // Navigation state
+  const connectionId = useNavigationStore((s) => s.connectionId);
+  const bucket = useNavigationStore((s) => s.bucket);
+  const prefix = useNavigationStore((s) => s.prefix);
+  const history = useNavigationStore((s) => s.history);
+  const goBack = useNavigationStore((s) => s.goBack);
+  const setPrefix = useNavigationStore((s) => s.setPrefix);
+
+  // Search / filter state (shared between Toolbar and FileList)
+  const [filterQuery, setFilterQuery] = useState("");
+
+  // Context menu handler (will be wired to Radix ContextMenu later)
+  const handleContextMenu = useCallback((item: S3Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    // eslint-disable-next-line no-console
+    console.debug("[ContextMenu]", item.type, item.name, `(${e.clientX}, ${e.clientY})`);
+  }, []);
+
+  // Refresh: invalidate current folder query
+  const handleRefresh = useCallback(() => {
+    if (!connectionId || !bucket) return;
+    queryClient.invalidateQueries({
+      queryKey: ["s3", "objects", connectionId, bucket, prefix],
+    });
+  }, [queryClient, connectionId, bucket, prefix]);
+
+  // Breadcrumb navigation: clicking a segment or Home
+  const handleNavigate = useCallback(
+    (targetPrefix: string) => {
+      if (targetPrefix === "") {
+        // Go back to bucket root (not goHome which resets everything)
+        setPrefix("");
+      } else {
+        setPrefix(targetPrefix);
+      }
+    },
+    [setPrefix],
+  );
+
+  // Search filter
+  const handleSearchChange = useCallback((query: string) => {
+    setFilterQuery(query);
+  }, []);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <h1 className="text-3xl font-bold mb-6">Welcome to Tauri + React</h1>
+    <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
+      {/* ── Left panel ──────────────────────────────────── */}
+      <Sidebar onAddConnection={() => console.debug("AddConnection modal TBD")} />
 
-      <div className="flex gap-6 mb-6">
-        <a href="https://vite.dev" target="_blank" className="transition hover:drop-shadow-[0_0_2em_#747bff]">
-          <img src="/vite.svg" className="h-24 p-4" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank" className="transition hover:drop-shadow-[0_0_2em_#24c8db]">
-          <img src="/tauri.svg" className="h-24 p-4" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" className="transition hover:drop-shadow-[0_0_2em_#61dafb]">
-          <img src={reactLogo} className="h-24 p-4" alt="React logo" />
-        </a>
-      </div>
-      <p className="mb-4 text-gray-600 dark:text-gray-400">Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="flex gap-2 mb-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          className="rounded-lg border border-gray-300 px-4 py-2 text-base shadow-sm outline-none focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+      {/* ── Right panel ─────────────────────────────────── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Toolbar
+          connectionId={connectionId}
+          bucket={bucket}
+          prefix={prefix}
+          history={history}
+          onBack={goBack}
+          onNavigate={handleNavigate}
+          onRefresh={handleRefresh}
+          onUpload={() => console.debug("Upload modal TBD")}
+          onNewFolder={() => console.debug("NewFolder modal TBD")}
+          onSearchChange={handleSearchChange}
         />
-        <button
-          type="submit"
-          className="rounded-lg border border-transparent bg-white px-4 py-2 text-base font-medium shadow-sm cursor-pointer transition hover:border-blue-500 active:bg-gray-200 dark:bg-gray-800 dark:text-white dark:active:bg-gray-700"
-        >
-          Greet
-        </button>
-      </form>
-      <p className="text-lg font-medium text-blue-600 dark:text-blue-400">{greetMsg}</p>
-    </main>
+
+        {/* ── Content area ─────────────────────────────── */}
+        <main className="flex-1 overflow-hidden p-4">
+          {!connectionId || !bucket ? (
+            <EmptyState />
+          ) : (
+            <FileList
+              filterQuery={filterQuery}
+              onContextMenu={handleContextMenu}
+            />
+          )}
+        </main>
+      </div>
+    </div>
   );
 }
 
-export default App;
+/** Shown when no connection/bucket is selected */
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+      <svg
+        className="mb-4"
+        width="64"
+        height="64"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+      </svg>
+      <p className="text-lg font-medium text-gray-500">No bucket selected</p>
+      <p className="mt-1 text-sm">
+        Choose a connection from the sidebar and pick a bucket to get started.
+      </p>
+    </div>
+  );
+}
+
+// ─── Public App component ────────────────────────────────────
+
+export default function App() {
+  return (
+    <>
+      <AppLayout />
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        theme="light"
+      />
+    </>
+  );
+}
