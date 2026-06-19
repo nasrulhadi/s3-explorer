@@ -166,6 +166,7 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
   const connections = useConnectionStore((s) => s.connections);
   const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
+  const setConnectionId = useNavigationStore((s) => s.setConnectionId);
   const setBucket = useNavigationStore((s) => s.setBucket);
   const activeBucket = useNavigationStore((s) => s.bucket);
 
@@ -173,6 +174,13 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
 
   function handleConnectionClick(conn: S3Connection) {
     setActiveConnection(conn.id);
+    
+    // Only update connectionId in navigation store if it's different
+    // to avoid unnecessary re-renders and state resets
+    const currentConnectionId = useNavigationStore.getState().connectionId;
+    if (currentConnectionId !== conn.id) {
+      setConnectionId(conn.id);
+    }
 
     if (conn.provider === "r2" && conn.defaultBucket) {
       // R2 with defaultBucket → navigate directly to the bucket, no expand

@@ -7,9 +7,14 @@ import {
   FolderOpen,
   FileX,
   AlertCircle,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { useS3 } from "../../hooks/useS3";
+import { useConnectivity } from "../../hooks/useConnectivity";
 import { useNavigationStore } from "../../store/navigationStore";
+import { useTransferStore } from "../../store/transferStore";
 import type { S3Item, SortField, SortDirection } from "../../types";
 import FileRow, { ROW_HEIGHT, ROW_GRID } from "./FileRow";
 import FolderRow from "./FolderRow";
@@ -57,12 +62,33 @@ export default function FileList({ filterQuery }: FileListProps) {
 
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // ── Internet connectivity tracking ─────────────────────────
+  const isOnline = useConnectivity();
+
   // ── Data query ─────────────────────────────────────────────
   const { data, isLoading, isFetching, isError, error } = listObjects(
     connectionId,
     bucket,
     prefix,
   );
+
+  // ── Active transfers tracking ──────────────────────────────
+  const transfers = useTransferStore((s) => s.transfers);
+  const activeTransfers = useMemo(
+    () => transfers.filter((t) => t.status === "active"),
+    [transfers],
+  );
+  const hasActiveTransfers = activeTransfers.length > 0;
+
+  // ── Activity state ─────────────────────────────────────────
+  const isActivity = isLoading || isFetching || hasActiveTransfers;
+  const activityTooltip = !isOnline
+    ? "No internet connection"
+    : isLoading || isFetching
+    ? "Loading folder..."
+    : hasActiveTransfers
+    ? `${activeTransfers.length} transfer${activeTransfers.length > 1 ? "s" : ""} in progress`
+    : "No activity";
 
   // Reset selection when navigating to a different folder
   useEffect(() => {
@@ -329,11 +355,40 @@ export default function FileList({ filterQuery }: FileListProps) {
           {displayedItems.length} item{displayedItems.length !== 1 ? "s" : ""}
           {filterQuery ? ` (filtered)` : ""}
         </span>
-        {selectedKeys.size > 0 && (
-          <span className="text-[var(--s3-accent)] font-medium">
-            {selectedKeys.size} selected
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {selectedKeys.size > 0 && (
+            <span className="text-[var(--s3-accent)] font-medium">
+              {selectedKeys.size} selected
+            </span>
+          )}
+          <div className="flex items-center gap-2 w-20 justify-end">
+            {/* Connectivity indicator */}
+            <div
+              className="flex items-center gap-1"
+              title={isOnline ? "Connected" : "No internet connection"}
+            >
+              {isOnline ? (
+                <Wifi size={14} className="text-green-500" />
+              ) : (
+                <WifiOff size={14} className="text-red-500" />
+              )}
+            </div>
+            {/* Activity indicator */}
+            <div
+              className="flex items-center gap-1"
+              title={activityTooltip}
+            >
+              <RefreshCw
+                size={14}
+                className={`${
+                  isActivity
+                    ? "text-[var(--s3-accent)] animate-spin"
+                    : "text-[var(--s3-window-muted)] opacity-40"
+                }`}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

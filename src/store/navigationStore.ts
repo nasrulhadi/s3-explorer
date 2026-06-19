@@ -4,6 +4,12 @@ import type { NavigationState } from "../types";
 
 interface NavigationActions {
   /**
+   * Set connection ID saja (tanpa bucket).
+   * Dipakai saat klik koneksi di sidebar sebelum memilih bucket.
+   */
+  setConnectionId: (connectionId: string) => void;
+
+  /**
    * Pilih bucket dan reset prefix ke root.
    * Otomatis push prefix lama ke history sebelum berpindah bucket.
    */
@@ -41,6 +47,15 @@ export const useNavigationStore = create<NavigationStore>()(
       ...INITIAL_STATE,
 
       // ── Actions ────────────────────────────────────────────────
+
+      setConnectionId: (connectionId) => {
+        set({
+          connectionId,
+          bucket: null,
+          prefix: "",
+          history: [],
+        });
+      },
 
       setBucket: (connectionId, bucket) => {
         const { prefix } = get();

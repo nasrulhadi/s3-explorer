@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast, Toaster } from "sonner";
+import { Wifi, WifiOff } from "lucide-react";
 import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
@@ -12,6 +13,7 @@ import TransferPanel from "./components/layout/TransferPanel";
 import { useConnectionStore } from "./store/connectionStore";
 import { useNavigationStore } from "./store/navigationStore";
 import { useSettingsStore } from "./store/settingsStore";
+import { useConnectivity } from "./hooks/useConnectivity";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import "./App.css";
 
@@ -261,6 +263,8 @@ function AppLayout() {
 // ─── Welcome screen (no connections) ───────────────────────
 
 function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
+  const isOnline = useConnectivity();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
       {/* Cloud icon */}
@@ -320,12 +324,29 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
         </kbd>{" "}
         button in the sidebar at any time.
       </p>
+
+      {/* Connectivity indicator */}
+      <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        {isOnline ? (
+          <>
+            <Wifi size={14} className="text-green-500" />
+            <span>Connected</span>
+          </>
+        ) : (
+          <>
+            <WifiOff size={14} className="text-red-500" />
+            <span>No internet connection</span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 /** Shown when connections exist but no bucket is selected */
 function EmptyState() {
+  const isOnline = useConnectivity();
+
   return (
     <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 dark:text-gray-500 px-8">
       <svg
@@ -358,6 +379,21 @@ function EmptyState() {
           <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">Ctrl+U</kbd>{" "}
           Upload
         </span>
+      </div>
+
+      {/* Connectivity indicator */}
+      <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        {isOnline ? (
+          <>
+            <Wifi size={14} className="text-green-500" />
+            <span>Connected</span>
+          </>
+        ) : (
+          <>
+            <WifiOff size={14} className="text-red-500" />
+            <span>No internet connection</span>
+          </>
+        )}
       </div>
     </div>
   );
