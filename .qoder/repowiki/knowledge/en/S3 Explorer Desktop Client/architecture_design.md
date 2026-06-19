@@ -1,0 +1,6 @@
+- **Entry Point**: `src/main.tsx` bootstraps the React root with a configured `QueryClientProvider` (TanStack Query) for server-state management.
+- **State Management**: Uses Zustand for client-side global state, split into domain-specific stores: `connectionStore` (persisted credentials), `navigationStore` (bucket/prefix history), `transferStore` (upload/download progress), and `settingsStore`. Persistence is handled via `zustand/middleware`.
+- **Data Fetching**: TanStack Query (`useQuery`, `useMutation`) in `hooks/useS3.ts` orchestrates all S3 API interactions, providing caching, background refetching, and loading states.
+- **Service Layer**: `lib/s3Client.ts` acts as an SDK adapter, creating `@aws-sdk/client-s3` instances. It implements a custom `tauriHttpHandler` to route HTTP requests through Tauri's native `plugin-http`, bypassing WebView CORS restrictions.
+- **UI Composition**: `App.tsx` serves as the layout shell, conditionally rendering views (Welcome, Main Explorer, Settings, Connection Form) based on local view state and store data. Components are organized by feature (`explorer`, `layout`, `modals`).
+- **Virtualization**: `components/explorer/FileList.tsx` uses `@tanstack/react-virtual` to efficiently render large lists of S3 objects.

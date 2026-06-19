@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: frontend
-title: S3 Explorer Frontend
+title: S3 Explorer Desktop Client
 scope:
     - src/
 source_files: []

@@ -261,6 +261,7 @@ export default function FileList({ filterQuery }: FileListProps) {
     <div
       className="h-full flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden"
       onKeyDown={handleKeyDown}
+      onContextMenu={(e) => e.preventDefault()}
       tabIndex={-1}
     >
       {/* ── Column header ────────────────────────────────── */}

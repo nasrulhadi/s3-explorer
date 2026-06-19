@@ -1,0 +1,4 @@
+- Custom hooks (e.g., `useS3`, `useDownload`) encapsulate all side effects and API interactions, returning TanStack Query results or mutation triggers for consumption by UI components.
+- Zustand stores are defined with a clear separation of state and actions, using `persist` middleware for durable data like connections and navigation history.
+- S3 operations consistently retrieve connection details from `useConnectionStore.getState()` within query/mutation functions to ensure the latest credentials are used without prop-drilling.
+- UI components rely on conditional rendering for different application states (loading skeletons, error boundaries, empty states) rather than separate page routes.

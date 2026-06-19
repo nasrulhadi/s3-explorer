@@ -41,8 +41,11 @@ function ConnectionItem({
     <div
       className={`
         w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
-        transition-colors duration-150 group
-        ${isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-white/10"}
+        transition-colors duration-150 group rounded-md mx-0
+        ${isActive
+          ? "bg-blue-600 text-white"
+          : "text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10"
+        }
       `}
     >
       <button
@@ -215,22 +218,24 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
             )}
           </div>
         ) : (
-          connections.map((conn) => (
-            <div key={conn.id}>
-              <ConnectionItem
-                connection={conn}
-                isActive={activeConnectionId === conn.id}
-                activeBucket={activeBucket}
-                onSelect={() => handleConnectionClick(conn)}
-                onEdit={() => onEditConnection?.(conn.id)}
-                onDelete={() => onDeleteConnection?.(conn.id)}
-              />
-              {/* Only expand bucket list for non-R2 providers */}
-              {expandedId === conn.id && conn.provider !== "r2" && (
-                <BucketList connectionId={conn.id} />
-              )}
-            </div>
-          ))
+          <div className="space-y-1.5 px-2">
+            {connections.map((conn) => (
+              <div key={conn.id}>
+                <ConnectionItem
+                  connection={conn}
+                  isActive={activeConnectionId === conn.id}
+                  activeBucket={activeBucket}
+                  onSelect={() => handleConnectionClick(conn)}
+                  onEdit={() => onEditConnection?.(conn.id)}
+                  onDelete={() => onDeleteConnection?.(conn.id)}
+                />
+                {/* Only expand bucket list for non-R2 providers */}
+                {expandedId === conn.id && conn.provider !== "r2" && (
+                  <BucketList connectionId={conn.id} />
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </nav>
 

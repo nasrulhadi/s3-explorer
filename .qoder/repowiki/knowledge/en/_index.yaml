@@ -2,7 +2,7 @@
 schema_version: 1
 locale: en-US
 branch: main
-exported_at: "2026-06-18T17:41:24Z"
+exported_at: "2026-06-18T20:09:43Z"
 modules:
     "":
         dir_name: S3 Explorer Desktop Application
@@ -13,8 +13,8 @@ modules:
         depends_on: []
         related_to: []
     frontend:
-        dir_name: S3 Explorer Frontend
-        title: S3 Explorer Frontend
+        dir_name: S3 Explorer Desktop Client
+        title: S3 Explorer Desktop Client
         scope:
             - src/
         source_files: []

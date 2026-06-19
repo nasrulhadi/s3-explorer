@@ -40,6 +40,7 @@ function AppLayout() {
 
   // Store actions for delete
   const removeConnection = useConnectionStore((s) => s.removeConnection);
+  const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
   const connections = useConnectionStore((s) => s.connections);
 
   // ── Startup: check settings for session restore ────────────
@@ -48,6 +49,7 @@ function AppLayout() {
   useEffect(() => {
     if (!restoreLastSession) {
       goHome();
+      setActiveConnection(null);
     }
   // Run once on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,7 +158,7 @@ function AppLayout() {
   // ──────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50" onContextMenu={(e) => e.preventDefault()}>
       {/* ── Custom title bar ──────────────────────────────── */}
       <TitleBar />
 
@@ -200,7 +202,7 @@ function AppLayout() {
                   />
 
                   {/* Content area */}
-                  <main className="flex-1 overflow-hidden p-4">
+                  <main className="flex-1 overflow-hidden p-4" onContextMenu={(e) => e.preventDefault()}>
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (

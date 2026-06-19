@@ -1,4 +1,0 @@
-- Global state is managed via Zustand stores located in `src/store/`, with each store exporting a typed hook (e.g., `useConnectionStore`) and explicit action interfaces.
-- S3 operations are abstracted into custom hooks in `src/hooks/` (e.g., `useS3`, `useDownload`) that return TanStack Query results or mutation triggers.
-- TypeScript interfaces for domain models (Connections, S3Items, Transfers) are centralized in `src/types/index.ts` and imported across stores and components.
-- UI components are organized by feature area in `src/components/` (explorer, layout, modals) and rely on props for state injection rather than direct store access where possible.

@@ -1,1 +1,0 @@
-Development requires running `pnpm tauri dev`, which concurrently starts the Vite dev server on port 1420 and compiles the Rust backend.

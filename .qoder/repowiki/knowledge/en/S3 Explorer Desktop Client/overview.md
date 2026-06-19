@@ -1,0 +1,1 @@
+A Tauri-based desktop application for browsing, uploading, and managing files across multiple S3-compatible storage providers.

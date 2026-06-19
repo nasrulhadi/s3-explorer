@@ -1,1 +1,1 @@
-Frontend integration requires `pnpm dev` (dev) and `pnpm build` (production) as configured in `tauri.conf.json`.
+Frontend integration requires `pnpm dev` (dev server at http://localhost:1420) and `pnpm build` (output to ../dist) as configured in `tauri.conf.json` `beforeDevCommand`/`beforeBuildCommand`.
