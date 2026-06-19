@@ -6,6 +6,7 @@ import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
 import ConnectionFormPage from "./components/ConnectionFormPage";
+import DeleteConnectionPage from "./components/DeleteConnectionPage";
 import SettingsPage from "./components/SettingsPage";
 import TransferPanel from "./components/layout/TransferPanel";
 import { useConnectionStore } from "./store/connectionStore";
@@ -34,7 +35,7 @@ function AppLayout() {
   const [filterQuery, setFilterQuery] = useState("");
 
   // View state: replaces separate modal booleans
-  type View = "main" | "addConnection" | "editConnection" | "settings";
+  type View = "main" | "addConnection" | "editConnection" | "deleteConnection" | "settings";
   const [view, setView] = useState<View>("main");
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
 
@@ -112,6 +113,11 @@ function AppLayout() {
     });
   }, []);
 
+  const handleDisconnect = useCallback(() => {
+    goHome();
+    setActiveConnection(null);
+  }, [goHome, setActiveConnection]);
+
   // ── Keyboard shortcuts ─────────────────────────────────────
 
   useKeyboardShortcuts({
@@ -141,22 +147,9 @@ function AppLayout() {
   }, []);
 
   const handleDeleteConnection = useCallback((id: string) => {
-    const conn = connections.find((c) => c.id === id);
-    if (!conn) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${conn.name}"?\n\nThis action cannot be undone.`,
-    );
-    if (!confirmed) return;
-
-    removeConnection(id);
-    toast.success(`Connection "${conn.name}" deleted.`);
-
-    // If we deleted the active connection, reset navigation
-    if (connectionId === id) {
-      useNavigationStore.getState().goHome();
-    }
-  }, [connections, removeConnection, connectionId]);
+    setEditingConnectionId(id);
+    setView("deleteConnection");
+  }, []);
 
   // Handlers to open the connection form page
   const openAddConnection = useCallback(() => {
@@ -168,6 +161,24 @@ function AppLayout() {
     setView("main");
     setEditingConnectionId(null);
   }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!editingConnectionId) return;
+    const conn = connections.find((c) => c.id === editingConnectionId);
+    if (!conn) return;
+
+    removeConnection(editingConnectionId);
+    toast.success(`Connection "${conn.name}" deleted.`);
+
+    // If we deleted the active connection, reset navigation
+    if (connectionId === editingConnectionId) {
+      useNavigationStore.getState().goHome();
+      setActiveConnection(null);
+    }
+
+    setView("main");
+    setEditingConnectionId(null);
+  }, [editingConnectionId, connections, removeConnection, connectionId, setActiveConnection]);
 
   // Find the connection being edited
   const editingConnection = editingConnectionId
@@ -205,6 +216,12 @@ function AppLayout() {
                   onDone={closeConnectionForm}
                   editConnection={editingConnection ?? undefined}
                 />
+              ) : view === "deleteConnection" && editingConnection ? (
+                <DeleteConnectionPage
+                  connection={editingConnection}
+                  onConfirm={handleConfirmDelete}
+                  onCancel={closeConnectionForm}
+                />
               ) : view === "settings" ? (
                 <SettingsPage onDone={() => setView("main")} />
               ) : (
@@ -220,6 +237,7 @@ function AppLayout() {
                     onUpload={handleUpload}
                     onNewFolder={handleNewFolder}
                     onSearchChange={handleSearchChange}
+                    onDisconnect={handleDisconnect}
                   />
 
                   {/* Content area */}

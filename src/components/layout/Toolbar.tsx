@@ -8,6 +8,7 @@ import {
   Search,
   ChevronRight,
   MoreHorizontal,
+  Power,
 } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
 
@@ -25,6 +26,7 @@ interface ToolbarProps {
   onUpload?: () => void;
   onNewFolder?: () => void;
   onSearchChange?: (query: string) => void;
+  onDisconnect?: () => void;
 }
 
 // ─── Component ──────────────────────────────────────────────
@@ -40,6 +42,7 @@ export default function Toolbar({
   onUpload,
   onNewFolder,
   onSearchChange,
+  onDisconnect,
 }: ToolbarProps) {
   const [searchInput, setSearchInput] = useState("");
 
@@ -268,6 +271,21 @@ export default function Toolbar({
           "
         >
           <RefreshCw size={16} />
+        </button>
+        )}
+
+        {onDisconnect && (
+        <button
+          onClick={onDisconnect}
+          disabled={!hasBucketSelected}
+          title="Disconnect"
+          className="
+            p-1.5 rounded-md text-[var(--s3-window-muted)]
+            hover:bg-[var(--s3-danger-light)] hover:text-[var(--s3-danger)] transition-colors
+            disabled:opacity-40 disabled:cursor-not-allowed
+          "
+        >
+          <Power size={16} />
         </button>
         )}
       </div>
