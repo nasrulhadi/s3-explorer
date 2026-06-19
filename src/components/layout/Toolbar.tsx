@@ -9,6 +9,7 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from "lucide-react";
+import { useSettingsStore } from "../../store/settingsStore";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -41,6 +42,13 @@ export default function Toolbar({
   onSearchChange,
 }: ToolbarProps) {
   const [searchInput, setSearchInput] = useState("");
+
+  // Settings
+  const showBreadcrumbs = useSettingsStore((s) => s.showBreadcrumbs);
+  const showFilter = useSettingsStore((s) => s.showFilter);
+  const showUpload = useSettingsStore((s) => s.showUpload);
+  const showNewFolder = useSettingsStore((s) => s.showNewFolder);
+  const showReload = useSettingsStore((s) => s.showReload);
 
   // Debounce search input
   useEffect(() => {
@@ -80,15 +88,15 @@ export default function Toolbar({
   const hasBucketSelected = !!connectionId && !!bucket;
 
   return (
-    <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-200 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shrink-0">
       {/* ── Back button ──────────────────────────────────── */}
       <button
         onClick={onBack}
         disabled={history.length === 0}
         title="Back (Backspace)"
         className="
-          p-1.5 rounded-md text-gray-600
-          hover:bg-gray-100 transition-colors
+          p-1.5 rounded-md text-gray-600 dark:text-gray-400
+          hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
           disabled:opacity-30 disabled:cursor-not-allowed
         "
       >
@@ -96,12 +104,13 @@ export default function Toolbar({
       </button>
 
       {/* ── Breadcrumb ───────────────────────────────────── */}
+      {showBreadcrumbs && (
       <nav className="flex items-center gap-1 text-sm min-w-0">
         <button
           onClick={() => onNavigate("")}
           className={`
             shrink-0 p-1 rounded transition-colors
-            ${bucket ? "text-gray-500 hover:text-blue-600 hover:bg-blue-50" : "text-gray-800"}
+            ${bucket ? "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" : "text-gray-800 dark:text-gray-100"}
           `}
           title="Home"
         >
@@ -115,7 +124,7 @@ export default function Toolbar({
               onClick={() => onNavigate("")}
               className={`
                 shrink-0 font-medium rounded px-1.5 py-0.5 transition-colors
-                ${prefix === "" ? "text-gray-800" : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"}
+                ${prefix === "" ? "text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"}
               `}
             >
               {bucket}
@@ -130,7 +139,7 @@ export default function Toolbar({
             <div className="relative flex items-center">
               <button
                 onClick={() => setShowCollapsed((v) => !v)}
-                className="rounded px-1 py-0.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                className="rounded px-1 py-0.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                 title="Show hidden folders"
               >
                 <MoreHorizontal size={16} />
@@ -139,7 +148,7 @@ export default function Toolbar({
                 <>
                   {/* Backdrop to close dropdown */}
                   <div className="fixed inset-0 z-10" onClick={() => setShowCollapsed(false)} />
-                  <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[160px]">
                     {hiddenItems.map((item) => (
                       <button
                         key={item.prefix}
@@ -147,7 +156,7 @@ export default function Toolbar({
                           onNavigate(item.prefix);
                           setShowCollapsed(false);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors truncate"
+                        className="w-full text-left px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors truncate"
                         title={item.label}
                       >
                         {item.label}
@@ -171,8 +180,8 @@ export default function Toolbar({
                 className={`
                   rounded px-1.5 py-0.5 transition-colors
                   ${isLast
-                    ? "text-gray-800 font-medium"
-                    : "truncate max-w-[140px] text-gray-500 hover:text-blue-600 hover:bg-blue-50"}
+                    ? "text-gray-800 dark:text-gray-100 font-medium"
+                    : "truncate max-w-[140px] text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"}
                 `}
                 title={item.label}
               >
@@ -182,12 +191,13 @@ export default function Toolbar({
           );
         })}
       </nav>
+      )}
 
       {/* ── Spacer ───────────────────────────────────────── */}
       <div className="flex-1" />
 
       {/* ── Search input ─────────────────────────────────── */}
-      {hasBucketSelected && (
+      {showFilter && hasBucketSelected && (
         <div className="relative w-52">
           <Search
             size={14}
@@ -200,9 +210,10 @@ export default function Toolbar({
             placeholder="Filter files…"
             className="
               w-full pl-8 pr-3 py-1.5 text-sm
-              border border-gray-200 rounded-md
-              outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100
-              text-gray-700 placeholder-gray-400
+              border border-gray-200 dark:border-gray-700 rounded-md
+              outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 dark:focus:ring-blue-900
+              text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500
+              bg-white dark:bg-gray-800
               transition-all
             "
           />
@@ -211,6 +222,7 @@ export default function Toolbar({
 
       {/* ── Action buttons ───────────────────────────────── */}
       <div className="flex items-center gap-1">
+        {showUpload && (
         <button
           onClick={onUpload}
           disabled={!hasBucketSelected}
@@ -225,34 +237,39 @@ export default function Toolbar({
           <Upload size={15} />
           Upload
         </button>
+        )}
 
+        {showNewFolder && (
         <button
           onClick={onNewFolder}
           disabled={!hasBucketSelected}
           title="New Folder"
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-            border border-gray-200 text-gray-600
-            hover:bg-gray-50 transition-colors
+            border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300
+            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "
         >
           <FolderPlus size={15} />
           New Folder
         </button>
+        )}
 
+        {showReload && (
         <button
           onClick={onRefresh}
           disabled={!hasBucketSelected}
           title="Refresh (F5)"
           className="
-            p-1.5 rounded-md text-gray-500
-            hover:bg-gray-100 hover:text-gray-700 transition-colors
+            p-1.5 rounded-md text-gray-500 dark:text-gray-400
+            hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "
         >
           <RefreshCw size={16} />
         </button>
+        )}
       </div>
     </div>
   );

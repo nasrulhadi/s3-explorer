@@ -53,30 +53,30 @@ export default function FileRow({
       className={`
         ${ROW_GRID} h-full px-3 gap-2 cursor-default select-none
         transition-colors duration-75
-        ${isSelected ? "bg-blue-50 text-blue-900" : "hover:bg-gray-50"}
+        ${isSelected ? "bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-gray-50 dark:hover:bg-gray-800"}
         ${isFocused ? "ring-2 ring-inset ring-blue-400" : ""}
       `}
     >
       {/* Icon */}
       <div className="flex items-center justify-center">
-        <Icon size={17} className="text-gray-400" />
+        <Icon size={17} className="text-gray-400 dark:text-gray-500" />
       </div>
 
       {/* Name */}
-      <span className="truncate text-sm">{item.name}</span>
+      <span className="truncate text-sm text-gray-800 dark:text-gray-200">{item.name}</span>
 
       {/* Size */}
-      <span className="text-xs text-gray-400 text-right tabular-nums">
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right tabular-nums">
         {item.size != null ? formatFileSize(item.size) : "—"}
       </span>
 
       {/* Last modified */}
-      <span className="text-xs text-gray-400 text-right tabular-nums">
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right tabular-nums">
         {item.lastModified ? formatDate(item.lastModified) : "—"}
       </span>
 
       {/* Storage class */}
-      <span className="text-xs text-gray-400 text-right">
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right">
         {item.storageClass ?? "—"}
       </span>
     </div>

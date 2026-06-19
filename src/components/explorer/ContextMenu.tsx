@@ -26,11 +26,11 @@ interface ItemContextMenuProps {
 // ─── Shared menu styling ────────────────────────────────────
 
 const MENU_CONTENT =
-  "min-w-[180px] bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-50";
+  "min-w-[180px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-50";
 const MENU_ITEM =
-  "flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 rounded-md outline-none cursor-default select-none data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-700 data-[disabled]:opacity-40 data-[disabled]:pointer-events-none";
-const MENU_SEPARATOR = "h-px bg-gray-200 my-1";
-const MENU_SHORTCUT = "ml-auto text-xs text-gray-400";
+  "flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md outline-none cursor-default select-none data-[highlighted]:bg-blue-50 dark:data-[highlighted]:bg-blue-900/30 data-[highlighted]:text-blue-700 dark:data-[highlighted]:text-blue-300 data-[disabled]:opacity-40 data-[disabled]:pointer-events-none";
+const MENU_SEPARATOR = "h-px bg-gray-200 dark:bg-gray-700 my-1";
+const MENU_SHORTCUT = "ml-auto text-xs text-gray-400 dark:text-gray-500";
 
 // ─── Main Component ─────────────────────────────────────────
 
@@ -210,13 +210,13 @@ export default function ItemContextMenu({ item, children }: ItemContextMenuProps
             // ── Folder menu ──────────────────────────────────
             <>
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleDownloadZip}>
-                <Archive size={15} className="text-gray-400" />
+                <Archive size={15} className="text-gray-400 dark:text-gray-500" />
                 Download as ZIP
                 <span className={MENU_SHORTCUT}>Soon</span>
               </ContextMenu.Item>
 
               <ContextMenu.Item
-                className={`${MENU_ITEM} text-red-600 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-700`}
+                className={`${MENU_ITEM} text-red-600 dark:text-red-400 data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-900/30 data-[highlighted]:text-red-700 dark:data-[highlighted]:text-red-300`}
                 onSelect={handleDeleteFolder}
               >
                 <Trash2 size={15} />
@@ -226,7 +226,7 @@ export default function ItemContextMenu({ item, children }: ItemContextMenuProps
               <ContextMenu.Separator className={MENU_SEPARATOR} />
 
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleFolderGetInfo}>
-                <Info size={15} className="text-gray-400" />
+                <Info size={15} className="text-gray-400 dark:text-gray-500" />
                 Get Info
               </ContextMenu.Item>
             </>
@@ -234,22 +234,22 @@ export default function ItemContextMenu({ item, children }: ItemContextMenuProps
             // ── File menu ────────────────────────────────────
             <>
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleDownload}>
-                <Download size={15} className="text-gray-400" />
+                <Download size={15} className="text-gray-400 dark:text-gray-500" />
                 Download
               </ContextMenu.Item>
 
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleCopyUrl}>
-                <Link size={15} className="text-gray-400" />
+                <Link size={15} className="text-gray-400 dark:text-gray-500" />
                 Copy Presigned URL
               </ContextMenu.Item>
 
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleRename}>
-                <Pencil size={15} className="text-gray-400" />
+                <Pencil size={15} className="text-gray-400 dark:text-gray-500" />
                 Rename
               </ContextMenu.Item>
 
               <ContextMenu.Item
-                className={`${MENU_ITEM} text-red-600 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-700`}
+                className={`${MENU_ITEM} text-red-600 dark:text-red-400 data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-900/30 data-[highlighted]:text-red-700 dark:data-[highlighted]:text-red-300`}
                 onSelect={handleDelete}
               >
                 <Trash2 size={15} />
@@ -259,7 +259,7 @@ export default function ItemContextMenu({ item, children }: ItemContextMenuProps
               <ContextMenu.Separator className={MENU_SEPARATOR} />
 
               <ContextMenu.Item className={MENU_ITEM} onSelect={handleGetInfo}>
-                <Info size={15} className="text-gray-400" />
+                <Info size={15} className="text-gray-400 dark:text-gray-500" />
                 Get Info
               </ContextMenu.Item>
             </>

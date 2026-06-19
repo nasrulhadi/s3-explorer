@@ -1,13 +1,29 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type ThemeMode = "system" | "light" | "dark";
+
 interface SettingsState {
-  /** If true, restore last session (bucket/folder) on app open. If false, always show home page. */
+  // Startup
   restoreLastSession: boolean;
+  // Appearance
+  theme: ThemeMode;
+  // Toolbar
+  showFilter: boolean;
+  showUpload: boolean;
+  showNewFolder: boolean;
+  showReload: boolean;
+  showBreadcrumbs: boolean;
 }
 
 interface SettingsActions {
   setRestoreLastSession: (value: boolean) => void;
+  setTheme: (value: ThemeMode) => void;
+  setShowFilter: (value: boolean) => void;
+  setShowUpload: (value: boolean) => void;
+  setShowNewFolder: (value: boolean) => void;
+  setShowReload: (value: boolean) => void;
+  setShowBreadcrumbs: (value: boolean) => void;
 }
 
 export type SettingsStore = SettingsState & SettingsActions;
@@ -15,11 +31,23 @@ export type SettingsStore = SettingsState & SettingsActions;
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      // ── State ──────────────────────────────────────────────────
-      restoreLastSession: false, // default: always go to home page
+      // ── State (all defaults) ────────────────────────────────
+      restoreLastSession: false,
+      theme: "system",
+      showFilter: true,
+      showUpload: true,
+      showNewFolder: true,
+      showReload: true,
+      showBreadcrumbs: true,
 
-      // ── Actions ────────────────────────────────────────────────
+      // ── Actions ─────────────────────────────────────────────
       setRestoreLastSession: (value) => set({ restoreLastSession: value }),
+      setTheme: (value) => set({ theme: value }),
+      setShowFilter: (value) => set({ showFilter: value }),
+      setShowUpload: (value) => set({ showUpload: value }),
+      setShowNewFolder: (value) => set({ showNewFolder: value }),
+      setShowReload: (value) => set({ showReload: value }),
+      setShowBreadcrumbs: (value) => set({ showBreadcrumbs: value }),
     }),
     {
       name: "s3-explorer-settings",

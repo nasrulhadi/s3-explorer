@@ -39,28 +39,28 @@ export default function FolderRow({
       className={`
         ${ROW_GRID} h-full px-3 gap-2 cursor-default select-none
         transition-colors duration-75
-        ${isSelected ? "bg-blue-50 text-blue-900" : "hover:bg-gray-50"}
+        ${isSelected ? "bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-gray-50 dark:hover:bg-gray-800"}
         ${isFocused ? "ring-2 ring-inset ring-blue-400" : ""}
       `}
     >
       {/* Icon */}
       <div className="flex items-center justify-center">
-        <Folder size={17} className="text-blue-400 fill-blue-100" />
+        <Folder size={17} className="text-blue-400 dark:text-blue-400 fill-blue-100 dark:fill-blue-900/50" />
       </div>
 
       {/* Name */}
-      <span className="truncate text-sm font-medium">{item.name}</span>
+      <span className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</span>
 
       {/* Size — folders have no size */}
-      <span className="text-xs text-gray-400 text-right">—</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right">—</span>
 
       {/* Last modified */}
-      <span className="text-xs text-gray-400 text-right tabular-nums">
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right tabular-nums">
         {item.lastModified ? formatDate(item.lastModified) : "—"}
       </span>
 
       {/* Storage class */}
-      <span className="text-xs text-gray-400 text-right">—</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500 text-right">—</span>
     </div>
   );
 }

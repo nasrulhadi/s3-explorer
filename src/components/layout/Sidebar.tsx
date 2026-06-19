@@ -44,7 +44,7 @@ function ConnectionItem({
         transition-colors duration-150 group rounded-md mx-0
         ${isActive
           ? "bg-blue-600 text-white"
-          : "text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10"
+          : "text-gray-300 bg-gray-800/50 dark:bg-gray-800/50 border border-gray-700 dark:border-gray-800 hover:bg-gray-800 dark:hover:bg-gray-800"
         }
       `}
     >
@@ -73,7 +73,7 @@ function ConnectionItem({
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           title="Edit connection"
-          className={`p-1 rounded hover:bg-white/20 transition-colors ${isActive ? "text-white/70 hover:text-white" : "text-gray-500 hover:text-gray-300"}`}
+          className={`p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-700 transition-colors ${isActive ? "text-white/70 hover:text-white" : "text-gray-500 hover:text-gray-300"}`}
         >
           <Pencil size={13} />
         </button>
@@ -137,7 +137,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
             className={`
               w-full flex items-center gap-2 pl-10 pr-3 py-2 text-sm text-left
               transition-colors duration-150
-              ${isActive ? "bg-blue-600/40 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}
+              ${isActive ? "bg-blue-600/40 text-white" : "text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-800 hover:text-gray-200"}
             `}
           >
             <Database size={14} className="shrink-0" />
@@ -185,17 +185,17 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
   }
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-[#1a1a2e] text-white select-none">
+    <aside className="w-64 h-full flex flex-col bg-gray-900 dark:bg-gray-950 text-gray-100 select-none">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 h-14 border-b border-gray-700 dark:border-gray-800">
         <h1 className="font-semibold text-sm tracking-wide">S3 Explorer</h1>
         {onAddConnection && (
           <button
             onClick={onAddConnection}
             title="Add Connection"
             className="
-              p-1 rounded hover:bg-white/10 transition-colors
-              text-gray-400 hover:text-white
+              p-1 rounded hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors
+              text-gray-400 hover:text-gray-100
             "
           >
             <Plus size={18} />
@@ -240,7 +240,7 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
       </nav>
 
       {/* ── Footer ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/10">
+      <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-700 dark:border-gray-800">
         <span className="text-xs text-gray-500">
           {connections.length} connection{connections.length !== 1 ? "s" : ""}
         </span>
@@ -248,7 +248,7 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
           <button
             onClick={onOpenSettings}
             title="Settings"
-            className="p-1 rounded hover:bg-white/10 transition-colors text-gray-500 hover:text-gray-300"
+            className="p-1 rounded hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-gray-300"
           >
             <Settings size={16} />
           </button>

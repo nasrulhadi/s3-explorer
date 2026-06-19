@@ -57,7 +57,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       : 0;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0">
       {/* ── Type icon ──────────────────────────────────── */}
       <div className="shrink-0">
         {transfer.type === "download" ? (
@@ -71,11 +71,11 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-0.5">
           <span
-            className={`truncate text-sm ${isError ? "text-red-600" : "text-gray-700"}`}
+            className={`truncate text-sm ${isError ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-200"}`}
           >
             {transfer.fileName}
           </span>
-          <span className="text-xs text-gray-400 ml-2 shrink-0 tabular-nums">
+          <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 shrink-0 tabular-nums">
             {isDone && "Done"}
             {isError && (transfer.error ?? "Error")}
             {isActive && transfer.totalBytes > 0 && (
@@ -92,7 +92,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
 
         {/* Progress bar */}
         {isActive && (
-          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 rounded-full transition-all duration-200"
               style={{ width: transfer.totalBytes > 0 ? `${progress}%` : "30%" }}
@@ -100,12 +100,12 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
           </div>
         )}
         {isDone && (
-          <div className="h-1.5 bg-green-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-green-200 dark:bg-green-900/50 rounded-full overflow-hidden">
             <div className="h-full bg-green-500 rounded-full w-full" />
           </div>
         )}
         {isError && (
-          <div className="h-1.5 bg-red-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-red-100 dark:bg-red-900/50 rounded-full overflow-hidden">
             <div className="h-full bg-red-400 rounded-full w-full" />
           </div>
         )}
@@ -114,7 +114,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       {/* ── Speed ─────────────────────────────────────────── */}
       <div className="w-20 text-right shrink-0">
         {isActive && speed > 0 && (
-          <span className="text-xs text-gray-400 tabular-nums">
+          <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
             {formatSpeed(speed)}
           </span>
         )}
@@ -133,7 +133,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
             ? cancelDownload(transfer.id)
             : useTransferStore.getState().removeTransfer(transfer.id)
         }
-        className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+        className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
         title={isActive ? "Cancel" : "Remove"}
       >
         {isActive ? (
@@ -162,13 +162,13 @@ export default function TransferPanel() {
   ).length;
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-40 overflow-hidden">
+    <div className="fixed bottom-4 right-4 w-96 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-40 overflow-hidden">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-11 bg-gray-50 border-b border-gray-200">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="flex items-center justify-between px-4 h-11 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           Transfers
           {activeCount > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full">
               {activeCount}
             </span>
           )}
@@ -179,7 +179,7 @@ export default function TransferPanel() {
             <button
               onClick={clearCompleted}
               title="Clear completed"
-              className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Trash2 size={14} />
             </button>
@@ -187,7 +187,7 @@ export default function TransferPanel() {
           <button
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? "Expand" : "Collapse"}
-            className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {collapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>

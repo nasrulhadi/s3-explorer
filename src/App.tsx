@@ -55,6 +55,27 @@ function AppLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Theme: apply dark/light class to document ──────────────
+  const theme = useSettingsStore((s) => s.theme);
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else if (theme === "light") {
+      root.classList.remove("dark");
+    } else {
+      // system: follow OS preference
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = (e: MediaQueryListEvent) => {
+        root.classList.toggle("dark", e.matches);
+      };
+      root.classList.toggle("dark", mq.matches);
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    }
+  }, [theme]);
+
   // ── Callbacks ──────────────────────────────────────────────
 
   const handleRefresh = useCallback(() => {
@@ -158,7 +179,7 @@ function AppLayout() {
   // ──────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50" onContextMenu={(e) => e.preventDefault()}>
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950" onContextMenu={(e) => e.preventDefault()}>
       {/* ── Custom title bar ──────────────────────────────── */}
       <TitleBar />
 
@@ -225,7 +246,7 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
       {/* Cloud icon */}
-      <div className="w-20 h-20 rounded-2xl bg-blue-50 flex items-center justify-center mb-6">
+      <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-6">
         <svg
           width="40"
           height="40"
@@ -241,10 +262,10 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
         </svg>
       </div>
 
-      <h2 className="text-2xl font-semibold text-gray-800">
+      <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
         Welcome to S3 Explorer
       </h2>
-      <p className="mt-2 text-sm text-gray-500 max-w-sm">
+      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm">
         Connect to your S3-compatible storage to browse, upload, and manage
         your files. Supports AWS S3, MinIO, Cloudflare R2, Backblaze B2, and
         more.
@@ -274,9 +295,9 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
         Add Your First Connection
       </button>
 
-      <p className="mt-4 text-xs text-gray-400">
+      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
         You can also press the{" "}
-        <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">
+        <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">
           +
         </kbd>{" "}
         button in the sidebar at any time.
@@ -288,7 +309,7 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
 /** Shown when connections exist but no bucket is selected */
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-8">
+    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 dark:text-gray-500 px-8">
       <svg
         className="mb-4"
         width="56"
@@ -302,21 +323,21 @@ function EmptyState() {
       >
         <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
       </svg>
-      <p className="text-lg font-medium text-gray-500">Select a bucket to browse</p>
-      <p className="mt-1 text-sm text-gray-400 max-w-xs">
+      <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Select a bucket to browse</p>
+      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
         Click a connection in the sidebar, then select a bucket to view and manage your files.
       </p>
-      <div className="mt-6 text-xs text-gray-400 space-y-1">
+      <div className="mt-6 text-xs text-gray-400 dark:text-gray-500 space-y-1">
         <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">F5</kbd>{" "}
+          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">F5</kbd>{" "}
           Refresh
         </span>
         <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">Backspace</kbd>{" "}
+          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">Backspace</kbd>{" "}
           Go back
         </span>
         <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-mono">Ctrl+U</kbd>{" "}
+          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">Ctrl+U</kbd>{" "}
           Upload
         </span>
       </div>
