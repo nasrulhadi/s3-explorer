@@ -23,12 +23,12 @@ const SKELETON_COUNT = 8;
 
 function SkeletonRow() {
   return (
-    <div className={`${ROW_GRID} min-h-10 px-3 gap-2 items-center border-b border-gray-100 dark:border-gray-800`}>
-      <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-      <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-      <div className="h-4 w-12 rounded bg-gray-100 dark:bg-gray-800 animate-pulse justify-self-end" />
-      <div className="h-4 w-20 rounded bg-gray-100 dark:bg-gray-800 animate-pulse justify-self-end" />
-      <div className="h-4 w-14 rounded bg-gray-100 dark:bg-gray-800 animate-pulse justify-self-end" />
+    <div className={`${ROW_GRID} min-h-10 px-3 gap-2 items-center border-b border-[var(--s3-window-border)]`}>
+      <div className="h-4 w-4 rounded bg-[var(--s3-window-border)] animate-pulse" />
+      <div className="h-4 w-2/3 rounded bg-[var(--s3-window-border)] animate-pulse" />
+      <div className="h-4 w-12 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
+      <div className="h-4 w-20 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
+      <div className="h-4 w-14 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
     </div>
   );
 }
@@ -198,7 +198,7 @@ export default function FileList({ filterQuery }: FileListProps) {
   // ── Loading (first load or refetch) ───────────────────────
   if (isLoading || isFetching) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
         <ColumnHeader disabled />
         <div className="flex-1">
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -212,12 +212,12 @@ export default function FileList({ filterQuery }: FileListProps) {
   // ── Error ──────────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-gray-900 rounded-lg border border-red-200 dark:border-red-900">
-        <AlertCircle size={40} className="text-red-400 dark:text-red-500 mb-3" />
-        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+      <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-[var(--s3-window-bg)]">
+        <AlertCircle size={40} className="text-[var(--s3-danger)] mb-3" />
+        <p className="text-sm font-medium text-[var(--s3-danger)]">
           Failed to load contents
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
+        <p className="text-xs text-[var(--s3-window-muted)] mt-1 max-w-xs">
           {(error as Error).message}
         </p>
       </div>
@@ -227,26 +227,26 @@ export default function FileList({ filterQuery }: FileListProps) {
   // ── Empty state ────────────────────────────────────────────
   if (displayedItems.length === 0) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
         <ColumnHeader disabled />
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-gray-400 dark:text-gray-500">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-[var(--s3-window-muted)]">
           {filterQuery ? (
             <>
-              <FileX size={40} className="mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <FileX size={40} className="mb-3 opacity-40" />
+              <p className="text-sm font-medium text-[var(--s3-window-muted)]">
                 No items match your filter
               </p>
-              <p className="text-xs mt-1 dark:text-gray-500">
+              <p className="text-xs mt-1 opacity-70">
                 Try a different search term or clear the filter.
               </p>
             </>
           ) : (
             <>
-              <FolderOpen size={40} className="mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <FolderOpen size={40} className="mb-3 opacity-40" />
+              <p className="text-sm font-medium text-[var(--s3-window-muted)]">
                 This folder is empty
               </p>
-              <p className="text-xs mt-1 dark:text-gray-500">
+              <p className="text-xs mt-1 opacity-70">
                 Upload files or create a folder to get started.
               </p>
             </>
@@ -259,7 +259,7 @@ export default function FileList({ filterQuery }: FileListProps) {
   // ── Normal: virtualized list ───────────────────────────────
   return (
     <div
-      className="h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+      className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden"
       onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}
       tabIndex={-1}
@@ -298,7 +298,7 @@ export default function FileList({ filterQuery }: FileListProps) {
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
-                  className="border-b border-gray-100 dark:border-gray-800"
+                  className="border-b border-[var(--s3-window-border)]"
                 >
                   {item.type === "folder" ? (
                     <FolderRow
@@ -324,13 +324,13 @@ export default function FileList({ filterQuery }: FileListProps) {
       </div>
 
       {/* ── Status bar ───────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-8 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+      <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
         <span>
           {displayedItems.length} item{displayedItems.length !== 1 ? "s" : ""}
           {filterQuery ? ` (filtered)` : ""}
         </span>
         {selectedKeys.size > 0 && (
-          <span className="text-blue-500 dark:text-blue-400 font-medium">
+          <span className="text-[var(--s3-accent)] font-medium">
             {selectedKeys.size} selected
           </span>
         )}
@@ -360,7 +360,7 @@ function ColumnHeader({
   if (disabled || !onToggleSort || !SortIcon) {
     return (
       <div
-        className={`${ROW_GRID} h-10 px-3 gap-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0`}
+        className={`${ROW_GRID} h-10 px-3 gap-2 border-b border-[var(--s3-window-border)] bg-[var(--s3-statusbar-bg)] text-xs font-medium text-[var(--s3-window-muted)] shrink-0`}
       >
         <span />
         <span>Name</span>
@@ -380,7 +380,7 @@ function ColumnHeader({
 
   return (
     <div
-      className={`${ROW_GRID} h-10 px-3 gap-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0`}
+      className={`${ROW_GRID} h-10 px-3 gap-2 border-b border-[var(--s3-window-border)] bg-[var(--s3-statusbar-bg)] text-xs font-medium text-[var(--s3-window-muted)] shrink-0`}
     >
       <span />
       {fields.map((f) => (
@@ -388,7 +388,7 @@ function ColumnHeader({
           key={f.key}
           onClick={() => onToggleSort(f.key)}
           className={`
-            flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors
+            flex items-center gap-1 hover:text-[var(--s3-window-text)] transition-colors
             ${f.key === "name" ? "" : "justify-end"}
           `}
         >

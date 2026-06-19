@@ -179,7 +179,7 @@ function AppLayout() {
   // ──────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950" onContextMenu={(e) => e.preventDefault()}>
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--s3-window-bg)]" onContextMenu={(e) => e.preventDefault()}>
       {/* ── Custom title bar ──────────────────────────────── */}
       <TitleBar />
 
@@ -223,7 +223,7 @@ function AppLayout() {
                   />
 
                   {/* Content area */}
-                  <main className="flex-1 overflow-hidden p-4" onContextMenu={(e) => e.preventDefault()}>
+                  <main className="flex-1 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (

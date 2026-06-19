@@ -88,15 +88,15 @@ export default function Toolbar({
   const hasBucketSelected = !!connectionId && !!bucket;
 
   return (
-    <div className="flex items-center gap-2 px-4 h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-14 bg-[var(--s3-toolbar-bg)] border-b border-[var(--s3-toolbar-border)] shrink-0">
       {/* ── Back button ──────────────────────────────────── */}
       <button
         onClick={onBack}
         disabled={history.length === 0}
         title="Back (Backspace)"
         className="
-          p-1.5 rounded-md text-gray-600 dark:text-gray-400
-          hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
+          p-1.5 rounded-md text-[var(--s3-window-muted)]
+          hover:bg-[var(--s3-window-hover-bg)] transition-colors
           disabled:opacity-30 disabled:cursor-not-allowed
         "
       >
@@ -110,7 +110,7 @@ export default function Toolbar({
           onClick={() => onNavigate("")}
           className={`
             shrink-0 p-1 rounded transition-colors
-            ${bucket ? "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" : "text-gray-800 dark:text-gray-100"}
+            ${bucket ? "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]" : "text-[var(--s3-window-text)]"}
           `}
           title="Home"
         >
@@ -119,12 +119,12 @@ export default function Toolbar({
 
         {bucket && (
           <>
-            <ChevronRight size={14} className="shrink-0 text-gray-400" />
+            <ChevronRight size={14} className="shrink-0 text-[var(--s3-window-muted)] opacity-50" />
             <button
               onClick={() => onNavigate("")}
               className={`
                 shrink-0 font-medium rounded px-1.5 py-0.5 transition-colors
-                ${prefix === "" ? "text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"}
+                ${prefix === "" ? "text-[var(--s3-window-text)]" : "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]"}
               `}
             >
               {bucket}
@@ -135,11 +135,11 @@ export default function Toolbar({
         {/* Collapsed "…" dropdown (when more than MAX_VISIBLE folders) */}
         {hiddenItems.length > 0 && (
           <>
-            <ChevronRight size={14} className="shrink-0 text-gray-400" />
+            <ChevronRight size={14} className="shrink-0 text-[var(--s3-window-muted)] opacity-50" />
             <div className="relative flex items-center">
               <button
                 onClick={() => setShowCollapsed((v) => !v)}
-                className="rounded px-1 py-0.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                className="rounded px-1 py-0.5 text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)] transition-colors"
                 title="Show hidden folders"
               >
                 <MoreHorizontal size={16} />
@@ -148,7 +148,7 @@ export default function Toolbar({
                 <>
                   {/* Backdrop to close dropdown */}
                   <div className="fixed inset-0 z-10" onClick={() => setShowCollapsed(false)} />
-                  <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <div className="absolute top-full left-0 mt-1 z-20 bg-[var(--s3-window-bg)] border border-[var(--s3-window-border)] rounded-lg shadow-lg py-1 min-w-[160px]">
                     {hiddenItems.map((item) => (
                       <button
                         key={item.prefix}
@@ -156,7 +156,7 @@ export default function Toolbar({
                           onNavigate(item.prefix);
                           setShowCollapsed(false);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors truncate"
+                        className="w-full text-left px-3 py-1.5 text-sm text-[var(--s3-window-text)] hover:bg-[var(--s3-accent-light)] hover:text-[var(--s3-accent)] transition-colors truncate"
                         title={item.label}
                       >
                         {item.label}
@@ -174,14 +174,14 @@ export default function Toolbar({
           const isLast = item.prefix === prefix;
           return (
             <span key={item.prefix} className="flex items-center gap-1">
-              <ChevronRight size={14} className="shrink-0 text-gray-400" />
+              <ChevronRight size={14} className="shrink-0 text-[var(--s3-window-muted)] opacity-50" />
               <button
                 onClick={() => onNavigate(item.prefix)}
                 className={`
                   rounded px-1.5 py-0.5 transition-colors
                   ${isLast
-                    ? "text-gray-800 dark:text-gray-100 font-medium"
-                    : "truncate max-w-[140px] text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"}
+                    ? "text-[var(--s3-window-text)] font-medium"
+                    : "truncate max-w-[140px] text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]"}
                 `}
                 title={item.label}
               >
@@ -201,7 +201,7 @@ export default function Toolbar({
         <div className="relative w-52">
           <Search
             size={14}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--s3-window-muted)] opacity-50 pointer-events-none"
           />
           <input
             type="text"
@@ -210,10 +210,10 @@ export default function Toolbar({
             placeholder="Filter files…"
             className="
               w-full pl-8 pr-3 py-1.5 text-sm
-              border border-gray-200 dark:border-gray-700 rounded-md
-              outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 dark:focus:ring-blue-900
-              text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500
-              bg-white dark:bg-gray-800
+              border border-[var(--s3-window-border)] rounded-md
+              outline-none focus:border-[var(--s3-accent)] focus:ring-1 focus:ring-[var(--s3-accent-light)]
+              text-[var(--s3-window-text)] placeholder-[var(--s3-window-muted)]
+              bg-[var(--s3-window-bg)]
               transition-all
             "
           />
@@ -229,8 +229,8 @@ export default function Toolbar({
           title="Upload File (Ctrl+U)"
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
-            bg-blue-500 text-white
-            hover:bg-blue-600 transition-colors
+            bg-[var(--s3-accent)] text-white
+            hover:bg-[var(--s3-accent-hover)] transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "
         >
@@ -246,8 +246,8 @@ export default function Toolbar({
           title="New Folder"
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-            border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300
-            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
+            border border-[var(--s3-window-border)] text-[var(--s3-window-muted)]
+            hover:bg-[var(--s3-window-hover-bg)] transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "
         >
@@ -262,8 +262,8 @@ export default function Toolbar({
           disabled={!hasBucketSelected}
           title="Refresh (F5)"
           className="
-            p-1.5 rounded-md text-gray-500 dark:text-gray-400
-            hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors
+            p-1.5 rounded-md text-[var(--s3-window-muted)]
+            hover:bg-[var(--s3-window-hover-bg)] hover:text-[var(--s3-window-text)] transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "
         >

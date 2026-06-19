@@ -43,8 +43,8 @@ function ConnectionItem({
         w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
         transition-colors duration-150 group rounded-md mx-0
         ${isActive
-          ? "bg-blue-600 text-white"
-          : "text-gray-300 bg-gray-800/50 dark:bg-gray-800/50 border border-gray-700 dark:border-gray-800 hover:bg-gray-800 dark:hover:bg-gray-800"
+          ? "bg-[var(--s3-sidebar-active-bg)] text-[var(--s3-sidebar-active-text)]"
+          : "text-[var(--s3-sidebar-text)] bg-[var(--s3-sidebar-inactive-bg)] border border-[var(--s3-sidebar-inactive-border)] hover:bg-[var(--s3-sidebar-item-hover)]"
         }
       `}
     >
@@ -73,7 +73,7 @@ function ConnectionItem({
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           title="Edit connection"
-          className={`p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-700 transition-colors ${isActive ? "text-white/70 hover:text-white" : "text-gray-500 hover:text-gray-300"}`}
+          className={`p-1 rounded hover:bg-white/20 dark:hover:bg-white/10 transition-colors ${isActive ? "text-white/70 hover:text-white" : "text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"}`}
         >
           <Pencil size={13} />
         </button>
@@ -137,7 +137,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
             className={`
               w-full flex items-center gap-2 pl-10 pr-3 py-2 text-sm text-left
               transition-colors duration-150
-              ${isActive ? "bg-blue-600/40 text-white" : "text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-800 hover:text-gray-200"}
+              ${isActive ? "bg-[var(--s3-sidebar-active-bg)]/40 text-[var(--s3-sidebar-active-text)]" : "text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)] hover:text-[var(--s3-window-text)]"}
             `}
           >
             <Database size={14} className="shrink-0" />
@@ -185,17 +185,17 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
   }
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-gray-900 dark:bg-gray-950 text-gray-100 select-none">
+    <aside className="w-64 h-full flex flex-col bg-[var(--s3-sidebar-bg)] text-[var(--s3-sidebar-text)] select-none">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-gray-700 dark:border-gray-800">
+      <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--s3-sidebar-border)]">
         <h1 className="font-semibold text-sm tracking-wide">S3 Explorer</h1>
         {onAddConnection && (
           <button
             onClick={onAddConnection}
             title="Add Connection"
             className="
-              p-1 rounded hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors
-              text-gray-400 hover:text-gray-100
+              p-1 rounded hover:bg-[var(--s3-sidebar-item-hover)] transition-colors
+              text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]
             "
           >
             <Plus size={18} />
@@ -240,7 +240,7 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
       </nav>
 
       {/* ── Footer ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-700 dark:border-gray-800">
+      <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--s3-sidebar-border)]">
         <span className="text-xs text-gray-500">
           {connections.length} connection{connections.length !== 1 ? "s" : ""}
         </span>
@@ -248,7 +248,7 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
           <button
             onClick={onOpenSettings}
             title="Settings"
-            className="p-1 rounded hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-gray-300"
+            className="p-1 rounded hover:bg-[var(--s3-sidebar-item-hover)] transition-colors text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"
           >
             <Settings size={16} />
           </button>

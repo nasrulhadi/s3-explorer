@@ -74,7 +74,7 @@ export default function TitleBar() {
   }, []);
 
   return (
-    <div className="flex items-center h-9 bg-gray-900 dark:bg-gray-950 select-none shrink-0 overflow-hidden relative z-10">
+    <div className="flex items-center h-9 bg-[var(--s3-titlebar-bg)] select-none shrink-0 overflow-hidden relative z-10">
       {/* Drag region — fills remaining space */}
       <div
         data-tauri-drag-region
@@ -86,7 +86,7 @@ export default function TitleBar() {
         }}
         className="flex-1 self-stretch flex items-center pl-4 cursor-grab"
       >
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 pointer-events-none">
+        <span className="text-xs font-medium text-[var(--s3-titlebar-text)] opacity-60 pointer-events-none">
           S3 Explorer
         </span>
       </div>
@@ -95,7 +95,7 @@ export default function TitleBar() {
       <div className="flex h-9">
         <button
           onClick={() => getCurrentWindow().minimize()}
-          className="w-12 h-9 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white dark:hover:text-white hover:bg-white/10 dark:hover:bg-white/10 transition-colors"
+          className="w-12 h-9 flex items-center justify-center text-[var(--s3-titlebar-text)] opacity-50 hover:opacity-100 hover:bg-[var(--s3-titlebar-btn-hover)] transition-colors"
           title="Minimize"
         >
           <IconMinimize />
@@ -103,7 +103,7 @@ export default function TitleBar() {
 
         <button
           onClick={() => getCurrentWindow().toggleMaximize()}
-          className="w-12 h-9 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white dark:hover:text-white hover:bg-white/10 dark:hover:bg-white/10 transition-colors"
+          className="w-12 h-9 flex items-center justify-center text-[var(--s3-titlebar-text)] opacity-50 hover:opacity-100 hover:bg-[var(--s3-titlebar-btn-hover)] transition-colors"
           title={maximized ? "Restore" : "Maximize"}
         >
           {maximized ? <IconRestore /> : <IconMaximize />}
@@ -111,7 +111,7 @@ export default function TitleBar() {
 
         <button
           onClick={() => getCurrentWindow().close()}
-          className="w-12 h-9 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white dark:hover:text-white hover:bg-red-600 dark:hover:bg-red-600 transition-colors"
+          className="w-12 h-9 flex items-center justify-center text-[var(--s3-titlebar-text)] opacity-50 hover:opacity-100 hover:bg-[var(--s3-danger)] hover:text-white transition-colors"
           title="Close"
         >
           <IconClose />
