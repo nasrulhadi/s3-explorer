@@ -91,7 +91,7 @@ export default function Toolbar({
   const hasBucketSelected = !!connectionId && !!bucket;
 
   return (
-    <div className="flex items-center gap-2 px-4 h-14 bg-[var(--s3-toolbar-bg)] border-b border-[var(--s3-toolbar-border)] shrink-0 rounded-tl-xl">
+    <div className="flex items-center gap-2 px-4 h-14 bg-[var(--s3-window-bg)] border-b border-[var(--s3-toolbar-border)] shrink-0 rounded-tl-xl">
       {/* ── Back button ──────────────────────────────────── */}
       <button
         onClick={onBack}
@@ -113,7 +113,7 @@ export default function Toolbar({
           onClick={() => onNavigate("")}
           className={`
             shrink-0 p-1 rounded transition-colors
-            ${bucket ? "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]" : "text-[var(--s3-window-text)]"}
+            ${bucket ? "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)]" : "text-[var(--s3-window-text)]"}
           `}
           title="Home"
         >
@@ -127,7 +127,7 @@ export default function Toolbar({
               onClick={() => onNavigate("")}
               className={`
                 shrink-0 font-medium rounded px-1.5 py-0.5 transition-colors
-                ${prefix === "" ? "text-[var(--s3-window-text)]" : "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]"}
+                ${prefix === "" ? "text-[var(--s3-window-text)]" : "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)]"}
               `}
             >
               {bucket}
@@ -142,7 +142,7 @@ export default function Toolbar({
             <div className="relative flex items-center">
               <button
                 onClick={() => setShowCollapsed((v) => !v)}
-                className="rounded px-1 py-0.5 text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)] transition-colors"
+                className="rounded px-1 py-0.5 text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)] transition-colors"
                 title="Show hidden folders"
               >
                 <MoreHorizontal size={16} />
@@ -159,7 +159,7 @@ export default function Toolbar({
                           onNavigate(item.prefix);
                           setShowCollapsed(false);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-sm text-[var(--s3-window-text)] hover:bg-[var(--s3-accent-light)] hover:text-[var(--s3-accent)] transition-colors truncate"
+                        className="w-full text-left px-3 py-1.5 text-sm text-[var(--s3-window-text)] hover:bg-[var(--s3-accent-base)] hover:text-[var(--s3-accent-text)] transition-colors truncate"
                         title={item.label}
                       >
                         {item.label}
@@ -184,7 +184,7 @@ export default function Toolbar({
                   rounded px-1.5 py-0.5 transition-colors
                   ${isLast
                     ? "text-[var(--s3-window-text)] font-medium"
-                    : "truncate max-w-[140px] text-[var(--s3-window-muted)] hover:text-[var(--s3-accent)] hover:bg-[var(--s3-accent-light)]"}
+                    : "truncate max-w-[140px] text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)]"}
                 `}
                 title={item.label}
               >
@@ -214,7 +214,7 @@ export default function Toolbar({
             className="
               w-full pl-8 pr-3 py-1.5 text-sm
               border border-[var(--s3-window-border)] rounded-md
-              outline-none focus:border-[var(--s3-accent)] focus:ring-1 focus:ring-[var(--s3-accent-light)]
+              outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
               text-[var(--s3-window-text)] placeholder-[var(--s3-window-muted)]
               bg-[var(--s3-window-bg)]
               transition-all
@@ -232,7 +232,7 @@ export default function Toolbar({
           title="Upload File (Ctrl+U)"
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
-            bg-[var(--s3-accent)] text-white
+            bg-[var(--s3-accent-active)] text-white
             hover:bg-[var(--s3-accent-hover)] transition-colors
             disabled:opacity-40 disabled:cursor-not-allowed
           "

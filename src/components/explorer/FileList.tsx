@@ -209,9 +209,9 @@ export default function FileList({ filterQuery }: FileListProps) {
       return <ArrowUpDown size={13} className="text-gray-300" />;
     }
     return sortDir === "asc" ? (
-      <ArrowUp size={13} className="text-blue-500" />
+      <ArrowUp size={13} className="text-[var(--s3-accent-text)]" />
     ) : (
-      <ArrowDown size={13} className="text-blue-500" />
+      <ArrowDown size={13} className="text-[var(--s3-accent-text)]" />
     );
   }
 
@@ -355,7 +355,7 @@ export default function FileList({ filterQuery }: FileListProps) {
         </span>
         <div className="flex items-center gap-3">
           {selectedKeys.size > 0 && (
-            <span className="text-[var(--s3-accent)] font-medium">
+            <span className="text-[var(--s3-accent-text)] font-medium">
               {selectedKeys.size} selected
             </span>
           )}
@@ -381,7 +381,7 @@ export default function FileList({ filterQuery }: FileListProps) {
                 size={14}
                 className={`${
                   isActivity
-                    ? "text-[var(--s3-accent)] animate-pulse"
+                    ? "text-[var(--s3-accent-text)] animate-pulse"
                     : "text-[var(--s3-window-muted)] opacity-40"
                 }`}
               />

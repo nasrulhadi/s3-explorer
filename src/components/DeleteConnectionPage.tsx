@@ -20,7 +20,7 @@ export default function DeleteConnectionPage({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* ── Page header ──────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-6 h-14 border-b border-[var(--s3-window-border)] bg-[var(--s3-window-bg)] shrink-0">
+      <div className="flex items-center gap-3 px-6 h-14 border-b border-[var(--s3-window-border)] bg-[var(--s3-window-bg)] shrink-0 rounded-tl-xl">
         <button
           onClick={onCancel}
           className="p-1.5 rounded-md text-[var(--s3-window-muted)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-window-hover-bg)] transition-colors"
@@ -34,7 +34,7 @@ export default function DeleteConnectionPage({
       </div>
 
       {/* ── Content ─────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
         <div className="max-w-lg mx-auto p-8 space-y-6">
           {/* Warning */}
           <div className="flex items-start gap-3 p-4 rounded-lg bg-[var(--s3-danger-light)]">
@@ -120,7 +120,7 @@ export default function DeleteConnectionPage({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-3 pt-4 border-t border-[var(--s3-window-border)]">
+          <div className="flex items-center gap-3 pt-8">
             <button
               onClick={onCancel}
               className="

@@ -39,13 +39,13 @@ export default function FolderRow({
       className={`
         ${ROW_GRID} h-full px-3 gap-2 cursor-default select-none
         transition-colors duration-75
-        ${isSelected ? "bg-[var(--s3-accent-light)] text-[var(--s3-accent)]" : "hover:bg-[var(--s3-window-hover-bg)]"}
+        ${isSelected ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]" : "hover:bg-[var(--s3-window-hover-bg)]"}
         ${isFocused ? "ring-2 ring-inset ring-blue-400" : ""}
       `}
     >
       {/* Icon */}
       <div className="flex items-center justify-center">
-        <Folder size={17} className="text-[var(--s3-accent)] opacity-70" />
+        <Folder size={17} className="text-[var(--s3-accent-text)] opacity-70" />
       </div>
 
       {/* Name */}

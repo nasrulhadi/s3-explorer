@@ -43,7 +43,7 @@ function ConnectionItem({
         w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
         transition-colors duration-150 group rounded-md mx-0
         ${isActive
-          ? "bg-[var(--s3-sidebar-active-bg)] text-[var(--s3-sidebar-active-text)]"
+          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
           : "text-[var(--s3-sidebar-text)] bg-[var(--s3-sidebar-inactive-bg)] border border-[var(--s3-sidebar-inactive-border)] hover:bg-[var(--s3-sidebar-item-hover)]"
         }
       `}
@@ -59,7 +59,7 @@ function ConnectionItem({
             <div
               className={`
                 truncate text-[11px] leading-tight
-                ${isActive ? "text-white/60" : "text-gray-500"}
+                ${isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"}
               `}
             >
               {bucketLabel}

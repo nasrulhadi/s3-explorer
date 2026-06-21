@@ -8,6 +8,7 @@ interface SettingsState {
   restoreLastSession: boolean;
   // Appearance
   theme: ThemeMode;
+  accentColor: string;  // Accent color ID (default: "stone")
   // Toolbar
   showFilter: boolean;
   showUpload: boolean;
@@ -19,6 +20,7 @@ interface SettingsState {
 interface SettingsActions {
   setRestoreLastSession: (value: boolean) => void;
   setTheme: (value: ThemeMode) => void;
+  setAccentColor: (value: string) => void;
   setShowFilter: (value: boolean) => void;
   setShowUpload: (value: boolean) => void;
   setShowNewFolder: (value: boolean) => void;
@@ -34,6 +36,7 @@ export const useSettingsStore = create<SettingsStore>()(
       // ── State (all defaults) ────────────────────────────────
       restoreLastSession: false,
       theme: "system",
+      accentColor: "stone",  // Default accent color (easily changeable)
       showFilter: true,
       showUpload: true,
       showNewFolder: true,
@@ -43,6 +46,7 @@ export const useSettingsStore = create<SettingsStore>()(
       // ── Actions ─────────────────────────────────────────────
       setRestoreLastSession: (value) => set({ restoreLastSession: value }),
       setTheme: (value) => set({ theme: value }),
+      setAccentColor: (value) => set({ accentColor: value }),
       setShowFilter: (value) => set({ showFilter: value }),
       setShowUpload: (value) => set({ showUpload: value }),
       setShowNewFolder: (value) => set({ showNewFolder: value }),

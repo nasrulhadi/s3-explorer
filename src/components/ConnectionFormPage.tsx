@@ -38,7 +38,7 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 // ─── Input styling ──────────────────────────────────────────
 
 const INPUT_CLASS =
-  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500";
+  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)] transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500";
 
 // ─── Component ──────────────────────────────────────────────
 
@@ -214,7 +214,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* ── Page header ──────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
+      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-gray-700 bg-[var(--s3-window-bg)] shrink-0 rounded-tl-xl">
         <button
           onClick={onDone}
           className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -228,7 +228,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
       </div>
 
       {/* ── Scrollable form ─────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
         <form onSubmit={handleSave} className="max-w-lg mx-auto p-8 space-y-5">
           {/* Connection Name */}
           <Field label="Connection Name" error={errors.name}>
@@ -337,7 +337,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
             <div
               className={`
                 flex items-start gap-2 px-4 py-3 rounded-lg text-sm
-                ${testStatus === "testing" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : ""}
+                ${testStatus === "testing" ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]" : ""}
                 ${testStatus === "success" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : ""}
                 ${testStatus === "error" ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300" : ""}
               `}
@@ -356,7 +356,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           )}
 
           {/* ── Actions ─────────────────────────────────── */}
-          <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 pt-8">
             <button
               type="button"
               onClick={testConnection}
@@ -375,8 +375,8 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
               className="
                 flex-1 inline-flex items-center justify-center gap-2
                 px-4 py-2.5 text-sm font-medium rounded-lg
-                bg-blue-500 text-white
-                hover:bg-blue-600 transition-colors
+                bg-[var(--s3-accent-active)] text-white
+                hover:bg-[var(--s3-accent-hover)] transition-colors
               "
             >
               <Save size={15} />

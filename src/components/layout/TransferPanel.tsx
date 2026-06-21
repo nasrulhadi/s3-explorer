@@ -94,7 +94,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
         {isActive && (
           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-200"
+              className="h-full bg-[var(--s3-accent-active)] rounded-full transition-all duration-200"
               style={{ width: transfer.totalBytes > 0 ? `${progress}%` : "30%" }}
             />
           </div>
@@ -168,7 +168,7 @@ export default function TransferPanel() {
         <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           Transfers
           {activeCount > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full">
+            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] rounded-full">
               {activeCount}
             </span>
           )}

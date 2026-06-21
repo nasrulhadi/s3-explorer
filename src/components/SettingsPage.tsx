@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
 import { useSettingsStore, type ThemeMode } from "../store/settingsStore";
+import { ACCENT_COLORS } from "../lib/accentColors";
 import buymeacoffee from "../assets/buymeacoffee.png";
 
 // GitHub icon (inline SVG since it might not be in lucide-react)
@@ -50,7 +52,7 @@ function ToggleRow({
         className={`
           relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full
           transition-colors duration-200 ease-in-out
-          ${checked ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}
+          ${checked ? "bg-[var(--s3-accent-active)]" : "bg-gray-300 dark:bg-gray-600"}
         `}
       >
         <span
@@ -94,7 +96,7 @@ function SelectRow({
         className="
           text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5
           text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 outline-none
-          focus:border-blue-500 focus:ring-1 focus:ring-blue-100 dark:focus:ring-blue-900
+          focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
           transition-all cursor-pointer
         "
       >
@@ -108,15 +110,68 @@ function SelectRow({
   );
 }
 
+// ─── Accent color select with preview ──────────────────────
+
+function AccentColorSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const theme = useSettingsStore((s) => s.theme);
+  const [systemDark, setSystemDark] = useState(
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+
+  // Listen to system theme changes when theme === "system"
+  useEffect(() => {
+    if (theme !== "system") return;
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
+
+  const isDark = theme === "dark" || (theme === "system" && systemDark);
+  const mode = isDark ? "dark" : "light";
+
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div className="min-w-0 flex-1 pr-4">
+        <div className="text-sm text-gray-700 dark:text-gray-200">{label}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        {ACCENT_COLORS.map((color) => (
+          <button
+            key={color.id}
+            onClick={() => onChange(color.id)}
+            title={color.label}
+            className={`
+              w-6 h-6 rounded-full transition-all
+              ${value === color.id ? "ring-2 ring-offset-2 ring-blue-500" : "hover:scale-110"}
+            `}
+            style={{ backgroundColor: color[mode].base }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────
 
 export default function SettingsPage({ onDone }: SettingsPageProps) {
   const store = useSettingsStore();
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[var(--s3-window-bg)]">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* ── Page header ──────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
+      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-gray-700 bg-[var(--s3-window-bg)] shrink-0 rounded-tl-xl">
         <button
           onClick={onDone}
           className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -128,7 +183,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       </div>
 
       {/* ── Scrollable content ──────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
         <div className="max-w-lg mx-auto p-8 space-y-8">
 
           {/* ── General ─────────────────────────────────── */}
@@ -161,6 +216,11 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   { value: "dark", label: "Dark" },
                 ]}
                 onChange={(v) => store.setTheme(v as ThemeMode)}
+              />
+              <AccentColorSelect
+                label="Accent Color"
+                value={store.accentColor}
+                onChange={store.setAccentColor}
               />
             </div>
           </section>

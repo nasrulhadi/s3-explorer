@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.0.2] - 2026-06-21
+
+### Added
+- **Accent Color System**: Customizable accent colors with 5 soft pastel options
+  - Blue, Green, Yellow, Brown, Stone (default: Stone)
+  - Light and dark mode support with adaptive colors
+  - Settings page dropdown with color preview circles
+  - Extensible configuration in `src/lib/accentColors.ts`
+  - CSS variables: `--s3-accent-base`, `--s3-accent-hover`, `--s3-accent-active`, `--s3-accent-text`
+
+### Changed
+- **UI Components**: Updated all components to use accent color system
+  - Sidebar active connection background
+  - Toolbar buttons and breadcrumb hover states
+  - Toggle switches in Settings page
+  - FileList selected items and sort arrows
+  - TransferPanel progress bar and badges
+  - Context menu highlight states
+  - Search input focus rings
+  - Welcome screen cloud icon and button
+  - ConnectionFormPage input focus and buttons
+
+### Fixed
+- **Accent Color Reactivity**: Fixed dropdown not updating when theme changes
+  - Now reactive to Light/Dark theme switches
+  - Properly tracks system theme changes via media query listener
+  - Uses `useState` + `useEffect` for real-time updates
+- **Bucket Name Dark Mode**: Fixed text visibility in dark mode
+  - Changed from hardcoded `text-white/60` to `text-[var(--s3-accent-text)]/60`
+  - Now adapts to accent color and theme automatically
+- **System Theme Tracking**: Added media query listener for OS theme changes
+  - Accent colors now update when system theme changes (e.g., sunset)
+  - Proper cleanup on component unmount
+
+---
+
 ## [1.0.1] - 2026-06-21
 
 ### UI

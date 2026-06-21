@@ -15,6 +15,7 @@ import { useNavigationStore } from "./store/navigationStore";
 import { useSettingsStore } from "./store/settingsStore";
 import { useConnectivity } from "./hooks/useConnectivity";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { getAccentColor } from "./lib/accentColors";
 import "./App.css";
 
 // ─── Inner layout (must be inside QueryClientProvider) ──────
@@ -78,6 +79,20 @@ function AppLayout() {
       return () => mq.removeEventListener("change", handler);
     }
   }, [theme]);
+
+  // ── Accent Color: apply CSS variables ──────────────────────
+  const accentColorId = useSettingsStore((s) => s.accentColor);
+  useEffect(() => {
+    const root = document.documentElement;
+    const color = getAccentColor(accentColorId);
+    const isDark = root.classList.contains("dark");
+    const mode = isDark ? "dark" : "light";
+
+    root.style.setProperty("--s3-accent-base", color[mode].base);
+    root.style.setProperty("--s3-accent-hover", color[mode].hover);
+    root.style.setProperty("--s3-accent-active", color[mode].active);
+    root.style.setProperty("--s3-accent-text", color[mode].text);
+  }, [accentColorId, theme]);
 
   // ── Callbacks ──────────────────────────────────────────────
 
@@ -268,7 +283,7 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
       {/* Cloud icon */}
-      <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-6">
+      <div className="w-20 h-20 rounded-2xl bg-[var(--s3-accent-base)] flex items-center justify-center mb-6">
         <svg
           width="40"
           height="40"
@@ -278,7 +293,7 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-blue-500"
+          className="text-[var(--s3-accent-text)]"
         >
           <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
         </svg>
@@ -297,8 +312,8 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
         onClick={onAddConnection}
         className="
           mt-8 inline-flex items-center gap-2 px-5 py-2.5
-          text-sm font-medium text-white bg-blue-500 rounded-lg
-          hover:bg-blue-600 active:bg-blue-700
+          text-sm font-medium text-white bg-[var(--s3-accent-active)] rounded-lg
+          hover:bg-[var(--s3-accent-hover)] active:bg-[var(--s3-accent-hover)]
           transition-colors shadow-sm
         "
       >
