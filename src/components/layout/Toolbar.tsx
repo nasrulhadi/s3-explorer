@@ -91,7 +91,7 @@ export default function Toolbar({
   const hasBucketSelected = !!connectionId && !!bucket;
 
   return (
-    <div className="flex items-center gap-2 px-4 h-14 bg-[var(--s3-toolbar-bg)] border-b border-[var(--s3-toolbar-border)] shrink-0">
+    <div className="flex items-center gap-2 px-4 h-14 bg-[var(--s3-toolbar-bg)] border-b border-[var(--s3-toolbar-border)] shrink-0 rounded-tl-xl">
       {/* ── Back button ──────────────────────────────────── */}
       <button
         onClick={onBack}

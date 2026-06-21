@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast, Toaster } from "sonner";
-import { Wifi, WifiOff } from "lucide-react";
+import { Circle } from "lucide-react";
 import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
@@ -212,7 +212,7 @@ function AppLayout() {
             />
 
             {/* Right panel */}
-            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[var(--s3-sidebar-bg)]">
               {view === "addConnection" || view === "editConnection" ? (
                 <ConnectionFormPage
                   onDone={closeConnectionForm}
@@ -243,7 +243,7 @@ function AppLayout() {
                   />
 
                   {/* Content area */}
-                  <main className="flex-1 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
+                  <main className="flex-1 overflow-hidden bg-[var(--s3-window-bg)]" onContextMenu={(e) => e.preventDefault()}>
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (
@@ -327,17 +327,12 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
 
       {/* Connectivity indicator */}
       <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-        {isOnline ? (
-          <>
-            <Wifi size={14} className="text-green-500" />
-            <span>Connected</span>
-          </>
-        ) : (
-          <>
-            <WifiOff size={14} className="text-red-500" />
-            <span>No internet connection</span>
-          </>
-        )}
+        <Circle
+          size={8}
+          className={isOnline ? "text-green-500" : "text-red-500"}
+          fill="currentColor"
+        />
+        <span>{isOnline ? "Online" : "Offline"}</span>
       </div>
     </div>
   );
@@ -383,17 +378,12 @@ function EmptyState() {
 
       {/* Connectivity indicator */}
       <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-        {isOnline ? (
-          <>
-            <Wifi size={14} className="text-green-500" />
-            <span>Connected</span>
-          </>
-        ) : (
-          <>
-            <WifiOff size={14} className="text-red-500" />
-            <span>No internet connection</span>
-          </>
-        )}
+        <Circle
+          size={8}
+          className={isOnline ? "text-green-500" : "text-red-500"}
+          fill="currentColor"
+        />
+        <span>{isOnline ? "Online" : "Offline"}</span>
       </div>
     </div>
   );

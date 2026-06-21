@@ -7,9 +7,7 @@ import {
   FolderOpen,
   FileX,
   AlertCircle,
-  Wifi,
-  WifiOff,
-  RefreshCw,
+  Circle,
 } from "lucide-react";
 import { useS3 } from "../../hooks/useS3";
 import { useConnectivity } from "../../hooks/useConnectivity";
@@ -365,24 +363,25 @@ export default function FileList({ filterQuery }: FileListProps) {
             {/* Connectivity indicator */}
             <div
               className="flex items-center gap-1"
-              title={isOnline ? "Connected" : "No internet connection"}
+              title={isOnline ? "Online" : "Offline"}
             >
-              {isOnline ? (
-                <Wifi size={14} className="text-green-500" />
-              ) : (
-                <WifiOff size={14} className="text-red-500" />
-              )}
+              <Circle
+                size={8}
+                className={isOnline ? "text-green-500" : "text-red-500"}
+                fill="currentColor"
+              />
+              <span className="text-xs">{isOnline ? "Online" : "Offline"}</span>
             </div>
             {/* Activity indicator */}
             <div
               className="flex items-center gap-1"
               title={activityTooltip}
             >
-              <RefreshCw
+              <ArrowUpDown
                 size={14}
                 className={`${
                   isActivity
-                    ? "text-[var(--s3-accent)] animate-spin"
+                    ? "text-[var(--s3-accent)] animate-pulse"
                     : "text-[var(--s3-window-muted)] opacity-40"
                 }`}
               />

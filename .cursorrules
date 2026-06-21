@@ -1,0 +1,53 @@
+# S3 Explorer - AI Assistant Rules
+
+## Project Context
+- Desktop app for S3-compatible storage (AWS S3, MinIO, R2, B2)
+- Tech: Tauri v2 + React 18 + TypeScript + Tailwind CSS v4
+- State: Zustand v5 + TanStack Query v5
+- Language: Indonesian (user), English (code)
+
+## Key Conventions
+
+### Zustand (CRITICAL - Prevent Infinite Loops)
+```typescript
+// ✅ CORRECT - Memoize filtered/derived state
+const transfers = useTransferStore((s) => s.transfers);
+const active = useMemo(() => transfers.filter(t => t.active), [transfers]);
+
+// ❌ WRONG - Inline filter causes infinite loop
+const active = useTransferStore((s) => s.transfers.filter(t => t.active));
+```
+
+### Tailwind CSS
+- Use CSS variables: `bg-[var(--s3-sidebar-bg)]`
+- No dynamic classes (use static or style attribute)
+- Height: Use `h-screen`, `flex-1`, not `calc()`
+
+### S3 Operations
+- Use Tauri fetch: `import { fetch } from "@tauri-apps/plugin-http"`
+- Large files (>100MB): Use Rust commands via `invoke()`
+
+### Push Workflow
+When asked to push:
+1. Check commits: `git log v{last}..HEAD --oneline`
+2. Update CHANGELOG.md with new version section
+3. Commit changelog: `git commit -m "docs: update changelog for v{x.x.x}"`
+4. Create tag: `git tag -a v{x.x.x} -m "Release description"`
+5. Push: `git push origin main --tags`
+
+### UI Patterns
+- Connectivity: Green/red Circle dot + "Online"/"Offline"
+- Activity: ArrowUpDown icon with pulse animation
+- Pages for complex forms, modals for simple confirmations
+
+## Important Files
+- `CHANGELOG.md` - Release notes
+- `PROJECT.md` - Architecture overview
+- `CONVENTIONS.md` - Detailed guidelines
+- `src/App.tsx` - Main layout
+- `src/store/*.ts` - State management
+
+## Before Committing
+```bash
+pnpm tsc --noEmit && pnpm vite build
+```
