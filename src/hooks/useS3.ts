@@ -151,254 +151,239 @@ export function useS3() {
     });
   }
 
-  // ── Mutations ──────────────────────────────────────────────
+  // ── Mutations (pre-created at top level) ───────────────────
 
   /**
    * Download a file via presigned URL (browser-based).
    * For files > 100 MB the Rust command should be used instead.
    */
-  function downloadFile() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        key,
-      }: {
-        connectionId: string;
-        bucket: string;
-        key: string;
-      }): Promise<void> => {
-        const client = createS3Client(getConnection(connectionId));
-        const url = await getSignedUrl(
-          client,
-          new GetObjectCommand({ Bucket: bucket, Key: key }),
-          { expiresIn: 300 },
+  const downloadFile = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      key,
+    }: {
+      connectionId: string;
+      bucket: string;
+      key: string;
+    }): Promise<void> => {
+      const client = createS3Client(getConnection(connectionId));
+      const url = await getSignedUrl(
+        client,
+        new GetObjectCommand({ Bucket: bucket, Key: key }),
+        { expiresIn: 300 },
+      );
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(
+          `Download failed for "${key}": HTTP ${response.status} ${response.statusText}`,
         );
+      }
 
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(
-            `Download failed for "${key}": HTTP ${response.status} ${response.statusText}`,
-          );
-        }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const anchor = document.createElement("a");
-        anchor.href = blobUrl;
-        anchor.download = nameFromKey(key);
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(blobUrl);
-      },
-    });
-  }
+      const anchor = document.createElement("a");
+      anchor.href = blobUrl;
+      anchor.download = nameFromKey(key);
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(blobUrl);
+    },
+  });
 
   /**
    * Upload a single file to S3.
    * Automatically prepends the current prefix to the file name.
    */
-  function uploadFile() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        prefix,
-        file,
-      }: {
-        connectionId: string;
-        bucket: string;
-        prefix: string;
-        file: File;
-      }): Promise<void> => {
-        const client = createS3Client(getConnection(connectionId));
-        const key = `${prefix}${file.name}`;
+  const uploadFile = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      prefix,
+      file,
+    }: {
+      connectionId: string;
+      bucket: string;
+      prefix: string;
+      file: File;
+    }): Promise<void> => {
+      const client = createS3Client(getConnection(connectionId));
+      const key = `${prefix}${file.name}`;
 
-        const res = await client.send(
-          new PutObjectCommand({
-            Bucket: bucket,
-            Key: key,
-            Body: file,
-            ContentType: file.type || "application/octet-stream",
-          }),
+      const res = await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: file,
+          ContentType: file.type || "application/octet-stream",
+        }),
+      );
+
+      if (res.$metadata.httpStatusCode && res.$metadata.httpStatusCode >= 400) {
+        throw new Error(
+          `Upload failed for "${file.name}": server returned HTTP ${res.$metadata.httpStatusCode}`,
         );
-
-        if (res.$metadata.httpStatusCode && res.$metadata.httpStatusCode >= 400) {
-          throw new Error(
-            `Upload failed for "${file.name}": server returned HTTP ${res.$metadata.httpStatusCode}`,
-          );
-        }
-      },
-    });
-  }
+      }
+    },
+  });
 
   /**
    * Delete a single object or folder placeholder from S3.
    */
-  function deleteItem() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        key,
-      }: {
-        connectionId: string;
-        bucket: string;
-        key: string;
-      }): Promise<void> => {
-        const client = createS3Client(getConnection(connectionId));
-        const res = await client.send(
-          new DeleteObjectCommand({ Bucket: bucket, Key: key }),
-        );
+  const deleteItem = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      key,
+    }: {
+      connectionId: string;
+      bucket: string;
+      key: string;
+    }): Promise<void> => {
+      const client = createS3Client(getConnection(connectionId));
+      const res = await client.send(
+        new DeleteObjectCommand({ Bucket: bucket, Key: key }),
+      );
 
-        if (res.DeleteMarker === undefined && res.$metadata.httpStatusCode &&
-            res.$metadata.httpStatusCode >= 400) {
-          throw new Error(
-            `Delete failed for "${key}": server returned HTTP ${res.$metadata.httpStatusCode}`,
-          );
-        }
-      },
-    });
-  }
+      if (res.DeleteMarker === undefined && res.$metadata.httpStatusCode &&
+          res.$metadata.httpStatusCode >= 400) {
+        throw new Error(
+          `Delete failed for "${key}": server returned HTTP ${res.$metadata.httpStatusCode}`,
+        );
+      }
+    },
+  });
 
   /**
    * Create a virtual folder by putting an empty object whose key ends with "/".
    */
-  function createFolder() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        prefix,
-        folderName,
-      }: {
-        connectionId: string;
-        bucket: string;
-        prefix: string;
-        folderName: string;
-      }): Promise<void> => {
-        if (!folderName || folderName.includes("/")) {
-          throw new Error(
-            `Invalid folder name "${folderName}". Name must not be empty or contain "/".`,
-          );
-        }
-
-        const client = createS3Client(getConnection(connectionId));
-        const key = `${prefix}${folderName}/`;
-
-        await client.send(
-          new PutObjectCommand({ Bucket: bucket, Key: key, Body: "" }),
+  const createFolder = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      prefix,
+      folderName,
+    }: {
+      connectionId: string;
+      bucket: string;
+      prefix: string;
+      folderName: string;
+    }): Promise<void> => {
+      if (!folderName || folderName.includes("/")) {
+        throw new Error(
+          `Invalid folder name "${folderName}". Name must not be empty or contain "/".`,
         );
-      },
-    });
-  }
+      }
+
+      const client = createS3Client(getConnection(connectionId));
+      const key = `${prefix}${folderName}/`;
+
+      await client.send(
+        new PutObjectCommand({ Bucket: bucket, Key: key, Body: "" }),
+      );
+    },
+  });
 
   /**
    * Generate a presigned GET URL for an object (valid for 1 hour).
    */
-  function getPresignedUrl() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        key,
-      }: {
-        connectionId: string;
-        bucket: string;
-        key: string;
-      }): Promise<string> => {
-        const client = createS3Client(getConnection(connectionId));
-        return getSignedUrl(
-          client,
-          new GetObjectCommand({ Bucket: bucket, Key: key }),
-          { expiresIn: 3600 },
-        );
-      },
-    });
-  }
+  const getPresignedUrl = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      key,
+    }: {
+      connectionId: string;
+      bucket: string;
+      key: string;
+    }): Promise<string> => {
+      const client = createS3Client(getConnection(connectionId));
+      return getSignedUrl(
+        client,
+        new GetObjectCommand({ Bucket: bucket, Key: key }),
+        { expiresIn: 3600 },
+      );
+    },
+  });
 
   /**
    * Rename (move) an S3 object by copying it to a new key then deleting
    * the original. Works for files; for folders each child must be renamed
    * individually.
    */
-  function renameItem() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        oldKey,
-        newKey,
-      }: {
-        connectionId: string;
-        bucket: string;
-        oldKey: string;
-        newKey: string;
-      }): Promise<void> => {
-        if (oldKey === newKey) {
-          throw new Error("New name must be different from the current name.");
-        }
+  const renameItem = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      oldKey,
+      newKey,
+    }: {
+      connectionId: string;
+      bucket: string;
+      oldKey: string;
+      newKey: string;
+    }): Promise<void> => {
+      if (oldKey === newKey) {
+        throw new Error("New name must be different from the current name.");
+      }
 
-        const client = createS3Client(getConnection(connectionId));
+      const client = createS3Client(getConnection(connectionId));
 
-        // 1. Copy to new key
-        const copyRes = await client.send(
-          new CopyObjectCommand({
-            Bucket: bucket,
-            CopySource: encodeURIComponent(`${bucket}/${oldKey}`),
-            Key: newKey,
-          }),
+      // 1. Copy to new key
+      console.log("Rename:", { bucket, oldKey, newKey });
+      const copyRes = await client.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          CopySource: encodeURIComponent(`${bucket}/${oldKey}`),
+          Key: newKey,
+        }),
+      );
+
+      if (copyRes.$metadata.httpStatusCode &&
+          copyRes.$metadata.httpStatusCode >= 400) {
+        throw new Error(
+          `Rename failed at copy step for "${oldKey}": HTTP ${copyRes.$metadata.httpStatusCode}`,
         );
+      }
 
-        if (copyRes.$metadata.httpStatusCode &&
-            copyRes.$metadata.httpStatusCode >= 400) {
-          throw new Error(
-            `Rename failed at copy step for "${oldKey}": HTTP ${copyRes.$metadata.httpStatusCode}`,
-          );
-        }
-
-        // 2. Delete original
-        await client.send(
-          new DeleteObjectCommand({ Bucket: bucket, Key: oldKey }),
-        );
-      },
-    });
-  }
+      // 2. Delete original
+      await client.send(
+        new DeleteObjectCommand({ Bucket: bucket, Key: oldKey }),
+      );
+    },
+  });
 
   /**
    * Fetch object metadata (size, last-modified, content-type, etc.)
    * without downloading the body. Useful for "Get Info" dialogs.
    */
-  function headObject() {
-    return useMutation({
-      mutationFn: async ({
-        connectionId,
-        bucket,
-        key,
-      }: {
-        connectionId: string;
-        bucket: string;
-        key: string;
-      }) => {
-        const client = createS3Client(getConnection(connectionId));
-        const res = await client.send(
-          new HeadObjectCommand({ Bucket: bucket, Key: key }),
-        );
+  const headObject = useMutation({
+    mutationFn: async ({
+      connectionId,
+      bucket,
+      key,
+    }: {
+      connectionId: string;
+      bucket: string;
+      key: string;
+    }) => {
+      const client = createS3Client(getConnection(connectionId));
+      const res = await client.send(
+        new HeadObjectCommand({ Bucket: bucket, Key: key }),
+      );
 
-        return {
-          size: res.ContentLength,
-          lastModified: res.LastModified,
-          contentType: res.ContentType,
-          etag: res.ETag,
-          storageClass: res.StorageClass,
-        };
-      },
-    });
-  }
-
-  // ── Return ─────────────────────────────────────────────────
+      return {
+        size: res.ContentLength,
+        lastModified: res.LastModified,
+        contentType: res.ContentType,
+        etag: res.ETag,
+        storageClass: res.StorageClass,
+      };
+    },
+  });
 
   return {
     // Queries (return UseQueryResult)

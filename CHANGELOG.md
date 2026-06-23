@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.0] - 2026-06-21
+
+### Added
+- **Unified Context Menu**: Single-source right-click menu for items and empty areas
+  - Single file: Copy, Rename, Delete, Download, Get URL, Get Info
+  - Single folder: Copy, Rename, Delete, Download as ZIP (soon), Get Info
+  - Multi-select (2+ items): Copy, Delete, Download as ZIP (soon)
+  - Empty area: Copy, Paste, Upload, New Folder, Reload
+  - Selection-aware menu (single vs multi vs mixed)
+- **Delete Confirmation Modal**: Modal dialog for single and bulk delete
+  - Clicking outside or Cancel closes the modal
+  - Folder warning about permanent removal
+  - Bulk mode shows "Delete N Items"
+- **Rename Modal**: Replaced window.prompt with proper modal
+  - Pre-filled name, Enter/Escape support
+  - Dynamic title (Rename File / Rename Folder)
+  - Virtual folder detection with inline error message
+- **New Folder Modal**: Popup dialog for creating folders
+  - Input field with accent color focus ring
+  - Cancel/Create buttons with Enter support
+- **Clipboard Store**: Zustand store for copy/paste operations
+  - Copy selected items to clipboard
+  - Paste via S3 CopyObject
+
+### Changed
+- **Mutations Refactored**: All `useMutation` calls moved from lazy functions to top-level
+  - Fixed "Invalid hook call" error in delete/rename/download/URL/Info operations
+  - `deleteItem()`, `renameItem()` etc. → `deleteItem`, `renameItem` (no parens)
+- **CopySource Format**: Added leading slash for S3 CopyObject compatibility
+- **Selection/Context Reset**: State cleared after delete operations
+  - Selected keys reset on successful delete
+  - Context menu target reset to prevent stale menus
+- **Removed All Toast Notifications**: Success/error/info toasts removed
+  - Operations execute silently without visual feedback
+  - `sonner` toast library import removed from all files
+
+### Fixed
+- **Context Menu Priority**: Multi-select menu now shown before single-item menu
+- **Folder Key Computation**: Strip trailing slash before `lastIndexOf("/")`
+  - Fixed rename creating invalid paths like `folder/new-folder/`
+- **Delete Not Working**: Inline `onConfirm` avoids stale closure
+- **Virtual Folder Handling**: Pre-check with HeadObject before rename
+- **Old ContextMenu.tsx**: Removed orphaned file (no longer imported)
+
+---
+
 ## [1.0.2] - 2026-06-21
 
 ### Added

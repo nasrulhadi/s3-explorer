@@ -73,14 +73,14 @@ function ConnectionItem({
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           title="Edit connection"
-          className={`p-1 rounded hover:bg-white/20 dark:hover:bg-white/10 transition-colors ${isActive ? "text-white/70 hover:text-white" : "text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"}`}
+          className={`p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors ${isActive ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)]" : "text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"}`}
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Delete connection"
-          className={`p-1 rounded hover:bg-red-500/30 transition-colors ${isActive ? "text-white/70 hover:text-red-300" : "text-gray-500 hover:text-red-400"}`}
+          className={`p-1 rounded hover:bg-red-500/20 transition-colors ${isActive ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 dark:hover:text-red-400" : "text-gray-500 hover:text-red-600 dark:hover:text-red-400"}`}
         >
           <Trash2 size={13} />
         </button>

@@ -1,5 +1,6 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import * as ContextMenu from "@radix-ui/react-context-menu";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -8,15 +9,40 @@ import {
   FileX,
   AlertCircle,
   Circle,
+  Copy,
+  ClipboardPaste,
+  Upload,
+  FolderPlus,
+  RefreshCw,
+  Pencil,
+  Trash2,
+  Download,
+  Link,
+  Info,
+  Archive,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CopyObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { useS3 } from "../../hooks/useS3";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useTransferStore } from "../../store/transferStore";
+import { useClipboardStore } from "../../store/clipboardStore";
+import { createS3Client } from "../../lib/s3Client";
+import { useConnectionStore } from "../../store/connectionStore";
+import { formatFileSize } from "../../lib/utils";
 import type { S3Item, SortField, SortDirection } from "../../types";
 import FileRow, { ROW_HEIGHT, ROW_GRID } from "./FileRow";
 import FolderRow from "./FolderRow";
-import ItemContextMenu from "./ContextMenu";
+
+// ─── Shared menu styling ────────────────────────────────────
+
+const MENU_CONTENT =
+  "min-w-[180px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-50";
+const MENU_ITEM =
+  "flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md outline-none cursor-default select-none data-[highlighted]:bg-[var(--s3-accent-base)] data-[highlighted]:text-[var(--s3-accent-text)] data-[disabled]:opacity-40 data-[disabled]:pointer-events-none";
+const MENU_SEPARATOR = "h-px bg-gray-200 dark:bg-gray-700 my-1";
+const MENU_SHORTCUT = "ml-auto text-xs text-gray-400 dark:text-gray-500";
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -44,7 +70,14 @@ interface FileListProps {
 }
 
 export default function FileList({ filterQuery }: FileListProps) {
-  const { listObjects } = useS3();
+  const {
+    listObjects,
+    downloadFile,
+    getPresignedUrl,
+    renameItem,
+    deleteItem,
+    headObject,
+  } = useS3();
 
   // Navigation state from Zustand
   const connectionId = useNavigationStore((s) => s.connectionId);
@@ -57,11 +90,27 @@ export default function FileList({ filterQuery }: FileListProps) {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
   const [focusIndex, setFocusIndex] = useState<number>(-1);
+  const [contextTarget, setContextTarget] = useState<{ type: "item" | "empty"; item?: S3Item }>({ type: "empty" });
+  const [deleteTarget, setDeleteTarget] = useState<S3Item | null>(null);
+  const [bulkDeleteItems, setBulkDeleteItems] = useState<S3Item[] | null>(null);
+  const [renameTarget, setRenameTarget] = useState<S3Item | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
   // ── Internet connectivity tracking ─────────────────────────
   const isOnline = useConnectivity();
+
+  // ── Clipboard state ────────────────────────────────────────
+  const clipboard = useClipboardStore();
+  const connections = useConnectionStore((s) => s.connections);
+  const queryClient = useQueryClient();
+  const getConnection = useCallback(
+    (id: string) => connections.find((c) => c.id === id)!,
+    [connections],
+  );
 
   // ── Data query ─────────────────────────────────────────────
   const { data, isLoading, isFetching, isError, error } = listObjects(
@@ -203,6 +252,247 @@ export default function FileList({ filterQuery }: FileListProps) {
     [displayedItems, focusIndex, openItem],
   );
 
+  // ── Clipboard: Copy selected items ────────────────────────
+  const handleCopy = useCallback(() => {
+    if (selectedKeys.size === 0) return;
+    const items = displayedItems
+      .filter((i) => selectedKeys.has(i.key))
+      .map((i) => ({ key: i.key, name: i.name, type: i.type as "file" | "folder" }));
+    clipboard.copy(items, bucket!, prefix);
+  }, [selectedKeys, displayedItems, clipboard, bucket, prefix]);
+
+  // ── Clipboard: Paste items ────────────────────────────────
+  const handlePaste = useCallback(async () => {
+    if (clipboard.items.length === 0) {
+      return;
+    }
+    if (!connectionId || !bucket) return;
+
+    const client = createS3Client(getConnection(connectionId));
+    let successCount = 0;
+
+    for (const item of clipboard.items) {
+      try {
+        const sourceKey = item.key;
+        const destKey = `${prefix}${item.name}`;
+        await client.send(
+          new CopyObjectCommand({
+            Bucket: bucket,
+            CopySource: encodeURIComponent(`${clipboard.sourceBucket}/${sourceKey}`),
+            Key: destKey,
+          }),
+        );
+        successCount++;
+      } catch (err) {
+        // Paste failed silently
+      }
+    }
+
+    if (successCount > 0) {
+      queryClient.invalidateQueries({
+        queryKey: ["s3", "objects", connectionId, bucket, prefix],
+      });
+    }
+  }, [clipboard, connectionId, bucket, prefix, getConnection, queryClient]);
+
+  // ── New Folder ────────────────────────────────────────────
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderCreating, setNewFolderCreating] = useState(false);
+
+  const handleNewFolder = useCallback(() => {
+    if (!connectionId || !bucket) return;
+    setNewFolderName("");
+    setNewFolderOpen(true);
+  }, [connectionId, bucket]);
+
+  const confirmNewFolder = useCallback(async () => {
+    if (!connectionId || !bucket || !newFolderName.trim()) return;
+
+    setNewFolderCreating(true);
+    try {
+      const client = createS3Client(getConnection(connectionId));
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: `${prefix}${newFolderName.trim()}/`,
+          Body: "",
+        }),
+      );
+      setNewFolderOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["s3", "objects", connectionId, bucket, prefix],
+      });
+    } catch (err) {
+      // Silently fail - no notification needed
+    } finally {
+      setNewFolderCreating(false);
+    }
+  }, [connectionId, bucket, prefix, newFolderName, getConnection, queryClient]);
+
+  // ── Refresh ───────────────────────────────────────────────
+  const handleRefresh = useCallback(() => {
+    if (!connectionId || !bucket) return;
+    queryClient.invalidateQueries({
+      queryKey: ["s3", "objects", connectionId, bucket, prefix],
+    });
+  }, [queryClient, connectionId, bucket, prefix]);
+
+  // ── Upload (placeholder) ────────────────────────────────
+  const handleUpload = useCallback(() => {
+    // Upload: drag & drop files onto the main area
+  }, []);
+
+  // ── Rename ────────────────────────────────────────────────
+  const handleRename = useCallback((item: S3Item) => {
+    setRenameError(null);
+    setRenameName(item.name);
+    setRenameTarget(item);
+  }, []);
+
+  const confirmRename = useCallback(async () => {
+    if (!connectionId || !bucket || !renameTarget || !renameName.trim()) return;
+    if (renameName.trim() === renameTarget.name) {
+      setRenameTarget(null);
+      return;
+    }
+
+    setRenameLoading(true);
+    setRenameError(null);
+
+    // For folders, check if it's a real object first
+    if (renameTarget.type === "folder") {
+      try {
+        await headObject.mutateAsync({ connectionId, bucket, key: renameTarget.key });
+      } catch (_) {
+        setRenameError("This folder can't be renamed — it might be a virtual folder. Use New Folder to create a real folder first.");
+        setRenameLoading(false);
+        return;
+      }
+    }
+    // Strip trailing slash for folder keys, then rebuild path prefix
+    const baseKey = renameTarget.key.endsWith("/") ? renameTarget.key.slice(0, -1) : renameTarget.key;
+    const lastSlash = baseKey.lastIndexOf("/");
+    const newKeyBase = lastSlash === -1 ? renameName.trim() : baseKey.slice(0, lastSlash + 1) + renameName.trim();
+    const newKey = renameTarget.key.endsWith("/") ? newKeyBase + "/" : newKeyBase;
+
+    try {
+      await renameItem
+        .mutateAsync({ connectionId, bucket, oldKey: renameTarget.key, newKey });
+      setRenameTarget(null);
+      queryClient.invalidateQueries({
+        queryKey: ["s3", "objects", connectionId, bucket, prefix],
+      });
+    } catch (err) {
+      console.error("Rename failed:", err);
+    } finally {
+      setRenameLoading(false);
+    }
+  }, [connectionId, bucket, renameTarget, renameName, renameItem, queryClient, prefix]);
+
+  // ── Delete (opens modal) ──────────────────────────────────
+  const handleDelete = useCallback((item: S3Item) => {
+    setDeleteTarget(item);
+  }, []);
+
+  // ── Bulk delete (multi-select) ─────────────────────────────
+  const handleBulkDelete = useCallback((items: S3Item[]) => {
+    if (!connectionId || !bucket || items.length === 0) return;
+
+    Promise.all(
+      items.map((item) =>
+        deleteItem.mutateAsync({ connectionId, bucket, key: item.key }),
+      ),
+    ).then(() => {
+      setSelectedKeys(new Set());
+      setContextTarget({ type: "empty" });
+      queryClient.invalidateQueries({
+        queryKey: ["s3", "objects", connectionId, bucket, prefix],
+      });
+    });
+  }, [connectionId, bucket, deleteItem, queryClient, prefix]);
+
+  // ── Download ──────────────────────────────────────────────
+  const handleDownloadItem = useCallback((item: S3Item) => {
+    if (!connectionId || !bucket) return;
+    downloadFile.mutateAsync({ connectionId, bucket, key: item.key });
+  }, [connectionId, bucket, downloadFile]);
+
+  // ── Get URL (presigned) ───────────────────────────────────
+  const handleGetUrl = useCallback((item: S3Item) => {
+    if (!connectionId || !bucket) return;
+    getPresignedUrl
+      .mutateAsync({ connectionId, bucket, key: item.key })
+      .then(async (url) => {
+        await navigator.clipboard.writeText(url);
+      });
+  }, [connectionId, bucket, getPresignedUrl]);
+
+  // ── Get Info ──────────────────────────────────────────────
+  const handleGetInfo = useCallback((item: S3Item) => {
+    if (!connectionId || !bucket) return;
+    headObject
+      .mutateAsync({ connectionId, bucket, key: item.key })
+      .then((meta) => {
+        const info = [
+          `Name: ${item.name}`,
+          `Key: ${item.key}`,
+          `Type: ${item.type === "folder" ? "Folder" : "File"}`,
+        ];
+        if (meta.size !== undefined) {
+          info.push(`Size: ${formatFileSize(meta.size)}`);
+        }
+        if (meta.lastModified) {
+          info.push(`Last Modified: ${meta.lastModified.toLocaleString()}`);
+        }
+        if (meta.contentType) {
+          info.push(`Content Type: ${meta.contentType}`);
+        }
+        if (meta.storageClass) {
+          info.push(`Storage Class: ${meta.storageClass}`);
+        }
+        // Info fetched successfully — logged to console for debugging
+        console.log(info.join("\n"));
+      });
+  }, [connectionId, bucket, headObject]);
+
+    // ── Unified context menu: determine what to show ──────────
+  const menuItems = useMemo(() => {
+    // Determine items to show actions for:
+    // - If right-clicked on an item that IS selected → use full selection
+    // - If right-clicked on an item that is NOT selected → use only that item
+    // - If right-clicked on empty area → use current selection
+    let items: S3Item[];
+    if (contextTarget.type === "item" && contextTarget.item) {
+      if (selectedKeys.has(contextTarget.item.key)) {
+        items = displayedItems.filter((i) => selectedKeys.has(i.key));
+      } else {
+        items = [contextTarget.item];
+      }
+    } else {
+      items = displayedItems.filter((i) => selectedKeys.has(i.key));
+    }
+
+    const count = items.length;
+    const isSingle = count === 1;
+    const hasFile = items.some((i) => i.type === "file");
+    const hasFolder = items.some((i) => i.type === "folder");
+    const isSingleFile = isSingle && items[0]?.type === "file";
+    const isSingleFolder = isSingle && items[0]?.type === "folder";
+    const isMixed = hasFile && hasFolder;
+
+    return {
+      isItem: contextTarget.type === "item" && count === 1,
+      isItemMulti: contextTarget.type === "item" && count > 1,
+      isSingleFile,
+      isSingleFolder,
+      isMixed,
+      count,
+      items,
+    };
+  }, [selectedKeys, displayedItems, contextTarget]);
+
+
   // ── Sort header helper ─────────────────────────────────────
   function SortIcon({ field }: { field: SortField }) {
     if (sortField !== field) {
@@ -282,111 +572,563 @@ export default function FileList({ filterQuery }: FileListProps) {
 
   // ── Normal: virtualized list ───────────────────────────────
   return (
-    <div
-      className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden"
-      onKeyDown={handleKeyDown}
-      onContextMenu={(e) => e.preventDefault()}
-      tabIndex={-1}
-    >
-      {/* ── Column header ────────────────────────────────── */}
-      <ColumnHeader
-        sortField={sortField}
-        sortDir={sortDir}
-        onToggleSort={toggleSort}
-        SortIcon={SortIcon}
-      />
-
-      {/* ── Virtual scroll container ─────────────────────── */}
-      <div ref={parentRef} className="flex-1 overflow-auto outline-none">
+    <>
+      <ContextMenu.Root>
         <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
+          className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden"
+          onKeyDown={handleKeyDown}
+          onContextMenu={(e) => e.preventDefault()}
+          tabIndex={-1}
         >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const item = displayedItems[virtualRow.index];
-            const isSelected = selectedKeys.has(item.key);
-            const isFocused = virtualRow.index === focusIndex;
+          {/* ── Column header ────────────────────────────────── */}
+          <ColumnHeader
+            sortField={sortField}
+            sortDir={sortDir}
+            onToggleSort={toggleSort}
+            SortIcon={SortIcon}
+          />
 
-            return (
-              <ItemContextMenu item={item}>
-                <div
-                  key={item.key}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  className="border-b border-[var(--s3-window-border)]"
-                >
-                  {item.type === "folder" ? (
-                    <FolderRow
-                      item={item}
-                      isSelected={isSelected}
-                      isFocused={isFocused}
-                      onSelect={toggleSelect}
-                      onOpen={openFolder}
-                    />
-                  ) : (
-                    <FileRow
-                      item={item}
-                      isSelected={isSelected}
-                      isFocused={isFocused}
-                      onSelect={toggleSelect}
-                    />
-                  )}
-                </div>
-              </ItemContextMenu>
-            );
-          })}
-        </div>
-      </div>
+          {/* ── Virtual scroll container ─────────────────────── */}
+          <ContextMenu.Trigger asChild>
+            <div ref={parentRef} className="flex-1 overflow-auto outline-none">
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = displayedItems[virtualRow.index];
+                  const isSelected = selectedKeys.has(item.key);
+                  const isFocused = virtualRow.index === focusIndex;
 
-      {/* ── Status bar ───────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
-        <span>
-          {displayedItems.length} item{displayedItems.length !== 1 ? "s" : ""}
-          {filterQuery ? ` (filtered)` : ""}
-        </span>
-        <div className="flex items-center gap-3">
-          {selectedKeys.size > 0 && (
-            <span className="text-[var(--s3-accent-text)] font-medium">
-              {selectedKeys.size} selected
-            </span>
-          )}
-          <div className="flex items-center gap-2 w-20 justify-end">
-            {/* Connectivity indicator */}
-            <div
-              className="flex items-center gap-1"
-              title={isOnline ? "Online" : "Offline"}
-            >
-              <Circle
-                size={8}
-                className={isOnline ? "text-green-500" : "text-red-500"}
-                fill="currentColor"
-              />
-              <span className="text-xs">{isOnline ? "Online" : "Offline"}</span>
+                  return (
+                    <div
+                      key={item.key}
+                      data-item-key={item.key}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      className="border-b border-[var(--s3-window-border)]"
+                      onContextMenu={() => setContextTarget({ type: "item", item })}
+                    >
+                      {item.type === "folder" ? (
+                        <FolderRow
+                          item={item}
+                          isSelected={isSelected}
+                          isFocused={isFocused}
+                          onSelect={toggleSelect}
+                          onOpen={openFolder}
+                        />
+                      ) : (
+                        <FileRow
+                          item={item}
+                          isSelected={isSelected}
+                          isFocused={isFocused}
+                          onSelect={toggleSelect}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            {/* Activity indicator */}
-            <div
-              className="flex items-center gap-1"
-              title={activityTooltip}
-            >
-              <ArrowUpDown
-                size={14}
-                className={`${
-                  isActivity
-                    ? "text-[var(--s3-accent-text)] animate-pulse"
-                    : "text-[var(--s3-window-muted)] opacity-40"
-                }`}
-              />
+          </ContextMenu.Trigger>
+
+          {/* ── Status bar ───────────────────────────────────── */}
+          <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
+            <span>
+              {displayedItems.length} item{displayedItems.length !== 1 ? "s" : ""}
+              {filterQuery ? ` (filtered)` : ""}
+            </span>
+            <div className="flex items-center gap-3">
+              {selectedKeys.size > 0 && (
+                <span className="text-[var(--s3-accent-text)] font-medium">
+                  {selectedKeys.size} selected
+                </span>
+              )}
+              <div className="flex items-center gap-2 w-20 justify-end">
+                {/* Connectivity indicator */}
+                <div
+                  className="flex items-center gap-1"
+                  title={isOnline ? "Online" : "Offline"}
+                >
+                  <Circle
+                    size={8}
+                    className={isOnline ? "text-green-500" : "text-red-500"}
+                    fill="currentColor"
+                  />
+                  <span className="text-xs">{isOnline ? "Online" : "Offline"}</span>
+                </div>
+                {/* Activity indicator */}
+                <div
+                  className="flex items-center gap-1"
+                  title={activityTooltip}
+                >
+                  <ArrowUpDown
+                    size={14}
+                    className={`${
+                      isActivity
+                        ? "text-[var(--s3-accent-text)] animate-pulse"
+                        : "text-[var(--s3-window-muted)] opacity-40"
+                    }`}
+                  />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Unified context menu ────────────────────────── */}
+        <ContextMenu.Portal>
+          <ContextMenu.Content className={MENU_CONTENT}>
+            {/* ── Unified context menu ──────────────────────── */}
+            {menuItems.isItemMulti ? (
+              <>
+                <ContextMenu.Item className={MENU_ITEM} disabled={selectedKeys.size === 0} onSelect={handleCopy}>
+                  <Copy size={15} /> Copy <span className={MENU_SHORTCUT}>{menuItems.count}</span>
+                </ContextMenu.Item>
+                <ContextMenu.Item className={MENU_ITEM} onSelect={() => {
+                  setBulkDeleteItems(menuItems.items);
+                }}>
+                  <Trash2 size={15} /> Delete <span className={MENU_SHORTCUT}>{menuItems.count}</span>
+                </ContextMenu.Item>
+                {!menuItems.isMixed && (
+                  <>
+                    <ContextMenu.Separator className={MENU_SEPARATOR} />
+                    <ContextMenu.Item className={MENU_ITEM} disabled>
+                      <Archive size={15} /> Download as ZIP <span className={MENU_SHORTCUT}>soon</span>
+                    </ContextMenu.Item>
+                  </>
+                )}
+              </>
+            ) : menuItems.isItem ? (
+              menuItems.isSingleFile ? (
+                <>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={handleCopy}>
+                    <Copy size={15} /> Copy
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleRename(menuItems.items[0])}>
+                    <Pencil size={15} /> Rename
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleDelete(menuItems.items[0])}>
+                    <Trash2 size={15} /> Delete
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator className={MENU_SEPARATOR} />
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleDownloadItem(menuItems.items[0])}>
+                    <Download size={15} /> Download
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleGetUrl(menuItems.items[0])}>
+                    <Link size={15} /> Get URL
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator className={MENU_SEPARATOR} />
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleGetInfo(menuItems.items[0])}>
+                    <Info size={15} /> Get Info
+                  </ContextMenu.Item>
+                </>
+              ) : (
+                <>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={handleCopy}>
+                    <Copy size={15} /> Copy
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleRename(menuItems.items[0])}>
+                    <Pencil size={15} /> Rename
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleDelete(menuItems.items[0])}>
+                    <Trash2 size={15} /> Delete
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator className={MENU_SEPARATOR} />
+                  <ContextMenu.Item className={MENU_ITEM} disabled>
+                    <Archive size={15} /> Download as ZIP <span className={MENU_SHORTCUT}>soon</span>
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator className={MENU_SEPARATOR} />
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleGetInfo(menuItems.items[0])}>
+                    <Info size={15} /> Get Info
+                  </ContextMenu.Item>
+                </>
+              )
+            ) : (
+              <>
+                {/* ── Empty area context ──────────────────────── */}
+                <ContextMenu.Item
+                  className={MENU_ITEM}
+                  disabled={selectedKeys.size === 0}
+                  onSelect={handleCopy}
+                >
+                  <Copy size={15} />
+                  Copy
+                  <span className={MENU_SHORTCUT}>{selectedKeys.size > 0 ? `${selectedKeys.size}` : ""}</span>
+                </ContextMenu.Item>
+                <ContextMenu.Item
+                  className={MENU_ITEM}
+                  disabled={clipboard.items.length === 0}
+                  onSelect={handlePaste}
+                >
+                  <ClipboardPaste size={15} />
+                  Paste
+                </ContextMenu.Item>
+                <ContextMenu.Separator className={MENU_SEPARATOR} />
+                <ContextMenu.Item className={MENU_ITEM} onSelect={handleUpload}>
+                  <Upload size={15} />
+                  Upload
+                  <span className={MENU_SHORTCUT}>Ctrl+U</span>
+                </ContextMenu.Item>
+                <ContextMenu.Item className={MENU_ITEM} onSelect={handleNewFolder}>
+                  <FolderPlus size={15} />
+                  New Folder
+                  <span className={MENU_SHORTCUT}>Ctrl+N</span>
+                </ContextMenu.Item>
+                <ContextMenu.Separator className={MENU_SEPARATOR} />
+                <ContextMenu.Item className={MENU_ITEM} onSelect={handleRefresh}>
+                  <RefreshCw size={15} />
+                  Reload
+                  <span className={MENU_SHORTCUT}>F5</span>
+                </ContextMenu.Item>
+              </>
+            )}
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+
+      {/* ── New Folder Modal ──────────────────────────────── */}
+      <NewFolderModal
+        open={newFolderOpen}
+        name={newFolderName}
+        creating={newFolderCreating}
+        onNameChange={setNewFolderName}
+        onConfirm={confirmNewFolder}
+        onCancel={() => setNewFolderOpen(false)}
+      />
+
+      {/* ── Delete Confirmation Modal ────────────────────────── */}
+      <DeleteConfirmModal
+        open={deleteTarget !== null || bulkDeleteItems !== null}
+        item={deleteTarget}
+        bulkCount={bulkDeleteItems?.length ?? 0}
+        onConfirm={async () => {
+          if (deleteTarget) {
+            const target = deleteTarget;
+            if (!connectionId || !bucket || !target) return;
+            try {
+              await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+              setDeleteTarget(null);
+              setSelectedKeys(new Set());
+              setContextTarget({ type: "empty" });
+              queryClient.invalidateQueries({
+                queryKey: ["s3", "objects", connectionId, bucket, prefix],
+              });
+            } catch (_) {
+              setDeleteTarget(null);
+            }
+          } else if (bulkDeleteItems) {
+            handleBulkDelete(bulkDeleteItems);
+            setBulkDeleteItems(null);
+          }
+        }}
+        onCancel={() => {
+          setDeleteTarget(null);
+          setBulkDeleteItems(null);
+        }}
+      />
+
+      {/* ── Rename Modal ──────────────────────────────────── */}
+      <RenameModal
+        open={renameTarget !== null}
+        item={renameTarget}
+        name={renameName}
+        loading={renameLoading}
+        error={renameError}
+        onNameChange={setRenameName}
+        onConfirm={confirmRename}
+        onCancel={() => {
+          setRenameError(null);
+          setRenameTarget(null);
+        }}
+      />
+    </>
+  );
+}
+
+// ─── New Folder Modal ────────────────────────────
+function NewFolderModal({
+  open,
+  name,
+  creating,
+  onNameChange,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  name: string;
+  creating: boolean;
+  onNameChange: (value: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+            New Folder
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Enter a name for the new folder.
+          </p>
+        </div>
+
+        {/* Input */}
+        <div className="px-5 pb-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && name.trim() && !creating) {
+                onConfirm();
+              }
+              if (e.key === "Escape") onCancel();
+            }}
+            placeholder="Folder name"
+            autoFocus
+            className="
+              w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+              outline-none focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+              bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200
+              placeholder-gray-400 dark:placeholder-gray-500
+              transition-all
+            "
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 px-5 pb-5">
+          <button
+            onClick={onCancel}
+            disabled={creating}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              border border-gray-300 dark:border-gray-600
+              text-gray-700 dark:text-gray-200
+              hover:bg-gray-50 dark:hover:bg-gray-700
+              transition-colors
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!name.trim() || creating}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              bg-[var(--s3-accent-active)] text-white
+              hover:bg-[var(--s3-accent-hover)]
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors
+            "
+          >
+            {creating ? "Creating…" : "Create"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Rename Modal ────────────────────────────────
+function RenameModal({
+  open,
+  item,
+  name,
+  loading,
+  error,
+  onNameChange,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  item: S3Item | null;
+  name: string;
+  loading: boolean;
+  error?: string | null;
+  onNameChange: (value: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open || !item) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+            Rename {item.type === "folder" ? "Folder" : "File"}
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Enter a new name for <strong>{item.name}</strong>.
+          </p>
+        </div>
+
+        {/* Input */}
+        <div className="px-5 pb-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && name.trim() && !loading) {
+                onConfirm();
+              }
+              if (e.key === "Escape") onCancel();
+            }}
+            placeholder="New name"
+            autoFocus
+            className="
+              w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+              outline-none focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+              bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200
+              placeholder-gray-400 dark:placeholder-gray-500
+              transition-all
+            "
+          />
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="px-5 pb-4">
+            <p className="text-xs text-red-500 dark:text-red-400 leading-relaxed">
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 px-5 pb-5">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              border border-gray-300 dark:border-gray-600
+              text-gray-700 dark:text-gray-200
+              hover:bg-gray-50 dark:hover:bg-gray-700
+              transition-colors
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!name.trim() || loading}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              bg-[var(--s3-accent-active)] text-white
+              hover:bg-[var(--s3-accent-hover)]
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors
+            "
+          >
+            {loading ? "Renaming…" : "Rename"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Confirmation Modal ───────────────────
+function DeleteConfirmModal({
+  open,
+  item,
+  bulkCount,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  item: S3Item | null;
+  bulkCount?: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+  const isBulk = bulkCount && bulkCount > 0 && !item;
+  if (!isBulk && !item) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-red-600 dark:text-red-400">
+            {isBulk ? `Delete ${bulkCount} Items` : `Delete ${item!.type === "folder" ? "Folder" : "File"}`}
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+            {isBulk ? (
+              <span>Are you sure you want to delete <strong>{bulkCount} items</strong>?</span>
+            ) : (
+              <>
+                Are you sure you want to delete <strong>{item!.name}</strong>?
+                {item!.type === "folder" && (
+                  <span className="block mt-1">All contents inside will be permanently removed.</span>
+                )}
+              </>
+            )}
+            <span className="block mt-1">This action cannot be undone.</span>
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 px-5 pb-5">
+          <button
+            onClick={onCancel}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              border border-gray-300 dark:border-gray-600
+              text-gray-700 dark:text-gray-200
+              hover:bg-gray-50 dark:hover:bg-gray-700
+              transition-colors
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="
+              px-4 py-2 text-sm font-medium rounded-lg
+              bg-red-600 hover:bg-red-700 text-white
+              transition-colors
+            "
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

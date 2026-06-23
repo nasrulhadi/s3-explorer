@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save } from "lucide-react";
 import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { toast } from "sonner";
 import { createS3Client } from "../lib/s3Client";
 import { useConnectionStore } from "../store/connectionStore";
 import { useNavigationStore } from "../store/navigationStore";
@@ -195,10 +194,10 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           useConnectionStore.getState().setActiveConnection(newId);
           useNavigationStore.getState().setBucket(newId, bucket.trim());
         }
-        toast.success(`Connection "${data.name}" saved.`);
+
       } else {
         updateConnection(editConnection!.id, data);
-        toast.success(`Connection "${data.name}" updated.`);
+
       }
 
       onDone();

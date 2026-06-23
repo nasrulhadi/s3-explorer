@@ -4,7 +4,6 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { toast } from "sonner";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { createS3Client } from "../lib/s3Client";
 import { useConnectionStore } from "../store/connectionStore";
@@ -93,10 +92,6 @@ export function useDownload() {
 
       // 3. Large-file path (Tauri Rust command) — not yet implemented
       if (totalBytes > LARGE_FILE_THRESHOLD) {
-        toast.info("Large file detected", {
-          description: `"${fileName}" (${(totalBytes / 1024 / 1024).toFixed(1)} MB) — using browser download. Tauri native download coming soon.`,
-          duration: 4000,
-        });
         // TODO: replace with Tauri invoke
         // try {
         //   await invoke("download_file", {
@@ -155,21 +150,16 @@ export function useDownload() {
           status: "done",
           transferredBytes: totalBytes || transfer.transferredBytes,
         });
-        toast.success(`Downloaded "${fileName}"`);
       } catch (err) {
         if ((err as Error).name === "AbortError") {
           useTransferStore.getState().updateTransfer(transferId, {
             status: "error",
             error: "Cancelled by user",
           });
-          toast.info(`Download cancelled: "${fileName}"`);
         } else {
           useTransferStore.getState().updateTransfer(transferId, {
             status: "error",
             error: (err as Error).message,
-          });
-          toast.error(`Download failed: "${fileName}"`, {
-            description: (err as Error).message,
           });
         }
       } finally {

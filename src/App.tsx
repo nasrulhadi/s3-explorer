@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast, Toaster } from "sonner";
+import { Toaster } from "sonner";
 import { Circle } from "lucide-react";
 import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
@@ -119,15 +119,11 @@ function AppLayout() {
   }, []);
 
   const handleUpload = useCallback(() => {
-    toast.info("Upload", {
-      description: "Upload dialog coming soon — drag & drop files onto the main area.",
-    });
+    // Upload coming soon
   }, []);
 
   const handleNewFolder = useCallback(() => {
-    toast.info("New Folder", {
-      description: "Create folder dialog coming soon.",
-    });
+    // New folder handled in FileList
   }, []);
 
   const handleDisconnect = useCallback(() => {
@@ -150,9 +146,7 @@ function AppLayout() {
       }
     },
     onDelete: () => {
-      toast.info("Delete", {
-        description: "Delete selected items — coming soon.",
-      });
+      // Delete coming soon
     },
   });
 
@@ -185,7 +179,6 @@ function AppLayout() {
     if (!conn) return;
 
     removeConnection(editingConnectionId);
-    toast.success(`Connection "${conn.name}" deleted.`);
 
     // If we deleted the active connection, reset navigation
     if (connectionId === editingConnectionId) {
