@@ -36,6 +36,8 @@ function AppLayout() {
 
   // Search / filter state (shared between Toolbar and FileList)
   const [filterQuery, setFilterQuery] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
 
   // View state: replaces separate modal booleans
   type View = "main" | "addConnection" | "editConnection" | "deleteConnection" | "settings";
@@ -119,11 +121,11 @@ function AppLayout() {
   }, []);
 
   const handleUpload = useCallback(() => {
-    // Upload coming soon
+    setUploadOpen(true);
   }, []);
 
   const handleNewFolder = useCallback(() => {
-    // New folder handled in FileList
+    setNewFolderOpen(true);
   }, []);
 
   const handleDisconnect = useCallback(() => {
@@ -255,7 +257,15 @@ function AppLayout() {
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (
-                      <FileList filterQuery={filterQuery} />
+                      <FileList
+                        filterQuery={filterQuery}
+                        uploadOpen={uploadOpen}
+                        newFolderOpen={newFolderOpen}
+                        onUploadOpen={() => setUploadOpen(true)}
+                        onUploadClose={() => setUploadOpen(false)}
+                        onNewFolderOpen={() => setNewFolderOpen(true)}
+                        onNewFolderClose={() => setNewFolderOpen(false)}
+                      />
                     )}
                   </main>
                 </>

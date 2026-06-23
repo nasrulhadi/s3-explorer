@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.2] - 2026-06-21
+
+### Added
+- **Upload Modal**: Full upload flow with choice and review stages
+  - Upload File / Upload Folder buttons with native file/folder picker
+  - Review list before upload with file name and size
+  - Auto-transfer to TransferPanel during upload
+  - 200 MB max file size with per-file validation
+- **Drag & Drop** (modal internal only): Drop zone inside UploadModal
+  - Later disabled due to Tauri v2 WebView2 limitation
+- **Context Menu Everywhere**: Context menu now available in ALL states
+  - Empty state: Right-click with Copy, Paste, Upload, New Folder, Reload
+  - Loading & Error states: All modals remain accessible
+- **Paste Duplicate Handling**: Auto-rename pasted files/folders
+  - `file.txt` → `file-copy1.txt` → `file-copy2.txt`
+  - `folder/` → `folder-copy1/`
+- **Recursive Folder Operations**:
+  - **Copy/Paste**: Paste folder copies ALL contents recursively (ListObjectsV2 + CopyObject)
+  - **Delete**: Delete folder removes ALL contents via ListObjectsV2 + DeleteObjects batch
+- **Dynamic Skeleton Count**: Loading skeleton matches last item count instead of fixed 8
+- **Connectivity Check Fix**: Changed from HEAD to GET (cdn-cgi/trace only responds to GET)
+
+### Changed
+- **Modal Architecture**: All modals (NewFolder, Delete, Rename, Upload) are now rendered unconditionally — accessible from any UI state
+- **New Folder State**: Moved `newFolderOpen` to App.tsx, same pattern as upload
+  - Toolbar New Folder button now works in empty/loading/error states
+- **Paste in All Menus**: Paste added to single-file, single-folder, and multi-item context menus
+- **Upload Notice**: Changed from dashed-border drop zone to solid background info box
+- **File Body Handling**: Upload body converted from `File` to `Uint8Array` for Tauri HTTP compatibility
+
+### Fixed
+- **Right-click in Empty State**: Removed `preventDefault` from ContextMenu trigger
+- **Empty State Toolbar Actions**: Upload and New Folder from toolbar now work
+- **Folder Paste Key**: Preserved trailing `/` for folder pastes
+- **B2 Credential Flow**: Proper credential mapping (Key ID → Access Key, Application Key → Secret Key)
+- **Remove Explorer Drag-and-Drop**: OS-level drag-and-drop removed (not supported in Tauri/WebView2)
+
+---
+
 ## [1.1.0] - 2026-06-21
 
 ### Added

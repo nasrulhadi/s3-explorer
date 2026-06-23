@@ -22,7 +22,7 @@ import {
   Archive,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CopyObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { useS3 } from "../../hooks/useS3";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useNavigationStore } from "../../store/navigationStore";
@@ -34,6 +34,7 @@ import { formatFileSize } from "../../lib/utils";
 import type { S3Item, SortField, SortDirection } from "../../types";
 import FileRow, { ROW_HEIGHT, ROW_GRID } from "./FileRow";
 import FolderRow from "./FolderRow";
+import UploadModal from "./UploadModal";
 
 // ─── Shared menu styling ────────────────────────────────────
 
@@ -43,10 +44,6 @@ const MENU_ITEM =
   "flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md outline-none cursor-default select-none data-[highlighted]:bg-[var(--s3-accent-base)] data-[highlighted]:text-[var(--s3-accent-text)] data-[disabled]:opacity-40 data-[disabled]:pointer-events-none";
 const MENU_SEPARATOR = "h-px bg-gray-200 dark:bg-gray-700 my-1";
 const MENU_SHORTCUT = "ml-auto text-xs text-gray-400 dark:text-gray-500";
-
-// ─── Constants ──────────────────────────────────────────────
-
-const SKELETON_COUNT = 8;
 
 // ─── Skeleton row (loading placeholder) ─────────────────────
 
@@ -67,9 +64,21 @@ function SkeletonRow() {
 interface FileListProps {
   /** Text filter applied to item names */
   filterQuery: string;
+  /** Upload modal open state */
+  uploadOpen: boolean;
+  /** Close upload modal */
+  onUploadClose: () => void;
+  /** Open upload modal (from toolbar or right-click) */
+  onUploadOpen: () => void;
+  /** New folder modal open state */
+  newFolderOpen: boolean;
+  /** Close new folder modal */
+  onNewFolderClose: () => void;
+  /** Open new folder modal */
+  onNewFolderOpen: () => void;
 }
 
-export default function FileList({ filterQuery }: FileListProps) {
+export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUploadOpen, newFolderOpen, onNewFolderClose, onNewFolderOpen }: FileListProps) {
   const {
     listObjects,
     downloadFile,
@@ -97,8 +106,10 @@ export default function FileList({ filterQuery }: FileListProps) {
   const [renameName, setRenameName] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [dropFiles, setDropFiles] = useState<Array<{ file: File; relativePath: string; size: number }> | undefined>(undefined);
 
   const parentRef = useRef<HTMLDivElement>(null);
+  const skeletonCountRef = useRef(8);
 
   // ── Internet connectivity tracking ─────────────────────────
   const isOnline = useConnectivity();
@@ -193,6 +204,13 @@ export default function FileList({ filterQuery }: FileListProps) {
     });
   }, [data, filterQuery, sortField, sortDir]);
 
+  // Track last known item count for skeleton during reload
+  useEffect(() => {
+    if (displayedItems.length > 0) {
+      skeletonCountRef.current = displayedItems.length;
+    }
+  }, [displayedItems]);
+
   // ── TanStack Virtual ───────────────────────────────────────
   const virtualizer = useVirtualizer({
     count: displayedItems.length,
@@ -271,18 +289,71 @@ export default function FileList({ filterQuery }: FileListProps) {
     const client = createS3Client(getConnection(connectionId));
     let successCount = 0;
 
+    // Build set of existing names for duplicate detection
+    const existingNames = new Set(displayedItems.map((i) => i.name));
+
     for (const item of clipboard.items) {
       try {
-        const sourceKey = item.key;
-        const destKey = `${prefix}${item.name}`;
-        await client.send(
-          new CopyObjectCommand({
-            Bucket: bucket,
-            CopySource: encodeURIComponent(`${clipboard.sourceBucket}/${sourceKey}`),
-            Key: destKey,
-          }),
-        );
-        successCount++;
+        // Generate unique destination name if duplicate
+        let destName = item.name;
+        let counter = 1;
+        const isFolder = item.key.endsWith("/");
+        while (existingNames.has(destName)) {
+          if (isFolder) {
+            destName = `${item.name}-copy${counter}`;
+          } else {
+            const extIndex = item.name.lastIndexOf(".");
+            if (extIndex > 0) {
+              const base = item.name.slice(0, extIndex);
+              const ext = item.name.slice(extIndex);
+              destName = `${base}-copy${counter}${ext}`;
+            } else {
+              destName = `${item.name}-copy${counter}`;
+            }
+          }
+          counter++;
+        }
+        existingNames.add(destName);
+
+        const destPrefix = `${prefix}${destName}${isFolder ? "/" : ""}`;
+
+        if (isFolder) {
+          // ── Folder: list all objects under prefix & copy each ──
+          const sourcePrefix = item.key;
+          const sourceClient = createS3Client(getConnection(connectionId));
+          const listed = await sourceClient.send(
+            new ListObjectsV2Command({
+              Bucket: clipboard.sourceBucket!,
+              Prefix: sourcePrefix,
+            }),
+          );
+
+          const objects = listed.Contents ?? [];
+          for (const obj of objects) {
+            if (!obj.Key) continue;
+            // Replace source prefix with dest prefix
+            const suffix = obj.Key.slice(sourcePrefix.length);
+            const destObjKey = `${destPrefix}${suffix}`;
+            await client.send(
+              new CopyObjectCommand({
+                Bucket: bucket,
+                CopySource: encodeURIComponent(`${clipboard.sourceBucket}/${obj.Key}`),
+                Key: destObjKey,
+              }),
+            );
+          }
+          successCount++;
+        } else {
+          // ── File: single CopyObject ──
+          await client.send(
+            new CopyObjectCommand({
+              Bucket: bucket,
+              CopySource: encodeURIComponent(`${clipboard.sourceBucket}/${item.key}`),
+              Key: destPrefix,
+            }),
+          );
+          successCount++;
+        }
       } catch (err) {
         // Paste failed silently
       }
@@ -293,18 +364,37 @@ export default function FileList({ filterQuery }: FileListProps) {
         queryKey: ["s3", "objects", connectionId, bucket, prefix],
       });
     }
-  }, [clipboard, connectionId, bucket, prefix, getConnection, queryClient]);
+  }, [clipboard, connectionId, bucket, prefix, displayedItems, getConnection, queryClient]);
+
+  // ── Delete folder + all contents recursively ──────────────
+  const deleteFolderRecursive = useCallback(async (folderKey: string) => {
+    if (!connectionId || !bucket) return;
+    const client = createS3Client(getConnection(connectionId));
+
+    const listed = await client.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: folderKey }),
+    );
+    const objects = listed.Contents ?? [];
+
+    if (objects.length > 0) {
+      await client.send(
+        new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: { Objects: objects.map((o) => ({ Key: o.Key! })) },
+        }),
+      );
+    }
+  }, [connectionId, bucket, getConnection]);
 
   // ── New Folder ────────────────────────────────────────────
-  const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderCreating, setNewFolderCreating] = useState(false);
 
   const handleNewFolder = useCallback(() => {
     if (!connectionId || !bucket) return;
     setNewFolderName("");
-    setNewFolderOpen(true);
-  }, [connectionId, bucket]);
+    onNewFolderOpen();
+  }, [connectionId, bucket, onNewFolderOpen]);
 
   const confirmNewFolder = useCallback(async () => {
     if (!connectionId || !bucket || !newFolderName.trim()) return;
@@ -319,7 +409,7 @@ export default function FileList({ filterQuery }: FileListProps) {
           Body: "",
         }),
       );
-      setNewFolderOpen(false);
+      onNewFolderClose();
       queryClient.invalidateQueries({
         queryKey: ["s3", "objects", connectionId, bucket, prefix],
       });
@@ -328,7 +418,7 @@ export default function FileList({ filterQuery }: FileListProps) {
     } finally {
       setNewFolderCreating(false);
     }
-  }, [connectionId, bucket, prefix, newFolderName, getConnection, queryClient]);
+  }, [connectionId, bucket, prefix, newFolderName, getConnection, queryClient, onNewFolderClose]);
 
   // ── Refresh ───────────────────────────────────────────────
   const handleRefresh = useCallback(() => {
@@ -338,10 +428,18 @@ export default function FileList({ filterQuery }: FileListProps) {
     });
   }, [queryClient, connectionId, bucket, prefix]);
 
-  // ── Upload (placeholder) ────────────────────────────────
+  // ── Upload ────────────────────────────────────────────────
   const handleUpload = useCallback(() => {
-    // Upload: drag & drop files onto the main area
-  }, []);
+    onUploadOpen();
+  }, [onUploadOpen]);
+
+  const handleUploadComplete = useCallback(() => {
+    if (connectionId && bucket) {
+      queryClient.invalidateQueries({
+        queryKey: ["s3", "objects", connectionId, bucket, prefix],
+      });
+    }
+  }, [connectionId, bucket, prefix, queryClient]);
 
   // ── Rename ────────────────────────────────────────────────
   const handleRename = useCallback((item: S3Item) => {
@@ -396,21 +494,23 @@ export default function FileList({ filterQuery }: FileListProps) {
   }, []);
 
   // ── Bulk delete (multi-select) ─────────────────────────────
-  const handleBulkDelete = useCallback((items: S3Item[]) => {
+  const handleBulkDelete = useCallback(async (items: S3Item[]) => {
     if (!connectionId || !bucket || items.length === 0) return;
 
-    Promise.all(
-      items.map((item) =>
-        deleteItem.mutateAsync({ connectionId, bucket, key: item.key }),
-      ),
-    ).then(() => {
-      setSelectedKeys(new Set());
-      setContextTarget({ type: "empty" });
-      queryClient.invalidateQueries({
-        queryKey: ["s3", "objects", connectionId, bucket, prefix],
-      });
+    for (const item of items) {
+      if (item.type === "folder") {
+        await deleteFolderRecursive(item.key);
+      } else {
+        await deleteItem.mutateAsync({ connectionId, bucket, key: item.key });
+      }
+    }
+
+    setSelectedKeys(new Set());
+    setContextTarget({ type: "empty" });
+    queryClient.invalidateQueries({
+      queryKey: ["s3", "objects", connectionId, bucket, prefix],
     });
-  }, [connectionId, bucket, deleteItem, queryClient, prefix]);
+  }, [connectionId, bucket, deleteItem, deleteFolderRecursive, queryClient, prefix]);
 
   // ── Download ──────────────────────────────────────────────
   const handleDownloadItem = useCallback((item: S3Item) => {
@@ -512,61 +612,277 @@ export default function FileList({ filterQuery }: FileListProps) {
   // ── Loading (first load or refetch) ───────────────────────
   if (isLoading || isFetching) {
     return (
-      <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
-        <ColumnHeader disabled />
-        <div className="flex-1">
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <SkeletonRow key={i} />
-          ))}
+      <>
+        <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
+          <ColumnHeader disabled />
+          <div className="flex-1">
+            {Array.from({ length: skeletonCountRef.current }).map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
         </div>
-      </div>
+        <NewFolderModal
+          open={newFolderOpen}
+          name={newFolderName}
+          creating={newFolderCreating}
+          onNameChange={setNewFolderName}
+          onConfirm={confirmNewFolder}
+          onCancel={onNewFolderClose}
+        />
+        <DeleteConfirmModal
+          open={deleteTarget !== null || bulkDeleteItems !== null}
+          item={deleteTarget}
+          bulkCount={bulkDeleteItems?.length ?? 0}
+          onConfirm={async () => {
+            if (deleteTarget) {
+              const target = deleteTarget;
+              if (!connectionId || !bucket || !target) return;
+              try {
+                if (target.type === "folder") {
+                  await deleteFolderRecursive(target.key);
+                } else {
+                  await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+                }
+                setDeleteTarget(null);
+                setSelectedKeys(new Set());
+                setContextTarget({ type: "empty" });
+                queryClient.invalidateQueries({ queryKey: ["s3", "objects", connectionId, bucket, prefix] });
+              } catch (_) {
+                setDeleteTarget(null);
+              }
+            } else if (bulkDeleteItems) {
+              handleBulkDelete(bulkDeleteItems);
+              setBulkDeleteItems(null);
+            }
+          }}
+          onCancel={() => { setDeleteTarget(null); setBulkDeleteItems(null); }}
+        />
+        <RenameModal
+          open={renameTarget !== null}
+          item={renameTarget}
+          name={renameName}
+          loading={renameLoading}
+          error={renameError}
+          onNameChange={setRenameName}
+          onConfirm={confirmRename}
+          onCancel={() => { setRenameError(null); setRenameTarget(null); }}
+        />
+        <UploadModal
+          open={uploadOpen}
+          connectionId={connectionId}
+          bucket={bucket}
+          prefix={prefix}
+          getConnection={getConnection}
+          dropFiles={dropFiles}
+          onClose={() => { setDropFiles(undefined); onUploadClose(); }}
+          onUploadComplete={handleUploadComplete}
+        />
+      </>
     );
   }
 
   // ── Error ──────────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-[var(--s3-window-bg)]">
-        <AlertCircle size={40} className="text-[var(--s3-danger)] mb-3" />
-        <p className="text-sm font-medium text-[var(--s3-danger)]">
-          Failed to load contents
-        </p>
-        <p className="text-xs text-[var(--s3-window-muted)] mt-1 max-w-xs">
-          {(error as Error).message}
-        </p>
-      </div>
+      <>
+        <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-[var(--s3-window-bg)]">
+          <AlertCircle size={40} className="text-[var(--s3-danger)] mb-3" />
+          <p className="text-sm font-medium text-[var(--s3-danger)]">
+            Failed to load contents
+          </p>
+          <p className="text-xs text-[var(--s3-window-muted)] mt-1 max-w-xs">
+            {(error as Error).message}
+          </p>
+        </div>
+        <NewFolderModal
+          open={newFolderOpen}
+          name={newFolderName}
+          creating={newFolderCreating}
+          onNameChange={setNewFolderName}
+          onConfirm={confirmNewFolder}
+          onCancel={onNewFolderClose}
+        />
+        <DeleteConfirmModal
+          open={deleteTarget !== null || bulkDeleteItems !== null}
+          item={deleteTarget}
+          bulkCount={bulkDeleteItems?.length ?? 0}
+          onConfirm={async () => {
+            if (deleteTarget) {
+              const target = deleteTarget;
+              if (!connectionId || !bucket || !target) return;
+              try {
+                if (target.type === "folder") {
+                  await deleteFolderRecursive(target.key);
+                } else {
+                  await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+                }
+                setDeleteTarget(null);
+                setSelectedKeys(new Set());
+                setContextTarget({ type: "empty" });
+                queryClient.invalidateQueries({ queryKey: ["s3", "objects", connectionId, bucket, prefix] });
+              } catch (_) {
+                setDeleteTarget(null);
+              }
+            } else if (bulkDeleteItems) {
+              handleBulkDelete(bulkDeleteItems);
+              setBulkDeleteItems(null);
+            }
+          }}
+          onCancel={() => { setDeleteTarget(null); setBulkDeleteItems(null); }}
+        />
+        <RenameModal
+          open={renameTarget !== null}
+          item={renameTarget}
+          name={renameName}
+          loading={renameLoading}
+          error={renameError}
+          onNameChange={setRenameName}
+          onConfirm={confirmRename}
+          onCancel={() => { setRenameError(null); setRenameTarget(null); }}
+        />
+        <UploadModal
+          open={uploadOpen}
+          connectionId={connectionId}
+          bucket={bucket}
+          prefix={prefix}
+          getConnection={getConnection}
+          dropFiles={dropFiles}
+          onClose={() => { setDropFiles(undefined); onUploadClose(); }}
+          onUploadComplete={handleUploadComplete}
+        />
+      </>
     );
   }
 
   // ── Empty state ────────────────────────────────────────────
   if (displayedItems.length === 0) {
     return (
-      <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
-        <ColumnHeader disabled />
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-[var(--s3-window-muted)]">
-          {filterQuery ? (
-            <>
-              <FileX size={40} className="mb-3 opacity-40" />
-              <p className="text-sm font-medium text-[var(--s3-window-muted)]">
-                No items match your filter
-              </p>
-              <p className="text-xs mt-1 opacity-70">
-                Try a different search term or clear the filter.
-              </p>
-            </>
-          ) : (
-            <>
-              <FolderOpen size={40} className="mb-3 opacity-40" />
-              <p className="text-sm font-medium text-[var(--s3-window-muted)]">
-                This folder is empty
-              </p>
-              <p className="text-xs mt-1 opacity-70">
-                Upload files or create a folder to get started.
-              </p>
-            </>
-          )}
-        </div>
-      </div>
+      <>
+        <ContextMenu.Root>
+          <ContextMenu.Trigger asChild>
+            <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
+              <ColumnHeader disabled />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-[var(--s3-window-muted)]">
+                {filterQuery ? (
+                  <>
+                    <FileX size={40} className="mb-3 opacity-40" />
+                    <p className="text-sm font-medium text-[var(--s3-window-muted)]">
+                      No items match your filter
+                    </p>
+                    <p className="text-xs mt-1 opacity-70">
+                      Try a different search term or clear the filter.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <FolderOpen size={40} className="mb-3 opacity-40" />
+                    <p className="text-sm font-medium text-[var(--s3-window-muted)]">
+                      This folder is empty
+                    </p>
+                    <p className="text-xs mt-1 opacity-70">
+                      Upload files or create a folder to get started.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </ContextMenu.Trigger>
+          <ContextMenu.Portal>
+            <ContextMenu.Content className={MENU_CONTENT}>
+              <ContextMenu.Item
+                className={MENU_ITEM}
+                disabled={selectedKeys.size === 0}
+                onSelect={handleCopy}
+              >
+                <Copy size={15} />
+                Copy
+                <span className={MENU_SHORTCUT}>{selectedKeys.size > 0 ? `${selectedKeys.size}` : ""}</span>
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className={MENU_ITEM}
+                disabled={clipboard.items.length === 0}
+                onSelect={handlePaste}
+              >
+                <ClipboardPaste size={15} />
+                Paste
+              </ContextMenu.Item>
+              <ContextMenu.Separator className={MENU_SEPARATOR} />
+              <ContextMenu.Item className={MENU_ITEM} onSelect={handleUpload}>
+                <Upload size={15} />
+                Upload
+                <span className={MENU_SHORTCUT}>Ctrl+U</span>
+              </ContextMenu.Item>
+              <ContextMenu.Item className={MENU_ITEM} onSelect={handleNewFolder}>
+                <FolderPlus size={15} />
+                New Folder
+                <span className={MENU_SHORTCUT}>Ctrl+N</span>
+              </ContextMenu.Item>
+              <ContextMenu.Separator className={MENU_SEPARATOR} />
+              <ContextMenu.Item className={MENU_ITEM} onSelect={handleRefresh}>
+                <RefreshCw size={15} />
+                Reload
+                <span className={MENU_SHORTCUT}>F5</span>
+              </ContextMenu.Item>
+            </ContextMenu.Content>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+        <NewFolderModal
+          open={newFolderOpen}
+          name={newFolderName}
+          creating={newFolderCreating}
+          onNameChange={setNewFolderName}
+          onConfirm={confirmNewFolder}
+          onCancel={onNewFolderClose}
+        />
+        <DeleteConfirmModal
+          open={deleteTarget !== null || bulkDeleteItems !== null}
+          item={deleteTarget}
+          bulkCount={bulkDeleteItems?.length ?? 0}
+          onConfirm={async () => {
+            if (deleteTarget) {
+              const target = deleteTarget;
+              if (!connectionId || !bucket || !target) return;
+              try {
+                if (target.type === "folder") {
+                  await deleteFolderRecursive(target.key);
+                } else {
+                  await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+                }
+                setDeleteTarget(null);
+                setSelectedKeys(new Set());
+                setContextTarget({ type: "empty" });
+                queryClient.invalidateQueries({ queryKey: ["s3", "objects", connectionId, bucket, prefix] });
+              } catch (_) {
+                setDeleteTarget(null);
+              }
+            } else if (bulkDeleteItems) {
+              handleBulkDelete(bulkDeleteItems);
+              setBulkDeleteItems(null);
+            }
+          }}
+          onCancel={() => { setDeleteTarget(null); setBulkDeleteItems(null); }}
+        />
+        <RenameModal
+          open={renameTarget !== null}
+          item={renameTarget}
+          name={renameName}
+          loading={renameLoading}
+          error={renameError}
+          onNameChange={setRenameName}
+          onConfirm={confirmRename}
+          onCancel={() => { setRenameError(null); setRenameTarget(null); }}
+        />
+        <UploadModal
+          open={uploadOpen}
+          connectionId={connectionId}
+          bucket={bucket}
+          prefix={prefix}
+          getConnection={getConnection}
+          dropFiles={dropFiles}
+          onClose={() => { setDropFiles(undefined); onUploadClose(); }}
+          onUploadComplete={handleUploadComplete}
+        />
+      </>
     );
   }
 
@@ -694,6 +1010,13 @@ export default function FileList({ filterQuery }: FileListProps) {
                 <ContextMenu.Item className={MENU_ITEM} disabled={selectedKeys.size === 0} onSelect={handleCopy}>
                   <Copy size={15} /> Copy <span className={MENU_SHORTCUT}>{menuItems.count}</span>
                 </ContextMenu.Item>
+                <ContextMenu.Item
+                  className={MENU_ITEM}
+                  disabled={clipboard.items.length === 0}
+                  onSelect={handlePaste}
+                >
+                  <ClipboardPaste size={15} /> Paste
+                </ContextMenu.Item>
                 <ContextMenu.Item className={MENU_ITEM} onSelect={() => {
                   setBulkDeleteItems(menuItems.items);
                 }}>
@@ -713,6 +1036,13 @@ export default function FileList({ filterQuery }: FileListProps) {
                 <>
                   <ContextMenu.Item className={MENU_ITEM} onSelect={handleCopy}>
                     <Copy size={15} /> Copy
+                  </ContextMenu.Item>
+                  <ContextMenu.Item
+                    className={MENU_ITEM}
+                    disabled={clipboard.items.length === 0}
+                    onSelect={handlePaste}
+                  >
+                    <ClipboardPaste size={15} /> Paste
                   </ContextMenu.Item>
                   <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleRename(menuItems.items[0])}>
                     <Pencil size={15} /> Rename
@@ -736,6 +1066,13 @@ export default function FileList({ filterQuery }: FileListProps) {
                 <>
                   <ContextMenu.Item className={MENU_ITEM} onSelect={handleCopy}>
                     <Copy size={15} /> Copy
+                  </ContextMenu.Item>
+                  <ContextMenu.Item
+                    className={MENU_ITEM}
+                    disabled={clipboard.items.length === 0}
+                    onSelect={handlePaste}
+                  >
+                    <ClipboardPaste size={15} /> Paste
                   </ContextMenu.Item>
                   <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleRename(menuItems.items[0])}>
                     <Pencil size={15} /> Rename
@@ -803,7 +1140,7 @@ export default function FileList({ filterQuery }: FileListProps) {
         creating={newFolderCreating}
         onNameChange={setNewFolderName}
         onConfirm={confirmNewFolder}
-        onCancel={() => setNewFolderOpen(false)}
+        onCancel={onNewFolderClose}
       />
 
       {/* ── Delete Confirmation Modal ────────────────────────── */}
@@ -816,7 +1153,11 @@ export default function FileList({ filterQuery }: FileListProps) {
             const target = deleteTarget;
             if (!connectionId || !bucket || !target) return;
             try {
-              await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+              if (target.type === "folder") {
+                await deleteFolderRecursive(target.key);
+              } else {
+                await deleteItem.mutateAsync({ connectionId, bucket, key: target.key });
+              }
               setDeleteTarget(null);
               setSelectedKeys(new Set());
               setContextTarget({ type: "empty" });
@@ -850,6 +1191,21 @@ export default function FileList({ filterQuery }: FileListProps) {
           setRenameError(null);
           setRenameTarget(null);
         }}
+      />
+
+      {/* ── Upload Modal ──────────────────────────────────── */}
+      <UploadModal
+        open={uploadOpen}
+        connectionId={connectionId}
+        bucket={bucket}
+        prefix={prefix}
+        getConnection={getConnection}
+        dropFiles={dropFiles}
+        onClose={() => {
+          setDropFiles(undefined);
+          onUploadClose();
+        }}
+        onUploadComplete={handleUploadComplete}
       />
     </>
   );

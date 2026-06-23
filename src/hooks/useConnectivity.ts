@@ -17,8 +17,7 @@ export function useConnectivity() {
       try {
         // Use HEAD request for minimal data transfer
         await fetch(CHECK_URL, {
-          method: "HEAD",
-          mode: "no-cors",
+          method: "GET",
           cache: "no-cache",
         });
         if (mounted) {
