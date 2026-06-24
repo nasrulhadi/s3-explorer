@@ -24,7 +24,7 @@ import {
   Archive,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CopyObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, PutObjectCommand, ListObjectsV2Command, ListObjectVersionsCommand, DeleteObjectsCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useS3 } from "../../hooks/useS3";
@@ -114,6 +114,26 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   const [infoData, setInfoData] = useState<{ title: string; type: string; rows: { label: string; value: string }[] } | null>(null);
   const [urlData, setUrlData] = useState<string | null>(null);
   const [zipError, setZipError] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [movingKeys, setMovingKeys] = useState<Set<string>>(new Set());
+
+  // ── Custom drag state (bypasses broken HTML5 DnD in WebView2) ─
+  const dragRef = useRef<{
+    active: boolean;
+    sourceKeys: string[];
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  }>({
+    active: false,
+    sourceKeys: [],
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+  });
+  const dragGhostRef = useRef<HTMLDivElement | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const skeletonCountRef = useRef(8);
@@ -155,12 +175,50 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
     ? `${activeTransfers.length} transfer${activeTransfers.length > 1 ? "s" : ""} in progress`
     : "No activity";
 
-    // Reset selection + context when navigating or after data refresh
+    // Reset selection + context + moving state when navigating or after data refresh
   useEffect(() => {
     setSelectedKeys(new Set());
+    setMovingKeys(new Set());
     setContextTarget({ type: "empty" });
     setFocusIndex(-1);
   }, [connectionId, bucket, prefix, data]);
+
+  // Clean up any orphaned drag ghost and stale drag state on unmount or navigation
+  useEffect(() => {
+    return () => {
+      const d = dragRef.current;
+      // Always reset all drag state — stale mousedown data from
+      // a previous click can trigger a false drag after navigation.
+      d.active = false;
+      d.sourceKeys = [];
+      d.startX = 0;
+      d.startY = 0;
+      setDragOverKey(null);
+      if (dragGhostRef.current) {
+        dragGhostRef.current.remove();
+        dragGhostRef.current = null;
+      }
+    };
+  }, [connectionId, bucket, prefix]);
+
+  // Document-level safety net: cancel drag on any mouseup outside container
+  useEffect(() => {
+    const onDocMouseUp = () => {
+      const d = dragRef.current;
+      if (!d.active) return;
+      d.active = false;
+      d.sourceKeys = [];
+      d.startX = 0;
+      d.startY = 0;
+      setDragOverKey(null);
+      if (dragGhostRef.current) {
+        dragGhostRef.current.remove();
+        dragGhostRef.current = null;
+      }
+    };
+    document.addEventListener("mouseup", onDocMouseUp);
+    return () => document.removeEventListener("mouseup", onDocMouseUp);
+  }, []);
 
   // ── Sort toggle ────────────────────────────────────────────
   function toggleSort(field: SortField) {
@@ -377,8 +435,36 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   // ── Delete folder + all contents recursively ──────────────
   const deleteFolderRecursive = useCallback(async (folderKey: string) => {
     if (!connectionId || !bucket) return;
-    const client = createS3Client(getConnection(connectionId));
+    const conn = getConnection(connectionId);
+    if (!conn) return;
+    const client = createS3Client(conn);
 
+    if (conn.provider === "b2") {
+      // B2 versioned: list all versions + delete markers under the prefix
+      const versions = await client.send(
+        new ListObjectVersionsCommand({ Bucket: bucket, Prefix: folderKey }),
+      );
+      const all: { Key: string; VersionId?: string }[] = [];
+
+      for (const v of versions.Versions ?? []) {
+        if (v.Key && v.VersionId) all.push({ Key: v.Key, VersionId: v.VersionId });
+      }
+      for (const m of versions.DeleteMarkers ?? []) {
+        if (m.Key && m.VersionId) all.push({ Key: m.Key, VersionId: m.VersionId });
+      }
+
+      if (all.length > 0) {
+        await client.send(
+          new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: all, Quiet: true },
+          }),
+        );
+      }
+      return;
+    }
+
+    // Standard S3: list + batch delete
     const listed = await client.send(
       new ListObjectsV2Command({ Bucket: bucket, Prefix: folderKey }),
     );
@@ -393,6 +479,229 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
       );
     }
   }, [connectionId, bucket, getConnection]);
+
+  // ── Drag & Drop (S3 move: CopyObject + Delete) ─────────────
+  // Custom mouse-based DnD – avoids broken HTML5 DnD in Tauri WebView2
+  const DRAG_THRESHOLD = 10;
+
+  const findDropTarget = useCallback(
+    (clientX: number, clientY: number): S3Item | null => {
+      // Hide ghost temporarily so elementFromPoint sees through it
+      const ghost = dragGhostRef.current;
+      if (ghost) ghost.style.display = "none";
+      const el = document.elementFromPoint(clientX, clientY);
+      if (ghost) ghost.style.display = "";
+
+      if (!el) return null;
+      let current: Element | null = el;
+      while (current) {
+        const key = current.getAttribute("data-item-key");
+        if (key) {
+          return displayedItems.find((i) => i.key === key && i.type === "folder") ?? null;
+        }
+        current = current.parentElement;
+      }
+      return null;
+    },
+    [displayedItems],
+  );
+
+  /** Copy all objects under a folder prefix to a new prefix, then delete originals (B2-safe). */
+  const moveFolderRecursive = useCallback(
+    async (sourcePrefix: string, destPrefix: string) => {
+      if (!connectionId || !bucket) return;
+      const conn = getConnection(connectionId);
+      if (!conn) return;
+      const client = createS3Client(conn);
+
+      // 1. List all objects under source prefix (paginated)
+      const allObjects: { key: string }[] = [];
+      let continuationToken: string | undefined;
+      do {
+        const listRes = await client.send(
+          new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: sourcePrefix,
+            ContinuationToken: continuationToken,
+          }),
+        );
+        for (const obj of listRes.Contents ?? []) {
+          if (obj.Key) allObjects.push({ key: obj.Key });
+        }
+        continuationToken = listRes.NextContinuationToken;
+      } while (continuationToken);
+
+      if (allObjects.length === 0) return;
+
+      // 2. Copy each object to the new prefix (preserving relative paths)
+      for (const obj of allObjects) {
+        const relativeKey = obj.key.slice(sourcePrefix.length);
+        const destKey = `${destPrefix}${relativeKey}`;
+        try {
+          await client.send(
+            new CopyObjectCommand({
+              Bucket: bucket,
+              CopySource: encodeURIComponent(`${bucket}/${obj.key}`),
+              Key: destKey,
+            }),
+          );
+        } catch (_) { /* skip failed */ }
+      }
+
+      // 3. Delete source folder + all contents (B2-safe)
+      await deleteFolderRecursive(sourcePrefix);
+    },
+    [connectionId, bucket, getConnection, deleteFolderRecursive],
+  );
+
+  const handleContainerMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const d = dragRef.current;
+
+      // If not dragging yet, check threshold
+      if (!d.active) {
+        if (d.sourceKeys.length === 0) return;
+        const dx = e.clientX - d.startX;
+        const dy = e.clientY - d.startY;
+        if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+
+        // Start dragging
+        d.active = true;
+        d.currentX = e.clientX;
+        d.currentY = e.clientY;
+
+        // Create ghost element
+        const count = d.sourceKeys.length;
+        const firstItem = displayedItems.find((it) => it.key === d.sourceKeys[0]);
+        const label = count === 1
+          ? firstItem?.name ?? ""
+          : `${count} items`;
+
+        const ghost = document.createElement("div");
+        ghost.className =
+          "fixed z-[9999] pointer-events-none px-2 py-1 rounded text-xs font-medium bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] shadow-lg whitespace-nowrap";
+        ghost.textContent = label;
+        ghost.style.left = `${e.clientX + 12}px`;
+        ghost.style.top = `${e.clientY - 10}px`;
+        document.body.appendChild(ghost);
+        dragGhostRef.current = ghost;
+        return;
+      }
+
+      d.currentX = e.clientX;
+      d.currentY = e.clientY;
+
+      // Update ghost position
+      const ghost = dragGhostRef.current;
+      if (ghost) {
+        ghost.style.left = `${e.clientX + 12}px`;
+        ghost.style.top = `${e.clientY - 10}px`;
+      }
+
+      // Find folder under cursor
+      const target = findDropTarget(e.clientX, e.clientY);
+      setDragOverKey(target ? target.key : null);
+    },
+    [findDropTarget, displayedItems],
+  );
+
+  const handleContainerMouseUp = useCallback(
+    (e: React.MouseEvent) => {
+      const d = dragRef.current;
+
+      // Always clear mousedown tracking — even on plain clicks.
+      const wasActive = d.active;
+      const sourceKeys = [...d.sourceKeys];
+      d.active = false;
+      d.sourceKeys = [];
+      d.startX = 0;
+      d.startY = 0;
+      setDragOverKey(null);
+
+      // Remove ghost if present
+      if (dragGhostRef.current) {
+        dragGhostRef.current.remove();
+        dragGhostRef.current = null;
+      }
+
+      if (!wasActive || sourceKeys.length === 0) return;
+
+      // Find drop target
+      const target = findDropTarget(e.clientX, e.clientY);
+      if (!target) return;
+
+      // Prevent dropping an item into itself
+      if (sourceKeys.includes(target.key)) return;
+
+      // Prevent dropping a folder into itself or its children
+      for (const sk of sourceKeys) {
+        if (sk.endsWith("/") && target.key.startsWith(sk)) return;
+      }
+
+      if (!connectionId || !bucket) return;
+
+      const client = createS3Client(getConnection(connectionId));
+      const destPrefix = target.key;
+
+      // ── Add transfer entries + set inline dimming immediately ──
+      const now = Date.now();
+      const transferIds: string[] = [];
+      for (const sk of sourceKeys) {
+        const item = displayedItems.find((it) => it.key === sk);
+        const name = item?.name ?? sk.split("/").filter(Boolean).pop() ?? sk;
+        const id = `move-${now}-${sk.replace(/[^a-zA-Z0-9]/g, "-").slice(-20)}`;
+        transferIds.push(id);
+        useTransferStore.getState().addTransfer({
+          id,
+          type: "move",
+          fileName: name,
+          totalBytes: 0,
+          transferredBytes: 0,
+          status: "active",
+          key: sk,
+          bucket,
+          connectionId,
+        });
+      }
+      setMovingKeys(new Set(sourceKeys));
+      setSelectedKeys(new Set());
+
+      (async () => {
+        for (let i = 0; i < sourceKeys.length; i++) {
+          const sourceKey = sourceKeys[i];
+          const tid = transferIds[i];
+          try {
+            if (sourceKey.endsWith("/")) {
+              // Folder: recursively copy all children, then delete old
+              const folderName = sourceKey.slice(0, -1).split("/").pop()!;
+              await moveFolderRecursive(sourceKey, `${destPrefix}${folderName}/`);
+            } else {
+              // File: copy + delete
+              const item = displayedItems.find((it) => it.key === sourceKey);
+              if (!item) continue;
+              const destKeyFull = `${destPrefix}${item.name}`;
+              await client.send(
+                new CopyObjectCommand({
+                  Bucket: bucket,
+                  CopySource: encodeURIComponent(`${bucket}/${item.key}`),
+                  Key: destKeyFull,
+                }),
+              );
+              await deleteItem.mutateAsync({ connectionId, bucket, key: item.key });
+            }
+            useTransferStore.getState().updateTransfer(tid, { status: "done" });
+          } catch (_) {
+            useTransferStore.getState().updateTransfer(tid, { status: "error", error: "Move failed" });
+          }
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: ["s3", "objects", connectionId, bucket, prefix],
+        });
+      })();
+    },
+    [connectionId, bucket, displayedItems, getConnection, queryClient, prefix, findDropTarget, moveFolderRecursive],
+  );
 
   // ── New Folder ────────────────────────────────────────────
   const [newFolderName, setNewFolderName] = useState("");
@@ -416,11 +725,16 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
 
     setNewFolderCreating(true);
     try {
-      const client = createS3Client(getConnection(connectionId));
+      const conn = getConnection(connectionId);
+      if (!conn) return;
+      const isB2 = conn.provider === "b2";
+      const client = createS3Client(conn);
       await client.send(
         new PutObjectCommand({
           Bucket: bucket,
-          Key: `${prefix}${newFolderName.trim()}/`,
+          Key: isB2
+            ? `${prefix}${newFolderName.trim()}/.bzEmpty`
+            : `${prefix}${newFolderName.trim()}/`,
           Body: "",
         }),
       );
@@ -473,35 +787,78 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
     setRenameLoading(true);
     setRenameError(null);
 
-    // For folders, check if it's a real object first
-    if (renameTarget.type === "folder") {
-      try {
-        await headObject.mutateAsync({ connectionId, bucket, key: renameTarget.key });
-      } catch (_) {
-        setRenameError("This folder can't be renamed — it might be a virtual folder. Use New Folder to create a real folder first.");
-        setRenameLoading(false);
-        return;
-      }
-    }
-    // Strip trailing slash for folder keys, then rebuild path prefix
-    const baseKey = renameTarget.key.endsWith("/") ? renameTarget.key.slice(0, -1) : renameTarget.key;
+    const conn = getConnection(connectionId);
+    if (!conn) { setRenameLoading(false); return; }
+
+    // Compute new key (preserving trailing slash for folders)
+    const isFolder = renameTarget.key.endsWith("/");
+    const baseKey = isFolder ? renameTarget.key.slice(0, -1) : renameTarget.key;
     const lastSlash = baseKey.lastIndexOf("/");
     const newKeyBase = lastSlash === -1 ? renameName.trim() : baseKey.slice(0, lastSlash + 1) + renameName.trim();
-    const newKey = renameTarget.key.endsWith("/") ? newKeyBase + "/" : newKeyBase;
+    const newKey = isFolder ? newKeyBase + "/" : newKeyBase;
+
+    const client = createS3Client(conn);
+    const oldKey = renameTarget.key;
 
     try {
-      await renameItem
-        .mutateAsync({ connectionId, bucket, oldKey: renameTarget.key, newKey });
+      if (isFolder) {
+        // ── Folder rename: copy all children to new prefix, then delete old ──
+        // List all objects under the old prefix
+        const allObjects: { key: string }[] = [];
+        let continuationToken: string | undefined;
+        do {
+          const listRes = await client.send(
+            new ListObjectsV2Command({
+              Bucket: bucket,
+              Prefix: oldKey,
+              ContinuationToken: continuationToken,
+            }),
+          );
+          for (const obj of listRes.Contents ?? []) {
+            if (obj.Key) allObjects.push({ key: obj.Key });
+          }
+          continuationToken = listRes.NextContinuationToken;
+        } while (continuationToken);
+
+        if (allObjects.length === 0) {
+          setRenameError("This folder can't be renamed — it might be a virtual folder. Use New Folder to create a real folder first.");
+          setRenameLoading(false);
+          return;
+        }
+
+        // Copy each object from old prefix to new prefix
+        for (const obj of allObjects) {
+          const relativeKey = obj.key.slice(oldKey.length);
+          const destKey = newKey + relativeKey;
+          await client.send(
+            new CopyObjectCommand({
+              Bucket: bucket,
+              CopySource: encodeURIComponent(`${bucket}/${obj.key}`),
+              Key: destKey,
+            }),
+          );
+        }
+
+        // Delete old folder + all contents (B2-safe)
+        await deleteFolderRecursive(oldKey);
+      } else {
+        // ── File rename: simple copy + delete ──
+        await renameItem.mutateAsync({ connectionId, bucket, oldKey, newKey });
+      }
+
       setRenameTarget(null);
+      setSelectedKeys(new Set());
+      setContextTarget({ type: "empty" });
       queryClient.invalidateQueries({
         queryKey: ["s3", "objects", connectionId, bucket, prefix],
       });
     } catch (err) {
       console.error("Rename failed:", err);
+      setRenameError("Rename failed. The operation may have partially completed.");
     } finally {
       setRenameLoading(false);
     }
-  }, [connectionId, bucket, renameTarget, renameName, renameItem, queryClient, prefix]);
+  }, [connectionId, bucket, renameTarget, renameName, renameItem, getConnection, queryClient, prefix, deleteFolderRecursive]);
 
   // ── Delete (opens modal) ──────────────────────────────────
   const handleDelete = useCallback((item: S3Item) => {
@@ -1049,7 +1406,25 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
 
           {/* ── Virtual scroll container ─────────────────────── */}
           <ContextMenu.Trigger asChild>
-            <div ref={parentRef} className="flex-1 overflow-auto outline-none">
+            <div
+              ref={parentRef}
+              className="flex-1 overflow-auto outline-none"
+              onMouseMove={handleContainerMouseMove}
+              onMouseUp={handleContainerMouseUp}
+              onMouseLeave={() => {
+                // Cancel drag & clear stale mousedown data
+                const d = dragRef.current;
+                d.active = false;
+                d.sourceKeys = [];
+                d.startX = 0;
+                d.startY = 0;
+                setDragOverKey(null);
+                if (dragGhostRef.current) {
+                  dragGhostRef.current.remove();
+                  dragGhostRef.current = null;
+                }
+              }}
+            >
               <div
                 style={{
                   height: `${virtualizer.getTotalSize()}px`,
@@ -1066,6 +1441,7 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                     <div
                       key={item.key}
                       data-item-key={item.key}
+                      data-item-type={item.type}
                       style={{
                         position: "absolute",
                         top: 0,
@@ -1075,6 +1451,20 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
                       className="border-b border-[var(--s3-window-border)]"
+                      onMouseDown={(e) => {
+                        // Only track left-button presses for drag
+                        if (e.button !== 0) return;
+                        const d = dragRef.current;
+                        d.startX = e.clientX;
+                        d.startY = e.clientY;
+                        // Multi-select: if the clicked item is among selected items, drag all selected
+                        if (selectedKeys.size > 1 && selectedKeys.has(item.key)) {
+                          d.sourceKeys = [...selectedKeys];
+                        } else {
+                          d.sourceKeys = [item.key];
+                        }
+                        d.active = false; // not dragging yet, wait for threshold
+                      }}
                       onContextMenu={() => setContextTarget({ type: "item", item })}
                     >
                       {item.type === "folder" ? (
@@ -1082,6 +1472,8 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                           item={item}
                           isSelected={isSelected}
                           isFocused={isFocused}
+                          isDragOver={dragOverKey === item.key}
+                          isMoving={movingKeys.has(item.key)}
                           onSelect={toggleSelect}
                           onOpen={openFolder}
                         />
@@ -1090,6 +1482,7 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                           item={item}
                           isSelected={isSelected}
                           isFocused={isFocused}
+                          isMoving={movingKeys.has(item.key)}
                           onSelect={toggleSelect}
                         />
                       )}

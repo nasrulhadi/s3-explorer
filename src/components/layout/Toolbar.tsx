@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   ArrowLeft,
   Home,
@@ -9,6 +10,7 @@ import {
   ChevronRight,
   MoreHorizontal,
   Power,
+  X,
 } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
 
@@ -45,6 +47,7 @@ export default function Toolbar({
   onDisconnect,
 }: ToolbarProps) {
   const [searchInput, setSearchInput] = useState("");
+  const [maximized, setMaximized] = useState(false);
 
   // Settings
   const showBreadcrumbs = useSettingsStore((s) => s.showBreadcrumbs);
@@ -60,6 +63,28 @@ export default function Toolbar({
     }, 300);
     return () => clearTimeout(timer);
   }, [searchInput, onSearchChange]);
+
+  // Track window maximize state
+  useEffect(() => {
+    let destroyed = false;
+    const win = getCurrentWindow();
+
+    win.isMaximized()
+      .then((val) => { if (!destroyed) setMaximized(val); })
+      .catch(() => {});
+
+    let unlistenFn: (() => void) | null = null;
+    win.onResized(() => {
+      win.isMaximized()
+        .then((val) => { if (!destroyed) setMaximized(val); })
+        .catch(() => {});
+    }).then((fn) => { unlistenFn = fn; });
+
+    return () => {
+      destroyed = true;
+      unlistenFn?.();
+    };
+  }, []);
 
   // Build breadcrumb segments from the current prefix
   const breadcrumbItems = useMemo(() => {
@@ -175,6 +200,9 @@ export default function Toolbar({
         {/* Visible breadcrumb items (last MAX_VISIBLE) */}
         {visibleItems.map((item) => {
           const isLast = item.prefix === prefix;
+          const displayLabel = isLast && !maximized && item.label.length > 20
+            ? item.label.slice(0, 19) + "…"
+            : item.label;
           return (
             <span key={item.prefix} className="flex items-center gap-1">
               <ChevronRight size={14} className="shrink-0 text-[var(--s3-window-muted)] opacity-50" />
@@ -188,7 +216,7 @@ export default function Toolbar({
                 `}
                 title={item.label}
               >
-                {item.label}
+                {displayLabel}
               </button>
             </span>
           );
@@ -201,7 +229,7 @@ export default function Toolbar({
 
       {/* ── Search input ─────────────────────────────────── */}
       {showFilter && hasBucketSelected && (
-        <div className="relative w-52">
+        <div className="relative w-36">
           <Search
             size={14}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--s3-window-muted)] opacity-50 pointer-events-none"
@@ -210,9 +238,9 @@ export default function Toolbar({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Filter files…"
+            placeholder="Filter…"
             className="
-              w-full pl-8 pr-3 py-1.5 text-sm
+              w-full pl-8 pr-8 py-1.5 text-sm
               border border-[var(--s3-window-border)] rounded-md
               outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
               text-[var(--s3-window-text)] placeholder-[var(--s3-window-muted)]
@@ -220,6 +248,15 @@ export default function Toolbar({
               transition-all
             "
           />
+          {searchInput && (
+            <button
+              onClick={() => setSearchInput("")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[var(--s3-window-muted)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-window-hover-bg)] transition-colors"
+              title="Clear filter"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       )}
 

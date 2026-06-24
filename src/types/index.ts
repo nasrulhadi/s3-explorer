@@ -11,7 +11,7 @@ export type S3Provider = "aws" | "minio" | "r2" | "b2" | "custom";
 export type ItemType = "file" | "folder" | "bucket";
 
 /** Transfer direction */
-export type TransferType = "upload" | "download";
+export type TransferType = "upload" | "download" | "move";
 
 /** Transfer lifecycle status */
 export type TransferStatus = "pending" | "active" | "done" | "error";

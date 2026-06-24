@@ -2,9 +2,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ListBucketsCommand,
   ListObjectsV2Command,
+  ListObjectVersionsCommand,
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   CopyObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -263,7 +265,43 @@ export function useS3() {
       bucket: string;
       key: string;
     }): Promise<void> => {
-      const client = createS3Client(getConnection(connectionId));
+      const conn = getConnection(connectionId);
+      const client = createS3Client(conn);
+
+      // B2 with versioning: after creating the hide marker,
+      // permanently delete all versions + delete markers
+      if (conn.provider === "b2") {
+        // Step 1: list all versions (including delete markers)
+        const versions = await client.send(
+          new ListObjectVersionsCommand({ Bucket: bucket, Prefix: key }),
+        );
+
+        const all: { Key: string; VersionId: string }[] = [];
+
+        for (const v of versions.Versions ?? []) {
+          if (v.Key === key && v.VersionId) all.push({ Key: v.Key, VersionId: v.VersionId });
+        }
+        for (const m of versions.DeleteMarkers ?? []) {
+          if (m.Key === key && m.VersionId) all.push({ Key: m.Key, VersionId: m.VersionId });
+        }
+
+        if (all.length > 0) {
+          await client.send(
+            new DeleteObjectsCommand({
+              Bucket: bucket,
+              Delete: { Objects: all, Quiet: true },
+            }),
+          );
+        }
+
+        // If no versions found (delete marker already created by previous call), just do a regular delete
+        if (all.length === 0) {
+          await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+        }
+        return;
+      }
+
+      // Standard S3: regular delete
       const res = await client.send(
         new DeleteObjectCommand({ Bucket: bucket, Key: key }),
       );

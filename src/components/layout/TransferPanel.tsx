@@ -4,6 +4,7 @@ import {
   Trash2,
   Download as DownloadIcon,
   Upload as UploadIcon,
+  ArrowRightLeft,
   ChevronUp,
   ChevronDown,
   CheckCircle2,
@@ -29,6 +30,7 @@ function formatSpeed(bytesPerSecond: number): string {
 
 function TransferRow({ transfer }: { transfer: Transfer }) {
   const { cancelDownload } = useDownload();
+  const removeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track bytes over time to compute live speed
   const [speed, setSpeed] = useState(0);
@@ -47,9 +49,22 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
     }
   }, [transfer.transferredBytes]);
 
+  // Auto-remove completed entries after 4 seconds (all types: upload, download, move)
+  useEffect(() => {
+    if (transfer.status === "done") {
+      removeRef.current = setTimeout(() => {
+        useTransferStore.getState().removeTransfer(transfer.id);
+      }, 4000);
+      return () => {
+        if (removeRef.current) clearTimeout(removeRef.current);
+      };
+    }
+  }, [transfer.status, transfer.id]);
+
   const isActive = transfer.status === "active";
   const isDone = transfer.status === "done";
   const isError = transfer.status === "error";
+  const isMove = transfer.type === "move";
 
   const progress =
     transfer.totalBytes > 0
@@ -62,6 +77,8 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       <div className="shrink-0">
         {transfer.type === "download" ? (
           <DownloadIcon size={15} className="text-blue-500" />
+        ) : transfer.type === "move" ? (
+          <ArrowRightLeft size={15} className="text-amber-500" />
         ) : (
           <UploadIcon size={15} className="text-green-500" />
         )}
@@ -76,22 +93,28 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
             {transfer.fileName}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 shrink-0 tabular-nums">
-            {isDone && "Done"}
+            {isDone && (isMove ? "Done" : "Done")}
             {isError && (transfer.error ?? "Error")}
-            {isActive && transfer.totalBytes > 0 && (
+            {isActive && isMove && "Moving..."}
+            {isActive && !isMove && transfer.totalBytes > 0 && (
               <>
                 {formatFileSize(transfer.transferredBytes)} /{" "}
                 {formatFileSize(transfer.totalBytes)}
               </>
             )}
-            {isActive && transfer.totalBytes === 0 && (
+            {isActive && !isMove && transfer.totalBytes === 0 && (
               <>{formatFileSize(transfer.transferredBytes)}</>
             )}
           </span>
         </div>
 
         {/* Progress bar */}
-        {isActive && (
+        {isActive && isMove && (
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-amber-400 rounded-full animate-pulse w-2/3" />
+          </div>
+        )}
+        {isActive && !isMove && (
           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-[var(--s3-accent-active)] rounded-full transition-all duration-200"
@@ -113,7 +136,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
 
       {/* ── Speed ─────────────────────────────────────────── */}
       <div className="w-20 text-right shrink-0">
-        {isActive && speed > 0 && (
+        {isActive && !isMove && speed > 0 && (
           <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
             {formatSpeed(speed)}
           </span>
@@ -128,11 +151,12 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
 
       {/* ── Cancel / dismiss button ───────────────────────── */}
       <button
-        onClick={() =>
+        onClick={() => {
+          if (removeRef.current) clearTimeout(removeRef.current);
           isActive
             ? cancelDownload(transfer.id)
-            : useTransferStore.getState().removeTransfer(transfer.id)
-        }
+            : useTransferStore.getState().removeTransfer(transfer.id);
+        }}
         className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
         title={isActive ? "Cancel" : "Remove"}
       >

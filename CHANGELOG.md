@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.4] - 2026-06-18
+
+### Added
+- **Custom Mouse-Based Drag & Drop**: Complete replacement of HTML5 DnD (broken in Tauri WebView2)
+  - Mouse tracking with 10px threshold and floating ghost label
+  - Drop target detection via `document.elementFromPoint()`
+  - Multi-select drag: drag multiple files, folders, or mixed simultaneously
+  - Recursive folder move: all children copied before source deletion (B2-safe)
+- **Move Progress Feedback**: Combined TransferPanel + inline dimming
+  - Amber pulsing progress bar with "Moving…" label per source item
+  - Source items dimmed (`opacity-40 pointer-events-none`) during move
+  - Auto-remove completed entries after 4 seconds (all types: upload, download, move)
+
+### Changed
+- **Breadcrumb Truncation**: Last folder name >20 chars truncated to 19 + "…"
+  - Full name restored when window is maximized
+- **Filter Input**: Reduced width (`w-36`) with clear X button on right
+- **Rename**: Folder rename now recursive — copies all children, deletes originals (B2-safe)
+
+### Fixed
+- **Drag Ghost Label**: No longer appears during navigation, clicks, or bucket changes
+  - Unconditional `dragRef` cleanup on navigation, mouseup, and leave
+  - Document-level mouseup safety net
+- **Folder Drag Content Loss**: Children now preserved via recursive copy
+- **Folder Rename Duplicate**: Recursive rename prevents leaving orphaned children
+
+---
+
 ## [1.1.3] - 2026-06-24
 
 ### Added

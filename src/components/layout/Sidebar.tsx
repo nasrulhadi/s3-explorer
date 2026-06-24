@@ -80,8 +80,8 @@ function ConnectionItem({
         w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
         transition-colors duration-150 group rounded-md mx-0
         ${isActive
-          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
-          : "text-[var(--s3-sidebar-text)] bg-[var(--s3-sidebar-inactive-bg)] border border-[var(--s3-sidebar-inactive-border)] hover:bg-[var(--s3-sidebar-item-hover)]"
+          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] border border-transparent"
+          : "text-[var(--s3-sidebar-text)] bg-[var(--s3-sidebar-inactive-bg)] border border-transparent hover:bg-[var(--s3-sidebar-item-hover)]"
         }
       `}
     >
