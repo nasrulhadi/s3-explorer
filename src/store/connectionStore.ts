@@ -23,6 +23,12 @@ interface ConnectionActions {
   removeConnection: (id: string) => void;
   /** Set koneksi aktif; pass null untuk deselect */
   setActiveConnection: (id: string | null) => void;
+  /** Import connections — merge by ID, skip duplicates, return summary */
+  importConnections: (imported: S3Connection[]) => {
+    added: number;
+    updated: number;
+    skipped: number;
+  };
 }
 
 export type ConnectionStore = ConnectionState & ConnectionActions;
@@ -73,6 +79,44 @@ export const useConnectionStore = create<ConnectionStore>()(
         if (id === null || get().connections.some((c) => c.id === id)) {
           set({ activeConnectionId: id });
         }
+      },
+
+      importConnections: (imported) => {
+        const state = get();
+        let added = 0;
+        let updated = 0;
+        let skipped = 0;
+
+        const merged = [...state.connections];
+
+        for (const imp of imported) {
+          // Check if same ID exists → update
+          const existingById = merged.find((c) => c.id === imp.id);
+          if (existingById) {
+            Object.assign(existingById, imp);
+            updated++;
+            continue;
+          }
+
+          // Check for duplicate by name + provider + endpoint
+          const duplicate = merged.find(
+            (c) =>
+              c.name === imp.name &&
+              c.provider === imp.provider &&
+              (c.endpoint ?? "") === (imp.endpoint ?? "")
+          );
+          if (duplicate) {
+            skipped++;
+            continue;
+          }
+
+          // New connection
+          merged.push(imp);
+          added++;
+        }
+
+        set({ connections: merged });
+        return { added, updated, skipped };
       },
     }),
     {

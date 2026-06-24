@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Mail } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Mail, Download, Upload } from "lucide-react";
 import { useSettingsStore, type ThemeMode } from "../store/settingsStore";
+import { useConnectionStore } from "../store/connectionStore";
+import type { S3Connection } from "../types";
+import ImportConnectionsModal from "./modals/ImportConnectionsModal";
+import PassphraseModal from "./modals/PassphraseModal";
+import { encryptExport, decryptExport, isEncryptedExport } from "../lib/crypto";
 import { ACCENT_COLORS } from "../lib/accentColors";
 import buymeacoffee from "../assets/buymeacoffee.png";
 
@@ -167,6 +172,163 @@ function AccentColorSelect({
 
 export default function SettingsPage({ onDone }: SettingsPageProps) {
   const store = useSettingsStore();
+  const connections = useConnectionStore((s) => s.connections);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Import modal state
+  const [importPreview, setImportPreview] = useState<
+    { connection: S3Connection; action: "new" | "update" | "skip"; existingName?: string }[] | null
+  >(null);
+
+  // Passphrase modal state
+  const [passphraseMode, setPassphraseMode] = useState<"export" | "import" | null>(null);
+  const [passphraseError, setPassphraseError] = useState("");
+  const pendingEncryptedBytesRef = useRef<Uint8Array | null>(null);
+
+  // ── Export (encrypted) ──────────────────────────────────
+  const handleExportClick = () => {
+    setPassphraseMode("export");
+  };
+
+  const handleExportWithPassphrase = async (passphrase: string) => {
+    setPassphraseError("");
+    try {
+      const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        connections: connections,
+      };
+      const encrypted = await encryptExport(data, passphrase);
+      const blob = new Blob([encrypted as BlobPart], { type: "application/octet-stream" });
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: "s3-explorer-backup.enc",
+          types: [{ description: "Encrypted Backup", accept: { "application/octet-stream": [".enc"] } }],
+        }) as FileSystemFileHandle;
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } catch {
+        // Fallback: anchor download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "s3-explorer-backup.enc";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      setPassphraseMode(null);
+    } catch {
+      setPassphraseError("Encryption failed. Please try again.");
+    }
+  };
+
+  // ── Import ──────────────────────────────────────────────
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+
+    // ── Extension gate ──────────────────────────────────────
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+
+    if (ext !== ".enc") {
+      alert("Unsupported file type. Please select an .enc backup file.");
+      return;
+    }
+
+    // Encrypted backup → read & check magic, then passphrase
+    const reader = new FileReader();
+    reader.onerror = () => {
+      alert("Failed to read file. It may be locked or corrupted.");
+    };
+    reader.onload = () => {
+      const bytes = new Uint8Array(reader.result as ArrayBuffer);
+      if (!isEncryptedExport(bytes)) {
+        alert("This file is not a valid S3 Explorer encrypted backup.");
+        return;
+      }
+      pendingEncryptedBytesRef.current = bytes;
+      setPassphraseError("");
+      setPassphraseMode("import");
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImportWithPassphrase = async (passphrase: string) => {
+    setPassphraseError("");
+    const bytes = pendingEncryptedBytesRef.current;
+    if (!bytes) return;
+
+    try {
+      const raw = await decryptExport(bytes, passphrase);
+      pendingEncryptedBytesRef.current = null;
+      setPassphraseMode(null);
+      processImportData(raw);
+    } catch {
+      setPassphraseError("Wrong passphrase or corrupted file.");
+    }
+  };
+
+  /** Shared import processing (used by both plain & encrypted paths) */
+  const processImportData = (raw: unknown) => {
+    if (!raw || typeof raw !== "object" || !("connections" in raw)) {
+      alert("Invalid file: missing 'connections' array.");
+      return;
+    }
+
+    const arr = (raw as Record<string, unknown>).connections;
+    if (!Array.isArray(arr)) {
+      alert("Invalid file: 'connections' is not an array.");
+      return;
+    }
+
+    const imported: S3Connection[] = arr.filter(
+      (c: unknown): c is S3Connection =>
+        typeof c === "object" &&
+        c !== null &&
+        typeof (c as S3Connection).id === "string" &&
+        typeof (c as S3Connection).name === "string" &&
+        typeof (c as S3Connection).provider === "string",
+    );
+
+    if (imported.length === 0) {
+      alert("No valid connections found in file.");
+      return;
+    }
+
+    // Build preview: determine action per connection
+    const existingConnections = useConnectionStore.getState().connections;
+    const preview = imported.map((imp) => {
+      const existingById = existingConnections.find((c) => c.id === imp.id);
+      if (existingById) {
+        return { connection: imp, action: "update" as const, existingName: existingById.name };
+      }
+      const duplicate = existingConnections.find(
+        (c) =>
+          c.name === imp.name &&
+          c.provider === imp.provider &&
+          (c.endpoint ?? "") === (imp.endpoint ?? ""),
+      );
+      if (duplicate) {
+        return { connection: imp, action: "skip" as const };
+      }
+      return { connection: imp, action: "new" as const };
+    });
+
+    setImportPreview(preview);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -261,6 +423,56 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             </div>
           </section>
 
+          {/* ── Data ────────────────────────────────────── */}
+          <section>
+            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+              Data
+            </h3>
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 flex-1 pr-4">
+                  <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Save all connections to an encrypted backup file
+                  </div>
+                </div>
+                <button
+                  onClick={handleExportClick}
+                  disabled={connections.length === 0}
+                  className="
+                    flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
+                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
+                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                  "
+                >
+                  <Download size={14} />
+                  Export
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 flex-1 pr-4">
+                  <div className="text-sm text-gray-700 dark:text-gray-200">Import Connections</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Merge connections from an encrypted .enc backup
+                  </div>
+                </div>
+                <button
+                  onClick={handleImportClick}
+                  className="
+                    flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
+                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
+                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer
+                  "
+                >
+                  <Upload size={14} />
+                  Import
+                </button>
+              </div>
+            </div>
+          </section>
+
           {/* ── About ───────────────────────────────────── */}
           <section>
             <div className="rounded-lg bg-[var(--s3-sidebar-bg)] p-6">
@@ -322,6 +534,33 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
 
         </div>
       </div>
+
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".enc"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Import confirmation modal */}
+      {importPreview && (
+        <ImportConnectionsModal
+          preview={importPreview}
+          onClose={() => setImportPreview(null)}
+        />
+      )}
+
+      {/* Passphrase modal (export encrypt / import decrypt) */}
+      {passphraseMode && (
+        <PassphraseModal
+          mode={passphraseMode}
+          externalError={passphraseError}
+          onConfirm={passphraseMode === "export" ? handleExportWithPassphrase : handleImportWithPassphrase}
+          onCancel={() => { setPassphraseMode(null); setPassphraseError(""); }}
+        />
+      )}
     </div>
   );
 }

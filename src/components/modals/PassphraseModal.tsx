@@ -1,0 +1,160 @@
+import { useState } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
+
+interface Props {
+  /** "export" shows confirm-passphrase field; "import" shows single field */
+  mode: "export" | "import";
+  /** External error from failed crypto operation (e.g. wrong passphrase) */
+  externalError?: string;
+  onConfirm: (passphrase: string) => void;
+  onCancel: () => void;
+}
+
+export default function PassphraseModal({ mode, externalError, onConfirm, onCancel }: Props) {
+  const [pass, setPass] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = () => {
+    setError("");
+
+    if (!pass) {
+      setError("Passphrase is required.");
+      return;
+    }
+    if (pass.length < 4) {
+      setError("Passphrase must be at least 4 characters.");
+      return;
+    }
+    if (mode === "export" && pass !== confirm) {
+      setError("Passphrases do not match.");
+      return;
+    }
+
+    onConfirm(pass);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <div className="flex items-center gap-2">
+            <Lock size={18} className="text-[var(--s3-accent-text)]" />
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+              {mode === "export" ? "Encrypt Export" : "Decrypt Import"}
+            </h3>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {mode === "export"
+              ? "Set a passphrase to encrypt your connection backup file."
+              : "Enter the passphrase used when this file was exported."}
+          </p>
+        </div>
+
+        {/* Inputs */}
+        <div className="px-5 pb-1 space-y-3">
+          {/* Passphrase */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Passphrase
+            </label>
+            <div className="relative">
+              <input
+                type={showPass ? "text" : "password"}
+                value={pass}
+                onChange={(e) => { setPass(e.target.value); setError(""); }}
+                placeholder={mode === "export" ? "Choose a strong passphrase" : "Enter passphrase"}
+                autoFocus
+                className="
+                  w-full pl-3 pr-9 py-2 text-sm
+                  border border-gray-300 dark:border-gray-600 rounded-lg
+                  bg-white dark:bg-gray-800
+                  text-gray-800 dark:text-gray-200
+                  placeholder-gray-400 dark:placeholder-gray-500
+                  outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+                  transition-all
+                  [&::-ms-reveal]:hidden
+                "
+                onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
+                title={showPass ? "Hide" : "Show"}
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm passphrase (export only) */}
+          {mode === "export" && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Confirm Passphrase
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirm}
+                  onChange={(e) => { setConfirm(e.target.value); setError(""); }}
+                  placeholder="Re-enter passphrase"
+                  className="
+                    w-full pl-3 pr-9 py-2 text-sm
+                    border border-gray-300 dark:border-gray-600 rounded-lg
+                    bg-white dark:bg-gray-800
+                    text-gray-800 dark:text-gray-200
+                    placeholder-gray-400 dark:placeholder-gray-500
+                    outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+                    transition-all
+                    [&::-ms-reveal]:hidden
+                  "
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
+                  title={showConfirm ? "Hide" : "Show"}
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Error */}
+        {(error || externalError) && (
+          <p className="px-5 pt-2 text-xs text-red-500 dark:text-red-400">{error || externalError}</p>
+        )}
+
+        {/* Footer */}
+        <div className="px-5 pt-4 pb-5 flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
+          >
+            {mode === "export" ? "Encrypt & Save" : "Decrypt & Continue"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

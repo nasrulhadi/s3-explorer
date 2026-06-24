@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.5] - 2026-06-18
+
+### Added
+- **Export/Import Connections**: Settings page data management with encryption
+  - Export all connections to AES-256-GCM encrypted `.enc` backup
+  - Import encrypted backups with passphrase decryption
+  - Merge-by-ID strategy with preview modal and result report (new/updated/skipped)
+- **Passphrase Modal**: Password input with show/hide toggle, confirm field, error display
+
+### Fixed
+- **TransferPanel**: All transfer types (upload/download/move) now auto-remove on completion
+
+---
+
 ## [1.1.4] - 2026-06-18
 
 ### Added
