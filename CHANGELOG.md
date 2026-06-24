@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.3] - 2026-06-24
+
+### Added
+- **Provider-Specific Icons**: Custom SVG icons for each provider in sidebar
+  - R2, B2, IO (MinIO), S3 (AWS/Custom) — each with distinct label
+  - Replaced generic Lucide Server icon
+- **Get Info Modal**: Right-click → Get Info opens modal with metadata
+  - Copy button per field (📋 → ✅ 1.5s)
+  - Dynamic "File Info" / "Folder Info" subtitle
+  - Monospace values, dark/light theme
+- **Get URL Modal**: Presigned URL displayed with copy button
+  - URL truncated with ellipsis, copy feedback
+  - Auto-copies to clipboard on generation
+- **ZIP Download**: Multi-file and folder download as ZIP
+  - JSZip client-side with progress via TransferPanel
+  - Limits: 250 files / 500 MB with error modal
+  - Uses `tauriFetch` to bypass CORS
+- **Backblaze B2 Support**: Full provider integration
+  - Custom form labels (Key ID / Application Key)
+  - Bucket field shown for B2 in connection form
+  - `listBuckets` suppression (B2 keys often lack this permission)
+- **Global cursor-pointer**: Added via CSS for all interactive elements
+
+### Changed
+- **Download System**: All downloads now use `tauriFetch` (CORS bypass)
+  - Single file download also fixed
+  - Native Save dialog via `showSaveFilePicker` with fallback
+- **Connection Form Labels**: Dynamic per provider (B2 shows Key ID/Application Key)
+- **TransferPanel Position**: Moved to `bottom-10` (above status bar)
+- **Native Save Dialog**: Added `showSaveFilePicker` API with anchor fallback
+
+### Fixed
+- **Stale Selection on Reload**: Selection cleared when data refreshes
+- **Stale Context Menu**: `contextTarget` reset on menu close via `onOpenChange`
+- **CORS on Downloads**: Replaced browser `fetch` with `tauriFetch`
+- **Download Save Dialog**: Delayed `URL.revokeObjectURL` and added File System Access API
+
+---
+
 ## [1.1.2] - 2026-06-21
 
 ### Added

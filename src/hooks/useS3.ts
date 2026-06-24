@@ -9,6 +9,7 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { createS3Client } from "../lib/s3Client";
 import { useConnectionStore } from "../store/connectionStore";
 import { getItemName } from "../lib/utils";
@@ -73,9 +74,8 @@ export function useS3() {
       queryFn: async (): Promise<S3Item[]> => {
         const connection = getConnection(connectionId!);
 
-        // Cloudflare R2 does not support the ListBuckets S3 API operation.
-        // Return an empty list — the Sidebar will show a manual bucket input.
-        if (connection.provider === "r2") {
+        // Cloudflare R2 dan Backblaze B2 do not support ListBuckets
+        if (connection.provider === "r2" || connection.provider === "b2") {
           return [];
         }
 
@@ -174,7 +174,7 @@ export function useS3() {
         { expiresIn: 300 },
       );
 
-      const response = await fetch(url);
+      const response = await tauriFetch(url);
       if (!response.ok) {
         throw new Error(
           `Download failed for "${key}": HTTP ${response.status} ${response.statusText}`,
@@ -184,13 +184,33 @@ export function useS3() {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
 
+      // Try showSaveFilePicker (File System Access API — modern WebView2)
+      try {
+        const handle = await (window as any).showSaveFilePicker?.({
+          suggestedName: nameFromKey(key),
+        });
+        if (handle) {
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          URL.revokeObjectURL(blobUrl);
+          return;
+        }
+      } catch {
+        // Fallback: user cancelled or API unavailable
+      }
+
+      // Fallback: anchor click with delayed cleanup
       const anchor = document.createElement("a");
       anchor.href = blobUrl;
       anchor.download = nameFromKey(key);
+      anchor.style.display = "none";
       document.body.appendChild(anchor);
       anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(blobUrl);
+      setTimeout(() => {
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(blobUrl);
+      }, 5000);
     },
   });
 

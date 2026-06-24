@@ -68,7 +68,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
 
   const providerLocked = isEditMode;
   const showEndpoint = provider !== "aws";
-  const showBucket = provider === "r2";
+  const showBucket = provider === "r2" || provider === "b2";
 
   // Reset endpoint when switching to AWS
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
     if (!region.trim()) e.region = "Region is required.";
     if (!accessKeyId.trim()) e.accessKeyId = "Access Key ID is required.";
     if (!secretAccessKey.trim()) e.secretAccessKey = "Secret Access Key is required.";
-    if (showBucket && !bucket.trim()) e.bucket = "Bucket name is required for R2.";
+    if (showBucket && !bucket.trim()) e.bucket = "Bucket name is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -119,7 +119,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
     try {
       const client = createS3Client(buildTestConnection());
 
-      if (provider === "r2") {
+      if (provider === "r2" || provider === "b2") {
         if (bucket.trim()) {
           try {
             const res = await client.send(
@@ -151,9 +151,9 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
             setTestMessage(`Connected! Found ${count} bucket${count !== 1 ? "s" : ""}.`);
           } catch (err) {
             const msg = (err as Error).message;
-            if (msg.includes("AccessDenied") || msg.includes("Access Denied")) {
+            if (msg.includes("AccessDenied") || msg.includes("Access Denied") || msg.includes("NotEntitled") || msg.includes("not entitled")) {
               setTestStatus("success");
-              setTestMessage("Connection OK! R2 doesn't support bucket listing — you'll enter bucket names manually.");
+              setTestMessage("Connection OK! Bucket listing not supported — enter bucket name in the sidebar.");
             } else {
               throw err;
             }
@@ -295,19 +295,19 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           </Field>
 
           {/* Access Key ID */}
-          <Field label="Access Key ID" error={errors.accessKeyId}>
+          <Field label={provider === "b2" ? "Key ID" : "Access Key ID"} error={errors.accessKeyId}>
             <input
               type="text"
               value={accessKeyId}
               onChange={(e) => setAccessKeyId(e.target.value)}
-              placeholder="AKIA…"
+              placeholder={provider === "b2" ? "0058…" : "AKIA…"}
               autoComplete="off"
               className={INPUT_CLASS}
             />
           </Field>
 
           {/* Secret Access Key */}
-          <Field label="Secret Access Key" error={errors.secretAccessKey}>
+          <Field label={provider === "b2" ? "Application Key" : "Secret Access Key"} error={errors.secretAccessKey}>
             <input
               type="text"
               value={secretAccessKey}
@@ -318,7 +318,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
             />
           </Field>
 
-          {/* Bucket Name (R2 only) */}
+          {/* Bucket Name (R2/B2) */}
           {showBucket && (
             <Field label="Bucket Name" error={errors.bucket}>
               <input

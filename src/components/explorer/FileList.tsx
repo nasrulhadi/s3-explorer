@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import * as ContextMenu from "@radix-ui/react-context-menu";
+import JSZip from "jszip";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -9,6 +10,7 @@ import {
   FileX,
   AlertCircle,
   Circle,
+  Check,
   Copy,
   ClipboardPaste,
   Upload,
@@ -22,7 +24,9 @@ import {
   Archive,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CopyObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useS3 } from "../../hooks/useS3";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useNavigationStore } from "../../store/navigationStore";
@@ -107,6 +111,9 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   const [renameLoading, setRenameLoading] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
   const [dropFiles, setDropFiles] = useState<Array<{ file: File; relativePath: string; size: number }> | undefined>(undefined);
+  const [infoData, setInfoData] = useState<{ title: string; type: string; rows: { label: string; value: string }[] } | null>(null);
+  const [urlData, setUrlData] = useState<string | null>(null);
+  const [zipError, setZipError] = useState<string | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const skeletonCountRef = useRef(8);
@@ -148,11 +155,12 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
     ? `${activeTransfers.length} transfer${activeTransfers.length > 1 ? "s" : ""} in progress`
     : "No activity";
 
-  // Reset selection when navigating to a different folder
+    // Reset selection + context when navigating or after data refresh
   useEffect(() => {
     setSelectedKeys(new Set());
+    setContextTarget({ type: "empty" });
     setFocusIndex(-1);
-  }, [connectionId, bucket, prefix]);
+  }, [connectionId, bucket, prefix, data]);
 
   // ── Sort toggle ────────────────────────────────────────────
   function toggleSort(field: SortField) {
@@ -390,6 +398,13 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderCreating, setNewFolderCreating] = useState(false);
 
+  // Reset name setiap kali modal terbuka (dari toolbar atau klik kanan)
+  useEffect(() => {
+    if (newFolderOpen) {
+      setNewFolderName("");
+    }
+  }, [newFolderOpen]);
+
   const handleNewFolder = useCallback(() => {
     if (!connectionId || !bucket) return;
     setNewFolderName("");
@@ -518,6 +533,127 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
     downloadFile.mutateAsync({ connectionId, bucket, key: item.key });
   }, [connectionId, bucket, downloadFile]);
 
+  // ── Download as ZIP ─────────────────────────────────────
+  const ZIP_LIMIT_FILES = 250;
+  const ZIP_LIMIT_BYTES = 500 * 1024 * 1024;
+
+  const handleDownloadZip = useCallback(async (items: S3Item[]) => {
+    if (!connectionId || !bucket) return;
+    setZipError(null);
+
+    // Collect all file-level objects (expand folders)
+    const allItems: { key: string; name: string; size: number }[] = [];
+
+    for (const item of items) {
+      if (item.type === "folder" && item.key.endsWith("/")) {
+        // List objects under folder prefix
+        const client = createS3Client(getConnection(connectionId));
+        const listed = await client.send(
+          new ListObjectsV2Command({ Bucket: bucket, Prefix: item.key }),
+        );
+        for (const obj of listed.Contents ?? []) {
+          if (!obj.Key || obj.Key === item.key) continue; // skip folder placeholder
+          allItems.push({
+            key: obj.Key,
+            name: obj.Key.slice(item.key.length), // relative path
+            size: obj.Size ?? 0,
+          });
+        }
+      } else {
+        allItems.push({ key: item.key, name: item.name, size: item.size ?? 0 });
+      }
+    }
+
+    // Validate limits
+    const totalSize = allItems.reduce((s, i) => s + i.size, 0);
+    if (allItems.length > ZIP_LIMIT_FILES || totalSize > ZIP_LIMIT_BYTES) {
+      setZipError(
+        `Download as ZIP is limited to ${ZIP_LIMIT_FILES} files or ${(ZIP_LIMIT_BYTES / 1024 / 1024).toFixed(0)} MB total. ` +
+        `Selected: ${allItems.length} file${allItems.length > 1 ? "s" : ""}, ${(totalSize / 1024 / 1024).toFixed(1)} MB.`
+      );
+      return;
+    }
+
+    // Create transfer entry
+    const transferId = `zip-${Date.now()}`;
+    useTransferStore.getState().addTransfer({
+      id: transferId,
+      type: "download",
+      fileName: `${items.length === 1 ? items[0].name : "files"}.zip`,
+      totalBytes: totalSize,
+      transferredBytes: 0,
+      status: "active",
+      bucket,
+      connectionId,
+    });
+
+    // Download each file and add to zip
+    const zip = new JSZip();
+    let downloaded = 0;
+
+    for (const entry of allItems) {
+      try {
+        const conn = getConnection(connectionId);
+        if (!conn) continue;
+        const client = createS3Client(conn);
+        const signedUrl = client.config.endpoint
+          ? await getSignedUrl(client as never, new GetObjectCommand({ Bucket: bucket, Key: entry.key }), { expiresIn: 300 })
+          : await getSignedUrl(client as never, new GetObjectCommand({ Bucket: bucket, Key: entry.key }), { expiresIn: 300 });
+
+        const response = await tauriFetch(signedUrl);
+        if (!response.ok) continue;
+
+        const blob = await response.blob();
+        zip.file(entry.name, blob);
+        downloaded += entry.size;
+        useTransferStore.getState().updateTransfer(transferId, { transferredBytes: downloaded });
+      } catch (_) {
+        // Skip failed files
+      }
+    }
+
+    // Generate and download zip
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const blobUrl = URL.createObjectURL(zipBlob);
+
+    // Try showSaveFilePicker
+    try {
+      const handle = await (window as any).showSaveFilePicker?.({
+        suggestedName: `${items.length === 1 ? items[0].name : "files"}.zip`,
+      });
+      if (handle) {
+        const writable = await handle.createWritable();
+        await writable.write(zipBlob);
+        await writable.close();
+        URL.revokeObjectURL(blobUrl);
+        useTransferStore.getState().updateTransfer(transferId, {
+          status: "done",
+          transferredBytes: totalSize,
+        });
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    // Fallback: anchor click
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = `${items.length === 1 ? items[0].name : "files"}.zip`;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    setTimeout(() => {
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(blobUrl);
+    }, 5000);
+
+    useTransferStore.getState().updateTransfer(transferId, {
+      status: "done",
+      transferredBytes: totalSize,
+    });
+  }, [connectionId, bucket, getConnection, queryClient]);
+
   // ── Get URL (presigned) ───────────────────────────────────
   const handleGetUrl = useCallback((item: S3Item) => {
     if (!connectionId || !bucket) return;
@@ -525,6 +661,7 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
       .mutateAsync({ connectionId, bucket, key: item.key })
       .then(async (url) => {
         await navigator.clipboard.writeText(url);
+        setUrlData(url);
       });
   }, [connectionId, bucket, getPresignedUrl]);
 
@@ -534,25 +671,27 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
     headObject
       .mutateAsync({ connectionId, bucket, key: item.key })
       .then((meta) => {
-        const info = [
-          `Name: ${item.name}`,
-          `Key: ${item.key}`,
-          `Type: ${item.type === "folder" ? "Folder" : "File"}`,
+        const rows: { label: string; value: string }[] = [
+          { label: "Name", value: item.name },
+          { label: "Key", value: item.key },
+          { label: "Type", value: item.type === "folder" ? "Folder" : "File" },
         ];
         if (meta.size !== undefined) {
-          info.push(`Size: ${formatFileSize(meta.size)}`);
+          rows.push({ label: "Size", value: formatFileSize(meta.size) });
         }
         if (meta.lastModified) {
-          info.push(`Last Modified: ${meta.lastModified.toLocaleString()}`);
+          rows.push({ label: "Last Modified", value: meta.lastModified.toLocaleString() });
         }
         if (meta.contentType) {
-          info.push(`Content Type: ${meta.contentType}`);
+          rows.push({ label: "Content Type", value: meta.contentType });
         }
         if (meta.storageClass) {
-          info.push(`Storage Class: ${meta.storageClass}`);
+          rows.push({ label: "Storage Class", value: meta.storageClass });
         }
-        // Info fetched successfully — logged to console for debugging
-        console.log(info.join("\n"));
+        if (meta.etag) {
+          rows.push({ label: "ETag", value: meta.etag });
+        }
+        setInfoData({ title: item.name, type: item.type === "folder" ? "Folder" : "File", rows });
       });
   }, [connectionId, bucket, headObject]);
 
@@ -758,7 +897,9 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   if (displayedItems.length === 0) {
     return (
       <>
-        <ContextMenu.Root>
+        <ContextMenu.Root onOpenChange={(open) => {
+          if (!open) setContextTarget({ type: "empty" });
+        }}>
           <ContextMenu.Trigger asChild>
             <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden">
               <ColumnHeader disabled />
@@ -889,7 +1030,9 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
   // ── Normal: virtualized list ───────────────────────────────
   return (
     <>
-      <ContextMenu.Root>
+      <ContextMenu.Root onOpenChange={(open) => {
+        if (!open) setContextTarget({ type: "empty" });
+      }}>
         <div
           className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden"
           onKeyDown={handleKeyDown}
@@ -1025,8 +1168,8 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                 {!menuItems.isMixed && (
                   <>
                     <ContextMenu.Separator className={MENU_SEPARATOR} />
-                    <ContextMenu.Item className={MENU_ITEM} disabled>
-                      <Archive size={15} /> Download as ZIP <span className={MENU_SHORTCUT}>soon</span>
+                    <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleDownloadZip(menuItems.items)}>
+                      <Archive size={15} /> Download as ZIP
                     </ContextMenu.Item>
                   </>
                 )}
@@ -1081,8 +1224,8 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
                     <Trash2 size={15} /> Delete
                   </ContextMenu.Item>
                   <ContextMenu.Separator className={MENU_SEPARATOR} />
-                  <ContextMenu.Item className={MENU_ITEM} disabled>
-                    <Archive size={15} /> Download as ZIP <span className={MENU_SHORTCUT}>soon</span>
+                  <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleDownloadZip(menuItems.items)}>
+                    <Archive size={15} /> Download as ZIP
                   </ContextMenu.Item>
                   <ContextMenu.Separator className={MENU_SEPARATOR} />
                   <ContextMenu.Item className={MENU_ITEM} onSelect={() => handleGetInfo(menuItems.items[0])}>
@@ -1193,6 +1336,24 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
         }}
       />
 
+      {/* ── Info Modal ────────────────────────────────────── */}
+      <InfoModal
+        data={infoData}
+        onClose={() => setInfoData(null)}
+      />
+
+      {/* ── URL Modal ─────────────────────────────────────── */}
+      <UrlModal
+        url={urlData}
+        onClose={() => setUrlData(null)}
+      />
+
+      {/* ── Zip Error Modal ──────────────────────────────── */}
+      <ZipErrorModal
+        message={zipError}
+        onClose={() => setZipError(null)}
+      />
+
       {/* ── Upload Modal ──────────────────────────────────── */}
       <UploadModal
         open={uploadOpen}
@@ -1208,6 +1369,191 @@ export default function FileList({ filterQuery, uploadOpen, onUploadClose, onUpl
         onUploadComplete={handleUploadComplete}
       />
     </>
+  );
+}
+
+// ─── Info Modal ──────────────────────────────────
+function InfoModal({
+  data,
+  onClose,
+}: {
+  data: { title: string; type: string; rows: { label: string; value: string }[] } | null;
+  onClose: () => void;
+}) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const copyToClipboard = async (text: string, index: number) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 1500);
+  };
+
+  if (!data) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">
+            {data.title}
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{data.type} Info</p>
+        </div>
+
+        {/* Info rows */}
+        <div className="px-5 pb-2 space-y-1 max-h-72 overflow-y-auto">
+          {data.rows.map((row, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500">{row.label}</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200 truncate font-mono">
+                  {row.value}
+                </p>
+              </div>
+              <button
+                onClick={() => copyToClipboard(row.value, i)}
+                className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)] transition-colors"
+                title={`Copy ${row.label}`}
+              >
+                {copiedIndex === i ? (
+                  <Check size={14} />
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end px-5 pb-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer mt-2"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── URL Modal ───────────────────────────────────
+function UrlModal({
+  url,
+  onClose,
+}: {
+  url: string | null;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyUrl = async () => {
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  if (!url) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+            Presigned URL
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            This URL expires in 1 hour. Already copied to clipboard.
+          </p>
+        </div>
+
+        {/* URL display */}
+        <div className="px-5 pb-4">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <p className="flex-1 text-sm text-gray-800 dark:text-gray-200 font-mono truncate min-w-0">
+              {url}
+            </p>
+            <button
+              onClick={copyUrl}
+              className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)] transition-colors"
+              title="Copy URL"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Zip Error Modal ──────────────────────────────
+function ZipErrorModal({
+  message,
+  onClose,
+}: {
+  message: string | null;
+  onClose: () => void;
+}) {
+  if (!message) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="text-base font-semibold text-red-600 dark:text-red-400">
+            Download Limit Exceeded
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+            {message}
+          </p>
+        </div>
+        <div className="flex items-center justify-end px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

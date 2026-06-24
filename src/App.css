@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* All buttons and clickable elements get cursor pointer */
+button,
+[role="button"],
+[role="menuitem"],
+[role="tab"],
+[role="switch"],
+summary,
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  cursor: pointer;
+}
+
+/* Disabled state overrides */
+button:disabled,
+[role="button"][aria-disabled="true"],
+[role="menuitem"][aria-disabled="true"] {
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {

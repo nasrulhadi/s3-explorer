@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Plus,
-  Server,
   Database,
   Loader2,
   AlertCircle,
@@ -13,6 +12,44 @@ import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useS3 } from "../../hooks/useS3";
 import type { S3Connection } from "../../types";
+
+// ─── Provider-specific icons ────────────────────────
+
+function R2Icon({ size = 18 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
+      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">R2</text>
+    </svg>
+  );
+}
+
+function B2Icon({ size = 18 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
+      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">B2</text>
+    </svg>
+  );
+}
+
+function IOIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
+      <text x="5" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">IO</text>
+    </svg>
+  );
+}
+
+function S3Icon({ size = 18 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
+      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">S3</text>
+    </svg>
+  );
+}
 
 // ─── Sub-components ─────────────────────────────────────────
 
@@ -52,7 +89,15 @@ function ConnectionItem({
         onClick={onSelect}
         className="flex-1 flex items-center gap-2 min-w-0"
       >
-        <Server size={18} className="shrink-0" />
+        {connection.provider === "r2" ? (
+          <R2Icon size={18} />
+        ) : connection.provider === "b2" ? (
+          <B2Icon size={18} />
+        ) : connection.provider === "minio" ? (
+          <IOIcon size={18} />
+        ) : (
+          <S3Icon size={18} />
+        )}
         <div className="min-w-0 flex-1 text-left">
           <div className="truncate leading-snug">{connection.name}</div>
           {bucketLabel && (
@@ -182,14 +227,16 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
       setConnectionId(conn.id);
     }
 
-    if (conn.provider === "r2" && conn.defaultBucket) {
-      // R2 with defaultBucket → navigate directly to the bucket, no expand
-      setBucket(conn.id, conn.defaultBucket);
-      setExpandedId(null);
-    } else {
-      // Other providers → toggle expand to show bucket list
-      setExpandedId((prev) => (prev === conn.id ? null : conn.id));
+    if (conn.provider === "r2" || conn.provider === "b2") {
+      // R2/B2 with defaultBucket → navigate directly to the bucket, no expand
+      if (conn.defaultBucket) {
+        setBucket(conn.id, conn.defaultBucket);
+        setExpandedId(null);
+        return;
+      }
     }
+    // Other providers → toggle expand to show bucket list
+    setExpandedId((prev) => (prev === conn.id ? null : conn.id));
   }
 
   return (
@@ -237,8 +284,8 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
                   onEdit={() => onEditConnection?.(conn.id)}
                   onDelete={() => onDeleteConnection?.(conn.id)}
                 />
-                {/* Only expand bucket list for non-R2 providers */}
-                {expandedId === conn.id && conn.provider !== "r2" && (
+                {/* Only expand bucket list for non-R2/B2 providers */}
+                {expandedId === conn.id && conn.provider !== "r2" && conn.provider !== "b2" && (
                   <BucketList connectionId={conn.id} />
                 )}
               </div>
