@@ -2,7 +2,7 @@
 
 **A modern desktop application for managing S3-compatible object storage**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
+[![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#)
 
@@ -11,23 +11,36 @@
 ## ✨ Features
 
 ### 🎯 Core Functionality
-- **Multi-Provider Support** - Connect to AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible storage
-- **File Browser** - Navigate folders with click-based interaction, just like Windows Explorer or macOS Finder
-- **Context Menu** - Right-click for file/folder operations (download, upload, delete, rename, copy URL)
-- **Transfer Management** - Track upload/download progress with real-time status updates
-- **Keyboard Shortcuts** - Efficient navigation with F5 (refresh), Backspace (back), Ctrl+U (upload)
+- **Multi-Provider Support** — Connect to AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible storage
+- **File Browser** — Navigate folders with click-based interaction, just like Windows Explorer or macOS Finder
+- **Context Menu** — Right-click for file/folder operations (download, copy URL, rename, delete, get info)
+- **Transfer Management** — Track upload/download/move progress with real-time status updates
+- **Keyboard Shortcuts** — Efficient navigation with F5/Ctrl+R (refresh), Backspace (back), Ctrl+U (upload), Delete, Escape
+
+### 📁 File Operations
+- **Multi-Select** — Ctrl+click and Shift+click to select multiple files/folders
+- **Copy/Paste** — Copy and paste files/folders between locations within the same connection
+- **Custom Drag & Drop** — Mouse-based drag & drop (HTML5 DnD is broken in Tauri WebView2)
+- **Recursive Folder Operations** — Delete, rename, and move folders recursively (B2-safe)
+- **Folder ZIP Download** — Download entire folders as ZIP archives
+- **File/Folder Rename** — Rename files and folders (recursive copy + delete for folders)
+- **Presigned URLs** — Generate shareable presigned URLs with copy button
+- **Get Info Modal** — View metadata (size, date, storage class, ETag) with per-field copy
 
 ### 🎨 Modern UI/UX
-- **Dark Mode** - Automatic theme switching based on system preference
-- **Virtual Scrolling** - Handle buckets with thousands of files smoothly
-- **Breadcrumb Navigation** - Clear path visualization with history-based back navigation
-- **Connectivity Indicator** - Real-time online/offline status detection
-- **Activity Indicator** - Visual feedback for loading states and transfers
+- **Dark Mode** — System / light / dark theme switching
+- **Accent Colors** — 5 accent color options (blue, green, yellow, brown, stone)
+- **Virtual Scrolling** — Handle buckets with thousands of files smoothly
+- **Breadcrumb Navigation** — Clear path visualization with history-based back navigation
+- **Connectivity Indicator** — Real-time online/offline status detection (60s interval)
+- **Activity Indicator** — Visual feedback for loading states and transfers
+- **Toolbar Customization** — Toggle filter, upload, new folder, reload, and breadcrumb visibility
 
 ### 🔐 Security & Privacy
-- **Local Storage** - Credentials stored securely on your device
-- **No Telemetry** - Your data stays private
-- **Open Source** - Full transparency with MIT license
+- **Encrypted Export/Import** — Backup connections with AES-256-GCM encryption (PBKDF2 key derivation)
+- **Local Storage** — Credentials stored on your device via Zustand persist
+- **No Telemetry** — Your data stays private
+- **Open Source** — Full transparency with MIT license
 
 ---
 
@@ -51,6 +64,7 @@ Get the latest release from [GitHub Releases](https://github.com/nasrulhadi/s3-e
    - Region
    - Access Key ID
    - Secret Access Key
+   - Default Bucket (for R2/B2 which don't support ListBuckets)
 5. Click **"Save Connection"**
 6. Select a bucket and start browsing!
 
@@ -61,9 +75,9 @@ Get the latest release from [GitHub Releases](https://github.com/nasrulhadi/s3-e
 | Provider | Status | Notes |
 |----------|--------|-------|
 | **AWS S3** | ✅ Fully Supported | Standard AWS regions |
-| **Cloudflare R2** | ✅ Fully Supported | Auto-fill endpoint, default bucket support |
-| **Backblaze B2** | ✅ Fully Supported | S3-compatible API |
-| **MinIO** | ✅ Fully Supported | Self-hosted or cloud |
+| **Cloudflare R2** | ✅ Fully Supported | Requires endpoint + default bucket |
+| **Backblaze B2** | ✅ Fully Supported | Auto-resolve endpoint from region |
+| **MinIO** | ✅ Fully Supported | Self-hosted or cloud, path-style addressing |
 | **DigitalOcean Spaces** | ✅ Fully Supported | S3-compatible |
 | **Custom S3** | ✅ Fully Supported | Any S3-compatible endpoint |
 
@@ -72,24 +86,26 @@ Get the latest release from [GitHub Releases](https://github.com/nasrulhadi/s3-e
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **[React 18](https://react.dev)** - UI framework
-- **[TypeScript](https://www.typescriptlang.org)** - Type safety
-- **[Tailwind CSS v4](https://tailwindcss.com)** - Utility-first styling
-- **[TanStack Query v5](https://tanstack.com/query/latest)** - Data fetching & caching
-- **[TanStack Virtual](https://tanstack.com/virtual/latest)** - Virtualized lists
-- **[Zustand v5](https://docs.pmnd.rs/zustand)** - State management
-- **[Lucide React](https://lucide.dev)** - Beautiful icons
-- **[Sonner](https://sonner.emilkowal.ski)** - Toast notifications
+- **[React 19](https://react.dev)** — UI framework
+- **[TypeScript](https://www.typescriptlang.org)** — Type safety (strict mode)
+- **[Tailwind CSS v4](https://tailwindcss.com)** — Utility-first styling (CSS-based config)
+- **[TanStack Query v5](https://tanstack.com/query/latest)** — Data fetching & caching
+- **[TanStack Virtual v3](https://tanstack.com/virtual/latest)** — Virtualized lists
+- **[Zustand v5](https://docs.pmnd.rs/zustand)** — State management (5 stores)
+- **[Lucide React](https://lucide.dev)** — Beautiful icons
+- **[Sonner](https://sonner.emilkowal.ski)** — Toast notifications
+- **[Radix UI](https://www.radix-ui.com)** — Context menu
+- **[JSZip](https://stuk.github.io/jszip)** — Folder ZIP downloads
+- **[@fontsource/onest](https://fontsource.org/fonts/onest)** — Bundled font
 
 ### Backend (Tauri)
-- **[Tauri v2](https://v2.tauri.app)** - Desktop framework
-- **[Rust](https://www.rust-lang.org)** - Native performance
-- **[AWS SDK JS v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)** - S3 operations
+- **[Tauri v2](https://v2.tauri.app)** — Desktop framework (frameless window)
+- **[Rust](https://www.rust-lang.org)** — Native performance
+- **[@aws-sdk/client-s3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)** — S3 operations (runs in frontend, HTTP routed through Rust)
 
 ### Development
-- **[Vite](https://vitejs.dev)** - Build tool
-- **[pnpm](https://pnpm.io)** - Package manager
-- **[ESLint](https://eslint.org)** - Code linting
+- **[Vite v7](https://vitejs.dev)** — Build tool
+- **[pnpm](https://pnpm.io)** — Package manager
 
 ---
 
@@ -133,41 +149,49 @@ Installers will be generated in `src-tauri/target/release/bundle/`
 
 ```
 s3-explorer/
-├── src/                          # Frontend React application
-│   ├── App.tsx                   # Main app layout & routing
-│   ├── main.tsx                  # Entry point
+├── src/                              # Frontend React application
+│   ├── main.tsx                      # Entry point, QueryClient setup
+│   ├── App.tsx                       # Root layout, view routing, theme/accent
+│   ├── App.css                       # Tailwind v4 + CSS custom properties
 │   ├── components/
-│   │   ├── layout/               # TitleBar, Sidebar, Toolbar, TransferPanel
-│   │   ├── explorer/             # FileList, FileRow, FolderRow, Breadcrumb
-│   │   ├── settings/             # SettingsPage
-│   │   └── connections/          # ConnectionFormPage, DeleteConnectionPage
+│   │   ├── ConnectionFormPage.tsx    # Add/edit connection (page)
+│   │   ├── DeleteConnectionPage.tsx  # Delete connection (page)
+│   │   ├── SettingsPage.tsx          # Settings (theme, accent, export/import)
+│   │   ├── explorer/                 # FileList, FileRow, FolderRow, UploadModal
+│   │   ├── layout/                   # TitleBar, Sidebar, Toolbar, TransferPanel
+│   │   └── modals/                   # ImportConnectionsModal, PassphraseModal
 │   ├── hooks/
-│   │   ├── useS3.ts              # S3 operations hook
-│   │   ├── useConnectivity.ts    # Internet connectivity detection
-│   │   └── useKeyboardShortcuts.ts
-│   ├── store/                    # Zustand state stores
-│   │   ├── connectionStore.ts    # S3 connections
-│   │   ├── navigationStore.ts    # View state & history
-│   │   ├── transferStore.ts      # Upload/download queue
-│   │   └── settingsStore.ts      # User preferences
+│   │   ├── useS3.ts                  # S3 operations (queries + mutations)
+│   │   ├── useConnectivity.ts        # Internet connectivity detection
+│   │   ├── useDownload.ts            # Download progress tracking
+│   │   └── useKeyboardShortcuts.ts   # Global keyboard shortcuts
+│   ├── store/                        # Zustand state stores
+│   │   ├── connectionStore.ts        # S3 connections (persisted)
+│   │   ├── navigationStore.ts        # View state & history (partially persisted)
+│   │   ├── transferStore.ts          # Upload/download/move queue
+│   │   ├── settingsStore.ts          # User preferences (persisted)
+│   │   └── clipboardStore.ts         # Copy/paste items
 │   ├── lib/
-│   │   ├── s3Client.ts           # S3 client factory
-│   │   └── utils.ts              # Helper functions
+│   │   ├── s3Client.ts               # S3 client factory + CORS-bypass handler
+│   │   ├── utils.ts                  # Helper functions
+│   │   ├── crypto.ts                 # AES-256-GCM encryption for export/import
+│   │   └── accentColors.ts           # Accent color definitions
 │   └── types/
-│       └── index.ts              # TypeScript interfaces
+│       └── index.ts                  # TypeScript interfaces
 │
-├── src-tauri/                    # Rust backend (Tauri)
+├── src-tauri/                        # Rust backend (minimal shell)
 │   ├── src/
-│   │   ├── main.rs               # Entry point
-│   │   └── lib.rs                # Tauri commands
-│   ├── Cargo.toml                # Rust dependencies
-│   └── tauri.conf.json           # Tauri configuration
+│   │   ├── main.rs                   # Binary entry point
+│   │   └── lib.rs                    # Tauri builder + plugins
+│   ├── Cargo.toml                    # Rust dependencies
+│   ├── tauri.conf.json               # App config (frameless, 1200x800)
+│   └── capabilities/default.json     # Window/HTTP/opener permissions
 │
-├── public/                       # Static assets
-├── CHANGELOG.md                  # Version history
-├── CONVENTIONS.md                # Coding guidelines
-├── PROJECT.md                    # Architecture docs
-└── README.md                     # This file
+├── CHANGELOG.md                      # Version history
+├── CONVENTIONS.md                    # Coding guidelines
+├── CLAUDE.md                         # AI assistant quick reference
+├── PROJECT.md                        # Architecture docs
+└── README.md                         # This file
 ```
 
 ---
@@ -176,13 +200,11 @@ s3-explorer/
 
 | Shortcut | Action |
 |----------|--------|
-| `F5` | Refresh current folder |
+| `F5` or `Ctrl+R` | Refresh current folder |
 | `Backspace` | Go back in history |
 | `Ctrl+U` | Upload files |
-| `Ctrl+N` | New folder |
-| `Ctrl+F` | Focus search |
 | `Delete` | Delete selected items |
-| `Escape` | Close modal / Clear selection |
+| `Escape` | Close modal / clear selection |
 
 ---
 
@@ -233,36 +255,33 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 ## 🗺️ Roadmap
 
 ### Planned Features
-- [ ] Multi-select operations (Ctrl+click, Shift+click)
-- [ ] Cut/Copy/Paste between folders
 - [ ] File preview (images, text, PDF)
-- [ ] Drag & drop upload
-- [ ] Search within bucket
-- [ ] Bucket management (create/delete)
-- [ ] Export/import connections
-- [ ] S3 presigned URL sharing
-- [ ] File versioning support
+- [ ] Large file downloads via Rust backend (>100MB)
+- [ ] Download cancellation
+- [ ] Bucket management (create/delete bucket)
 - [ ] Multipart upload for large files
+- [ ] Sync folder local ↔ S3
+- [ ] File versioning support
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
 ### Built With
-- [Tauri](https://tauri.app) - Amazing desktop framework
-- [React](https://react.dev) - UI library
-- [Tailwind CSS](https://tailwindcss.com) - Styling framework
-- [Lucide Icons](https://lucide.dev) - Beautiful icon set
+- [Tauri](https://tauri.app) — Amazing desktop framework
+- [React](https://react.dev) — UI library
+- [Tailwind CSS](https://tailwindcss.com) — Styling framework
+- [Lucide Icons](https://lucide.dev) — Beautiful icon set
 
 ### Inspired By
-- [Cyberduck](https://cyberduck.io) - Popular S3 client
-- [FileZilla](https://filezilla-project.org) - FTP client
+- [Cyberduck](https://cyberduck.io) — Popular S3 client
+- [FileZilla](https://filezilla-project.org) — FTP client
 - Windows Explorer & macOS Finder
 
 ### Contributors
@@ -298,10 +317,3 @@ If you find this project useful, please consider giving it a star! It helps othe
 [Report Bug](https://github.com/nasrulhadi/s3-explorer/issues) · [Request Feature](https://github.com/nasrulhadi/s3-explorer/issues/new) · [Documentation](CONVENTIONS.md)
 
 </div>
-# Tauri + React + Typescript
-
-This template should help get you started developing with Tauri, React and Typescript in Vite.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)

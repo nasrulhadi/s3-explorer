@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Agent(Explore)",
+      "Bash(git tag *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(ssh-add *)"
+    ]
+  },
+  "$version": 4
+}
