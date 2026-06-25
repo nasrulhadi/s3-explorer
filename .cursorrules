@@ -1,10 +1,19 @@
 # S3 Explorer - AI Assistant Rules
 
 ## Project Context
-- Desktop app for S3-compatible storage (AWS S3, MinIO, R2, B2)
-- Tech: Tauri v2 + React 18 + TypeScript + Tailwind CSS v4
-- State: Zustand v5 + TanStack Query v5
-- Language: Indonesian (user), English (code)
+- Desktop app for S3-compatible storage (AWS S3, MinIO, Cloudflare R2, Backblaze B2, DigitalOcean Spaces)
+- Tech: Tauri v2 + React 19 + TypeScript (strict) + Tailwind CSS v4 (CSS-based config)
+- State: Zustand v5 (5 stores, 4 persisted) + TanStack Query v5
+- Virtualization: TanStack Virtual v3
+- Icons: Lucide React | Font: Onest (`@fontsource/onest`)
+- Toasts: Sonner | Context menus: Radix UI | ZIP: JSZip
+- Language: Indonesian (user), English (code/comments)
+- Current Version: v1.1.5
+
+## Architecture (CRITICAL)
+- **CORS Bypass**: All AWS SDK HTTP traffic routed through Tauri's `@tauri-apps/plugin-http` — S3 providers don't serve CORS headers. Custom handler in `src/lib/s3Client.ts`.
+- **Rust backend is a minimal shell** — no S3 logic, no database, no filesystem access. All app logic in TypeScript frontend.
+- **Window**: Frameless (`decorations: false`), custom TitleBar, 1200×800 default, `resizable: false`.
 
 ## Key Conventions
 
@@ -16,38 +25,144 @@ const active = useMemo(() => transfers.filter(t => t.active), [transfers]);
 
 // ❌ WRONG - Inline filter causes infinite loop
 const active = useTransferStore((s) => s.transfers.filter(t => t.active));
+
+// ✅ CORRECT - Selective subscriptions
+const connections = useConnectionStore((s) => s.connections);
+const addConnection = useConnectionStore((s) => s.addConnection);
+
+// ❌ WRONG - Whole store subscription
+const store = useConnectionStore();
 ```
 
-### Tailwind CSS
+### Zustand Stores
+| Store | Persisted | Key |
+|-------|-----------|-----|
+| `connectionStore` | ✅ | `s3-explorer-connections` |
+| `navigationStore` | ✅ partial | `s3-explorer-navigation` (history NOT persisted) |
+| `transferStore` | ❌ | — |
+| `settingsStore` | ✅ | `s3-explorer-settings` |
+| `clipboardStore` | ❌ | — |
+
+### Tailwind CSS v4
+- Config is CSS-based (no `tailwind.config.js`) — uses `@tailwindcss/vite` plugin
 - Use CSS variables: `bg-[var(--s3-sidebar-bg)]`
-- No dynamic classes (use static or style attribute)
+- No dynamic classes (use static or `style` attribute)
 - Height: Use `h-screen`, `flex-1`, not `calc()`
+- Dark mode: `@custom-variant dark` + `.dark` class on `<html>`
+
+### Accent Colors
+- 5 options: blue, green, yellow, brown, stone (default: stone)
+- Defined in `src/lib/accentColors.ts`, injected at runtime by `App.tsx` via CSS vars:
+  `--s3-accent-base`, `--s3-accent-hover`, `--s3-accent-active`, `--s3-accent-text`
+- Light/dark variants per color — reactive to theme changes via `useState` + `useEffect`
+
+### S3 Client
+```typescript
+// ✅ The custom handler in s3Client.ts routes through Tauri's native fetch
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+// DO NOT use simple fetchFn pattern — won't bypass CORS properly
+
+// Provider-specific endpoint resolution:
+// - AWS: no endpoint override (SDK default)
+// - MinIO/custom: user-supplied endpoint, forcePathStyle: true
+// - R2: requires endpoint (https://{accountId}.r2.cloudflarestorage.com)
+// - B2: auto-resolve https://s3.{region}.backblazeb2.com if no endpoint given
+```
 
 ### S3 Operations
-- Use Tauri fetch: `import { fetch } from "@tauri-apps/plugin-http"`
-- Large files (>100MB): Use Rust commands via `invoke()`
+- All S3 ops via `@aws-sdk/client-s3` in renderer process (not Rust)
+- `download_file` Rust command is NOT yet implemented — all downloads via JS
+- Downloads use `tauriFetch` (not `globalThis.fetch`) to bypass CORS
+- Native save dialog: `showSaveFilePicker` with anchor fallback
 
-### Push Workflow
-When asked to push:
-1. Check commits: `git log v{last}..HEAD --oneline`
-2. Update CHANGELOG.md with new version section
-3. Commit changelog: `git commit -m "docs: update changelog for v{x.x.x}"`
-4. Create tag: `git tag -a v{x.x.x} -m "Release description"`
-5. Push: `git push origin main --tags`
+### Encrypted Export/Import
+- `src/lib/crypto.ts`: PBKDF2 (SHA-256, 100k iterations) → AES-256-GCM
+- Binary format: `MAGIC ("S3XPLR") | salt (16B) | iv (12B) | ciphertext`
+- `isEncryptedExport()` checks magic prefix for passphrase requirement
+
+### Drag & Drop
+- **HTML5 DnD is broken in Tauri WebView2** — project uses custom mouse-based implementation
+- 10px movement threshold, `document.elementFromPoint()` for drop targets
+- Floating ghost label follows cursor; supports multi-select drag
+- Recursive folder move: copy all children → delete source (B2-safe)
 
 ### UI Patterns
-- Connectivity: Green/red Circle dot + "Online"/"Offline"
-- Activity: ArrowUpDown icon with pulse animation
-- Pages for complex forms, modals for simple confirmations
+- **Connectivity**: Green/red Circle dot (8px) + "Online"/"Offline" (60s interval)
+- **Activity**: ArrowUpDown icon with `animate-pulse` when transfers active
+- **Status bar**: Fixed-width sections (`h-8`) — item count | selection | connectivity | activity
+- **Pages** for complex forms (connection add/edit/delete, settings)
+- **Modals** for: confirmations, upload progress, passphrase, import preview, info/URL, rename, new folder, delete
+- **TransferPanel**: Floating bottom-right, auto-remove completed after 4s
+
+### Keyboard Shortcuts
+| Key | Action | Note |
+|-----|--------|------|
+| F5 / Ctrl+R | Refresh | Ignored in inputs |
+| Backspace | Go back | Ignored in inputs |
+| Ctrl+U | Upload | |
+| Delete | Delete selected | |
+| Escape | Close modal / clear selection | |
 
 ## Important Files
-- `CHANGELOG.md` - Release notes
-- `PROJECT.md` - Architecture overview
-- `CONVENTIONS.md` - Detailed guidelines
-- `src/App.tsx` - Main layout
-- `src/store/*.ts` - State management
+| File | Purpose |
+|------|---------|
+| `CHANGELOG.md` | Release notes |
+| `PROJECT.md` | Architecture overview |
+| `CONVENTIONS.md` | Detailed AI guidelines |
+| `src/App.tsx` | Root layout, view routing, theme/accent |
+| `src/lib/s3Client.ts` | S3 client factory + CORS-bypass handler |
+| `src/hooks/useS3.ts` | Central S3 operations (queries + mutations) |
+| `src/components/explorer/FileList.tsx` | Core file list (~2300 lines, most complex) |
+| `src/store/connectionStore.ts` | S3 connections (persisted) |
+| `src/store/navigationStore.ts` | View state & history |
+| `src/store/transferStore.ts` | Upload/download/move queue |
+| `src/store/settingsStore.ts` | User preferences (persisted) |
+| `src/store/clipboardStore.ts` | Copy/paste items |
+| `src/lib/utils.ts` | Helpers: formatFileSize, formatDate, getFileIcon |
+| `src/lib/crypto.ts` | AES-256-GCM encryption |
+| `src/lib/accentColors.ts` | Accent color definitions |
+| `src-tauri/src/lib.rs` | Tauri builder (minimal backend) |
+| `src-tauri/tauri.conf.json` | App config (frameless, CSP null) |
+
+## Common Pitfalls
+
+### Zustand Selector Infinite Loop
+Selector returns new array/object every render → always memoize filters with `useMemo`.
+
+### CSS Specificity Conflicts
+Avoid dynamic Tailwind classes; use static classes or `style` attribute.
+
+### S3 Host Header
+Custom HTTP handler must skip `host` header — otherwise signature mismatch. Already handled in `s3Client.ts`.
+
+### HTML5 Drag & Drop
+Do NOT use `onDragStart`/`onDrop` — unreliable in Tauri WebView2. Use the existing mouse-based system in `FileList.tsx`.
+
+### Folder Operations (B2-safe)
+- Folders are virtual in S3 (prefix ending in `/`)
+- `ListObjectsV2` with `Delimiter: "/"` → `CommonPrefixes` = folders, `Contents` = files
+- Rename/delete folders: must recursively copy/move all children first
+- R2/B2 don't support `ListBuckets` — use `defaultBucket` field in connection
 
 ## Before Committing
 ```bash
 pnpm tsc --noEmit && pnpm vite build
 ```
+
+## Push Workflow
+When asked to push:
+1. Check commits: `git log v{last}..HEAD --oneline`
+2. Determine version (fix=patch, feat=minor, feat!/BREAKING=major)
+3. Update CHANGELOG.md with new version section (Added/Changed/Fixed/UI/Performance)
+4. Commit changelog: `git commit -m "docs: update changelog for v{x.x.x}"`
+5. Create tag: `git tag -a v{x.x.x} -m "Release description"`
+6. Push: `git push origin main --tags`
+
+## Known Issues / Technical Debt
+- `AddConnectionModal.tsx` is legacy (superseded by `ConnectionFormPage.tsx`)
+- `download_file` Rust command is TODO — large files still via JS
+- Download cancellation not functional
+- Credentials stored plaintext in localStorage (no OS keychain)
+- `greet` command in Rust backend is dead code
+- `FileList.tsx` is ~2300 lines — candidate for refactoring
+- CSP disabled (`"csp": null`)
