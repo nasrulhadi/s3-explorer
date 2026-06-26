@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Plus,
   Database,
@@ -7,53 +7,36 @@ import {
   Pencil,
   Trash2,
   Settings,
+  Search,
+  X,
 } from "lucide-react";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useS3 } from "../../hooks/useS3";
-import type { S3Connection } from "../../types";
+import type { S3Connection, S3Provider } from "../../types";
 
-// ─── Provider-specific icons ────────────────────────
+// ─── Provider labels ────────────────────────────────────────
 
-function R2Icon({ size = 18 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
-      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">R2</text>
-    </svg>
-  );
+const PROVIDER_LABELS: Record<S3Provider, string> = {
+  aws: "AWS S3",
+  minio: "MinIO",
+  r2: "Cloudflare R2",
+  b2: "Backblaze B2",
+  custom: "Custom S3",
+};
+
+/** Build metadata label: provider · region (or bucket for R2/B2) */
+function getMetadata(conn: S3Connection, activeBucket: string | null): string | null {
+  const label = PROVIDER_LABELS[conn.provider];
+  if (conn.provider === "r2" || conn.provider === "b2") {
+    const bucket = conn.defaultBucket ?? (activeBucket || null);
+    return bucket ? `${label} · ${bucket}` : label;
+  }
+  return conn.region ? `${label} · ${conn.region}` : label;
 }
 
-function B2Icon({ size = 18 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
-      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">B2</text>
-    </svg>
-  );
-}
+// ─── Connection Item ───────────────────────────────────────
 
-function IOIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
-      <text x="5" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">IO</text>
-    </svg>
-  );
-}
-
-function S3Icon({ size = 18 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 22 21.47" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M4.19,1h13.78c3.03,0,3.03,2.18,3.03,4.87v9.74c0,2.69,0,4.87-3.06,4.87H4.11c-3.11,0-3.11-2.18-3.11-4.87V5.87c0-2.69.28-4.87,3.19-4.87Z"/>
-      <text x="3.9" y="15" fontSize="11.4" fontWeight="600" fill="currentColor" stroke="none" fontFamily="Onest, sans-serif" letterSpacing="0.1">S3</text>
-    </svg>
-  );
-}
-
-// ─── Sub-components ─────────────────────────────────────────
-
-/** Single connection row — icon + name + bucket badge */
 function ConnectionItem({
   connection,
   isActive,
@@ -69,45 +52,33 @@ function ConnectionItem({
   onDelete: () => void;
   activeBucket: string | null;
 }) {
-  // Determine bucket to display
-  const bucketLabel =
-    connection.defaultBucket ??
-    (isActive && activeBucket ? activeBucket : null);
+  const metadata = getMetadata(connection, isActive ? activeBucket : null);
 
   return (
     <div
       className={`
-        w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
-        transition-colors duration-150 group rounded-md mx-0
+        relative w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
+        transition-colors duration-150 group rounded-md border-l-[3px]
         ${isActive
-          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] border border-transparent"
-          : "text-[var(--s3-sidebar-text)] bg-[var(--s3-sidebar-inactive-bg)] border border-transparent hover:bg-[var(--s3-sidebar-item-hover)]"
+          ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+          : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
         }
       `}
     >
       <button
         onClick={onSelect}
-        className="flex-1 flex items-center gap-2 min-w-0"
+        className="flex-1 flex items-center gap-2.5 min-w-0"
       >
-        {connection.provider === "r2" ? (
-          <R2Icon size={18} />
-        ) : connection.provider === "b2" ? (
-          <B2Icon size={18} />
-        ) : connection.provider === "minio" ? (
-          <IOIcon size={18} />
-        ) : (
-          <S3Icon size={18} />
-        )}
+        <Database size={16} className="shrink-0 opacity-70" />
         <div className="min-w-0 flex-1 text-left">
-          <div className="truncate leading-snug">{connection.name}</div>
-          {bucketLabel && (
+          <div className="truncate leading-snug font-medium">{connection.name}</div>
+          {metadata && (
             <div
-              className={`
-                truncate text-[11px] leading-tight
-                ${isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"}
-              `}
+              className={`truncate text-[11px] leading-tight mt-0.5 ${
+                isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"
+              }`}
             >
-              {bucketLabel}
+              {metadata}
             </div>
           )}
         </div>
@@ -118,14 +89,22 @@ function ConnectionItem({
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           title="Edit connection"
-          className={`p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors ${isActive ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)]" : "text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"}`}
+          className={`p-1 rounded transition-colors ${
+            isActive
+              ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)] hover:bg-black/10"
+              : "text-gray-500 hover:text-[var(--s3-window-text)] hover:bg-black/5 dark:hover:bg-white/10"
+          }`}
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Delete connection"
-          className={`p-1 rounded hover:bg-red-500/20 transition-colors ${isActive ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 dark:hover:text-red-400" : "text-gray-500 hover:text-red-600 dark:hover:text-red-400"}`}
+          className={`p-1 rounded transition-colors ${
+            isActive
+              ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 hover:bg-red-500/20"
+              : "text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10"
+          }`}
         >
           <Trash2 size={13} />
         </button>
@@ -134,7 +113,7 @@ function ConnectionItem({
   );
 }
 
-/** Bucket list rendered under an expanded connection (non-R2 only) */
+/** Bucket list rendered under an expanded connection (non-R2/B2 only) */
 function BucketList({ connectionId }: { connectionId: string }) {
   const { listBuckets } = useS3();
   const { data, isLoading, error } = listBuckets(connectionId);
@@ -145,7 +124,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-3 text-xs text-gray-400">
+      <div className="flex items-center gap-2 px-4 py-2.5 text-xs text-gray-400">
         <Loader2 size={12} className="animate-spin" />
         Loading buckets…
       </div>
@@ -154,7 +133,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
 
   if (error) {
     return (
-      <div className="flex items-start gap-2 px-4 py-3 text-xs text-red-400">
+      <div className="flex items-start gap-2 px-4 py-2.5 text-xs text-red-400">
         <AlertCircle size={12} className="mt-0.5 shrink-0" />
         <span className="truncate">{(error as Error).message}</span>
       </div>
@@ -163,14 +142,14 @@ function BucketList({ connectionId }: { connectionId: string }) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="px-4 py-3 text-xs text-gray-500 italic">
+      <div className="px-4 py-2.5 text-xs text-gray-500 italic">
         No buckets found
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="ml-[3px] border-l border-gray-200 dark:border-gray-700">
       {data.map((bucket) => {
         const isActive =
           activeConnId === connectionId && activeBucket === bucket.name;
@@ -180,12 +159,15 @@ function BucketList({ connectionId }: { connectionId: string }) {
             key={bucket.key}
             onClick={() => setBucket(connectionId, bucket.name)}
             className={`
-              w-full flex items-center gap-2 pl-10 pr-3 py-2 text-sm text-left
-              transition-colors duration-150
-              ${isActive ? "bg-[var(--s3-sidebar-active-bg)]/40 text-[var(--s3-sidebar-active-text)]" : "text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)] hover:text-[var(--s3-window-text)]"}
+              w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm text-left
+              transition-colors duration-150 border-l-[3px]
+              ${isActive
+                ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+                : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
+              }
             `}
           >
-            <Database size={14} className="shrink-0" />
+            <Database size={13} className="shrink-0 opacity-60" />
             <span className="truncate">{bucket.name}</span>
           </button>
         );
@@ -194,20 +176,21 @@ function BucketList({ connectionId }: { connectionId: string }) {
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────
+// ─── Main Component ────────────────────────────────────────
 
 interface SidebarProps {
-  /** Fired when the user clicks the "+" add-connection button */
   onAddConnection?: () => void;
-  /** Fired when the user clicks the edit button on a connection */
   onEditConnection?: (id: string) => void;
-  /** Fired when the user clicks the delete button on a connection */
   onDeleteConnection?: (id: string) => void;
-  /** Fired when the user clicks the settings gear icon */
   onOpenSettings?: () => void;
 }
 
-export default function Sidebar({ onAddConnection, onEditConnection, onDeleteConnection, onOpenSettings }: SidebarProps) {
+export default function Sidebar({
+  onAddConnection,
+  onEditConnection,
+  onDeleteConnection,
+  onOpenSettings,
+}: SidebarProps) {
   const connections = useConnectionStore((s) => s.connections);
   const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
@@ -216,65 +199,117 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
   const activeBucket = useNavigationStore((s) => s.bucket);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filterQuery, setFilterQuery] = useState("");
+
+  const hasConnections = connections.length > 0;
+
+  // Filter connections by name (real-time)
+  const filteredConnections = useMemo(() => {
+    if (!filterQuery.trim()) return connections;
+    const q = filterQuery.toLowerCase();
+    return connections.filter((c) => c.name.toLowerCase().includes(q));
+  }, [connections, filterQuery]);
 
   function handleConnectionClick(conn: S3Connection) {
     setActiveConnection(conn.id);
-    
-    // Only update connectionId in navigation store if it's different
-    // to avoid unnecessary re-renders and state resets
+
     const currentConnectionId = useNavigationStore.getState().connectionId;
     if (currentConnectionId !== conn.id) {
       setConnectionId(conn.id);
     }
 
     if (conn.provider === "r2" || conn.provider === "b2") {
-      // R2/B2 with defaultBucket → navigate directly to the bucket, no expand
       if (conn.defaultBucket) {
         setBucket(conn.id, conn.defaultBucket);
         setExpandedId(null);
         return;
       }
     }
-    // Other providers → toggle expand to show bucket list
     setExpandedId((prev) => (prev === conn.id ? null : conn.id));
   }
 
   return (
     <aside className="w-64 h-full flex flex-col bg-[var(--s3-sidebar-bg)] text-[var(--s3-sidebar-text)] select-none">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--s3-sidebar-border)]">
-        <h1 className="font-semibold text-sm tracking-wide">S3 Explorer</h1>
-        {onAddConnection && (
-          <button
-            onClick={onAddConnection}
-            title="Add Connection"
-            className="
-              p-1 rounded hover:bg-[var(--s3-sidebar-item-hover)] transition-colors
-              text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]
-            "
-          >
-            <Plus size={18} />
-          </button>
-        )}
+      <div className="flex items-center justify-between px-4 h-14">
+        <div className="flex items-baseline gap-1.5">
+          <h1 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+            Connections
+          </h1>
+          {hasConnections && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {connections.length}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => hasConnections && setSearchOpen((v) => !v)}
+          disabled={!hasConnections}
+          title="Search connections"
+          className={`
+            p-1 rounded transition-colors
+            ${searchOpen
+              ? "text-[var(--s3-accent-text)] bg-[var(--s3-accent-base)]"
+              : "text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
+            }
+            ${!hasConnections && "opacity-40 cursor-not-allowed pointer-events-none"}
+          `}
+        >
+          <Search size={16} />
+        </button>
       </div>
 
-      {/* ── Connections list ────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-2">
-        {connections.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-gray-500">
-            <p>No connections yet.</p>
-            {onAddConnection && (
+      {/* ── Filter form (toggle show/hide via search icon) ── */}
+      {searchOpen && hasConnections && (
+        <div className="px-3 pb-2">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-[var(--s3-sidebar-item-hover)]">
+            <Search size={13} className="shrink-0 text-gray-400" />
+            <input
+              type="text"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              placeholder="Filter connections…"
+              autoFocus
+              className="flex-1 min-w-0 bg-transparent text-sm text-[var(--s3-sidebar-text)] placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+            />
+            {filterQuery && (
               <button
-                onClick={onAddConnection}
-                className="mt-2 text-blue-400 hover:text-blue-300 text-xs underline"
+                onClick={() => setFilterQuery("")}
+                title="Clear"
+                className="shrink-0 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                Add your first connection
+                <X size={13} />
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Connections list ────────────────────────────── */}
+      <nav className="flex-1 overflow-y-auto py-2">
+        {!hasConnections ? (
+          /* ── Empty: no connections at all ── */
+          <div className="px-4 py-10 text-center">
+            <Database size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">No connections yet</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Add one to get started
+            </p>
+          </div>
+        ) : filteredConnections.length === 0 ? (
+          /* ── Empty: filter has no match ── */
+          <div className="px-4 py-10 text-center">
+            <Search size={28} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">No connections match</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Try a different search term
+            </p>
+          </div>
         ) : (
-          <div className="space-y-1.5 px-2">
-            {connections.map((conn) => (
+          /* ── Connection items ── */
+          <div className="space-y-0.5 px-2">
+            {filteredConnections.map((conn) => (
               <div key={conn.id}>
                 <ConnectionItem
                   connection={conn}
@@ -284,7 +319,6 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
                   onEdit={() => onEditConnection?.(conn.id)}
                   onDelete={() => onDeleteConnection?.(conn.id)}
                 />
-                {/* Only expand bucket list for non-R2/B2 providers */}
                 {expandedId === conn.id && conn.provider !== "r2" && conn.provider !== "b2" && (
                   <BucketList connectionId={conn.id} />
                 )}
@@ -295,19 +329,37 @@ export default function Sidebar({ onAddConnection, onEditConnection, onDeleteCon
       </nav>
 
       {/* ── Footer ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--s3-sidebar-border)]">
-        <span className="text-xs text-gray-500">
-          {connections.length} connection{connections.length !== 1 ? "s" : ""}
-        </span>
-        {onOpenSettings && (
-          <button
-            onClick={onOpenSettings}
-            title="Settings"
-            className="p-1 rounded hover:bg-[var(--s3-sidebar-item-hover)] transition-colors text-[var(--s3-sidebar-text)] hover:text-[var(--s3-window-text)]"
-          >
-            <Settings size={16} />
-          </button>
-        )}
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        <button
+          onClick={onAddConnection}
+          className="
+            flex-1 flex items-center justify-center gap-1.5
+            px-3 py-2 text-xs font-medium rounded-full
+            bg-white dark:bg-gray-800
+            border border-gray-200 dark:border-gray-700
+            text-gray-700 dark:text-gray-200
+            hover:bg-gray-50 dark:hover:bg-gray-700
+            transition-colors cursor-pointer
+          "
+        >
+          <Plus size={14} />
+          Add Connection
+        </button>
+        <button
+          onClick={onOpenSettings}
+          title="Settings"
+          className="
+            flex items-center justify-center
+            w-9 h-9 rounded-full
+            bg-white dark:bg-gray-800
+            border border-gray-200 dark:border-gray-700
+            text-gray-700 dark:text-gray-200
+            hover:bg-gray-50 dark:hover:bg-gray-700
+            transition-colors cursor-pointer
+          "
+        >
+          <Settings size={14} />
+        </button>
       </div>
     </aside>
   );
