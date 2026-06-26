@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Trash2, AlertTriangle } from "lucide-react";
-import type { S3Connection } from "../types";
+import type { S3Connection } from "../../types";
 
 interface DeleteConnectionPageProps {
   connection: S3Connection;

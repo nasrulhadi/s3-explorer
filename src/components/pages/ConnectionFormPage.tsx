@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save } from "lucide-react";
 import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { createS3Client } from "../lib/s3Client";
-import { useConnectionStore } from "../store/connectionStore";
-import { useNavigationStore } from "../store/navigationStore";
-import type { S3Provider, S3Connection, S3ConnectionFormData } from "../types";
+import { createS3Client } from "../../lib/s3Client";
+import { useConnectionStore } from "../../store/connectionStore";
+import { useNavigationStore } from "../../store/navigationStore";
+import type { S3Provider, S3Connection, S3ConnectionFormData } from "../../types";
 
 // ─── Constants ──────────────────────────────────────────────
 

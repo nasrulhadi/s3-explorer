@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Mail, Download, Upload } from "lucide-react";
-import { useSettingsStore, type ThemeMode } from "../store/settingsStore";
-import { useConnectionStore } from "../store/connectionStore";
-import type { S3Connection } from "../types";
-import ImportConnectionsModal from "./modals/ImportConnectionsModal";
-import PassphraseModal from "./modals/PassphraseModal";
-import { encryptExport, decryptExport, isEncryptedExport } from "../lib/crypto";
-import { ACCENT_COLORS } from "../lib/accentColors";
-import buymeacoffee from "../assets/buymeacoffee.png";
+import { useSettingsStore, type ThemeMode } from "../../store/settingsStore";
+import { useConnectionStore } from "../../store/connectionStore";
+import type { S3Connection } from "../../types";
+import ImportConnectionsModal from "../modals/ImportConnectionsModal";
+import PassphraseModal from "../modals/PassphraseModal";
+import { encryptExport, decryptExport, isEncryptedExport } from "../../lib/crypto";
+import { ACCENT_COLORS } from "../../lib/accentColors";
+import buymeacoffee from "../../assets/buymeacoffee.png";
 
 // GitHub icon (inline SVG since it might not be in lucide-react)
 function GithubIcon({ size = 14 }: { size?: number }) {
