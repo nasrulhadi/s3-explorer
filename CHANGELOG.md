@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
-## [1.1.5] - 2026-06-18
+## [1.1.6] - 2026-06-27
+
+### Changed
+- **Sidebar Redesign**: Modern Notion-inspired layout with functional improvements
+  - Header with `CONNECTIONS` label, live count, and toggle search icon
+  - Real-time connection name filter (show/hide via search icon, with clear button)
+  - Connection items: consistent `Database` icon + provider/region (or bucket for R2/B2) metadata
+  - Active connection: subtle left accent bar (3px) + soft accent background (replaces full accent block)
+  - Bucket list with vertical tree guide line + accent left bar for active bucket
+  - Removed inline SVG provider placeholder icons (R2/B2/IO/S3 text boxes)
+- **Settings Page**: Section cards with bordered rounded containers
+  - All sections (General/Appearance/Toolbar/Data) wrapped in bordered cards, no background
+  - ABOUT section retains background fill
+  - Page width widened from `max-w-lg` to `max-w-xl`
+- **Delete Connection Page**: Endpoint truncation (50 chars + "…") with full title tooltip; provider shown as full label (AWS S3 / Cloudflare R2 / Backblaze B2 / MinIO / Custom S3)
+- **Connection Form Page**: Page width widened to `max-w-xl`
+- **FileList Architecture**: Decomposed 2293-line monolith into modular structure
+  - Extracted 6 modals + ColumnHeader to dedicated files under `modals/` and `explorer/`
+  - Extracted S3 folder operations to `lib/s3FolderOps.ts` (B2-safe recursive ops)
+  - Custom hooks: `useFileSelection`, `useFileClipboard`, `useDragMove`
+  - Unified context menu as `ExplorerContextMenu` component
+  - Result: `FileList.tsx` reduced from 2293 → ~600 lines
+
+### Fixed
+- **Delete Modal Duplication**: Handler previously copy-pasted across 3 render branches (Loading/Error/Empty) — now defined once
+
+---
+
+## [1.1.5] - 2026-06-24
 
 ### Added
 - **Export/Import Connections**: Settings page data management with encryption
@@ -19,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org).
 
 ---
 
-## [1.1.4] - 2026-06-18
+## [1.1.4] - 2026-06-24
 
 ### Added
 - **Custom Mouse-Based Drag & Drop**: Complete replacement of HTML5 DnD (broken in Tauri WebView2)
