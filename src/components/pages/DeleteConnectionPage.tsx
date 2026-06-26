@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { ArrowLeft, Trash2, AlertTriangle } from "lucide-react";
-import type { S3Connection } from "../../types";
+import type { S3Connection, S3Provider } from "../../types";
+
+const PROVIDER_LABELS: Record<S3Provider, string> = {
+  aws: "AWS S3",
+  minio: "MinIO",
+  r2: "Cloudflare R2",
+  b2: "Backblaze B2",
+  custom: "Custom S3",
+};
 
 interface DeleteConnectionPageProps {
   connection: S3Connection;
@@ -35,7 +43,7 @@ export default function DeleteConnectionPage({
 
       {/* ── Content ─────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
-        <div className="max-w-lg mx-auto p-8 space-y-6">
+        <div className="max-w-xl mx-auto p-8 space-y-6">
           {/* Warning */}
           <div className="flex items-start gap-3 p-4 rounded-lg bg-[var(--s3-danger-light)]">
             <AlertTriangle size={20} className="text-[var(--s3-danger)] shrink-0 mt-0.5" />
@@ -65,14 +73,16 @@ export default function DeleteConnectionPage({
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--s3-window-muted)] w-20">Provider</span>
                 <span className="text-sm text-[var(--s3-window-text)]">
-                  {connection.provider.toUpperCase()}
+                  {PROVIDER_LABELS[connection.provider]}
                 </span>
               </div>
               {connection.endpoint && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[var(--s3-window-muted)] w-20">Endpoint</span>
-                  <span className="text-sm text-[var(--s3-window-muted)] truncate">
-                    {connection.endpoint}
+                  <span className="text-sm text-[var(--s3-window-text)]" title={connection.endpoint}>
+                    {connection.endpoint.length > 50
+                      ? connection.endpoint.slice(0, 50) + "..."
+                      : connection.endpoint}
                   </span>
                 </div>
               )}

@@ -228,7 +228,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
 
       {/* ── Scrollable form ─────────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
-        <form onSubmit={handleSave} className="max-w-lg mx-auto p-8 space-y-5">
+        <form onSubmit={handleSave} className="max-w-xl mx-auto p-8 space-y-5">
           {/* Connection Name */}
           <Field label="Connection Name" error={errors.name}>
             <input

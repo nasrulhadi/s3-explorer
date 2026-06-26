@@ -346,14 +346,14 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
 
       {/* ── Scrollable content ──────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
-        <div className="max-w-lg mx-auto p-8 space-y-8">
+        <div className="max-w-xl mx-auto p-8 space-y-8">
 
           {/* ── General ─────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               General
             </h3>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2">
               <ToggleRow
                 label="Restore last session"
                 description="Reopen the last viewed bucket and folder on startup"
@@ -368,7 +368,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Appearance
             </h3>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <SelectRow
                 label="Theme"
                 value={store.theme}
@@ -392,7 +392,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Toolbar
             </h3>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <ToggleRow
                 label="Breadcrumbs"
                 description="Show folder path navigation"
@@ -428,7 +428,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Data
             </h3>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
                   <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
@@ -475,10 +475,10 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
 
           {/* ── About ───────────────────────────────────── */}
           <section>
+            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+              About
+            </h3>
             <div className="rounded-lg bg-[var(--s3-sidebar-bg)] p-6">
-              <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
-                About
-              </h3>
               <div className="space-y-4">
                 {/* Author info */}
                 <div className="space-y-2">
