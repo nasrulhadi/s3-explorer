@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.7] - 2026-06-27
+
+### Added
+- **Empty State Redesign**: Hero image with shortcut pill badges and cleaner layout
+  - `emptyState.webp` illustration as visual anchor
+  - Shortcut hints as horizontal pill badges (F5/Refresh, ←/Back, Ctrl+U/Upload)
+  - Toolbar hidden when no bucket selected (current state only)
+  - Extracted to `src/components/explorer/EmptyState.tsx`
+- **Single Version Source**: App version auto-injected from git tag via Vite `define`
+  - `__APP_VERSION__` global available at build time
+  - Settings page, package.json, and git tag stay in sync
+
+### Changed
+- **Sidebar Polish**: Spacing, rounded corners, and filter form refinements
+  - Connection item spacing increased (`space-y-1`)
+  - Connection item rounded corners (`rounded-xl`)
+  - Filter form background lightened, font size reduced
+  - Sidebar width increased from 256px to 268px
+- **Settings Page**: Ko-fi support link replaced Buy Me a Coffee
+  - Image changed to `kofi2.png`, link to `ko-fi.com/nasrulhadi`
+
+### Fixed
+- **Toolbar Rounded Corner**: `rounded-tl-xl` now on `<main>` content area, always present even when Toolbar hidden
+
+---
+
 ## [1.1.6] - 2026-06-27
 
 ### Changed
