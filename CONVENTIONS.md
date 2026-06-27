@@ -268,18 +268,26 @@ Add new section at top (below header):
 - Optimization changes
 ```
 
-#### 4. Commit changelog
+#### 4. Run version sync script
+Updates `package.json`, `README.md`, `CONVENTIONS.md`, `CLAUDE.md`, `.cursorrules` to the new version:
 ```bash
-git add CHANGELOG.md
-git commit -m "docs: update changelog for v{x.x.x}"
+node scripts/release.mjs {x.x.x}
+```
+> `__APP_VERSION__` (Vite inject from git tag) auto-updates app UI at build time.
+> Script only syncs static files that can't read git tag.
+
+#### 5. Commit all changes
+```bash
+git add -A
+git commit -m "chore: bump version to v{x.x.x}"
 ```
 
-#### 5. Create git tag
+#### 6. Create git tag
 ```bash
 git tag -a v{x.x.x} -m "Short release description"
 ```
 
-#### 6. Push
+#### 7. Push (when user says so)
 ```bash
 git push origin main --tags
 ```

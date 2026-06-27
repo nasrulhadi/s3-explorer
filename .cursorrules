@@ -150,13 +150,17 @@ pnpm tsc --noEmit && pnpm vite build
 ```
 
 ## Push Workflow
-When asked to push:
+When asked to push/release/commit+changelog+tag:
 1. Check commits: `git log v{last}..HEAD --oneline`
 2. Determine version (fix=patch, feat=minor, feat!/BREAKING=major)
 3. Update CHANGELOG.md with new version section (Added/Changed/Fixed/UI/Performance)
-4. Commit changelog: `git commit -m "docs: update changelog for v{x.x.x}"`
-5. Create tag: `git tag -a v{x.x.x} -m "Release description"`
-6. Push: `git push origin main --tags`
+4. Run version sync script: `node scripts/release.mjs {new_version}` (updates package.json, README.md, CONVENTIONS.md, CLAUDE.md, .cursorrules)
+5. Commit all: `git add -A && git commit -m "chore: bump version to v{x.x.x}"`
+6. Create tag: `git tag -a v{x.x.x} -m "Release description"`
+7. Push when user says so: `git push origin main --tags`
+
+Note: `__APP_VERSION__` (Vite inject from git tag) auto-updates app UI at build time.
+Script only syncs static files (package.json + docs) that can't read git tag.
 
 ## Known Issues / Technical Debt
 - `AddConnectionModal.tsx` is legacy (superseded by `ConnectionFormPage.tsx`)

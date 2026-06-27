@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org).
 - **Single Version Source**: App version auto-injected from git tag via Vite `define`
   - `__APP_VERSION__` global available at build time
   - Settings page, package.json, and git tag stay in sync
+- **Release Script**: `scripts/release.mjs` for version sync across static files
+  - Updates `package.json`, `README.md`, `CONVENTIONS.md`, `CLAUDE.md`, `.cursorrules`
+  - Usage: `node scripts/release.mjs {version}` (e.g. `1.1.7` or `v1.1.7`)
 
 ### Changed
 - **Sidebar Polish**: Spacing, rounded corners, and filter form refinements

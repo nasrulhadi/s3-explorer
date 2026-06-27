@@ -80,7 +80,7 @@ src/types/index.ts      — All TypeScript types
 
 ## Push Workflow
 
-When user says "push" or "release":
+When user says "push", "release", or "commit+changelog+tag":
 
 1. **Check commits since last tag**
    ```bash
@@ -98,21 +98,29 @@ When user says "push" or "release":
    - Bug fix description
    ```
 
-3. **Commit changelog**
+3. **Run version sync script** (updates package.json, README.md, CONVENTIONS.md, CLAUDE.md, .cursorrules):
    ```bash
-   git add CHANGELOG.md
-   git commit -m "docs: update changelog for v{x.x.x}"
+   node scripts/release.mjs {x.x.x}
    ```
 
-4. **Create tag**
+4. **Commit all changes**
+   ```bash
+   git add -A
+   git commit -m "chore: bump version to v{x.x.x}"
+   ```
+
+5. **Create tag**
    ```bash
    git tag -a v{x.x.x} -m "Release description"
    ```
 
-5. **Push**
+6. **Push** (when user says so)
    ```bash
    git push origin main --tags
    ```
+
+> **Note**: `__APP_VERSION__` (Vite inject from git tag) auto-updates app UI at build time.
+> Script only syncs static files (package.json + docs) that can't read git tag.
 
 ## Version Bumping (SemVer)
 - **PATCH** (1.0.0 → 1.0.1): Bug fixes
