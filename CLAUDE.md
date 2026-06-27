@@ -10,7 +10,7 @@ Desktop application for S3-compatible object storage management (AWS S3, MinIO, 
 - **Virtualization**: TanStack Virtual v3
 - **Icons**: Lucide React
 - **Font**: Onest
-- **Current Version**: v1.1.5
+- **Current Version: v1.1.7
 
 ## Critical Rules
 
