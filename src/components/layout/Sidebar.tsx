@@ -55,7 +55,13 @@ function ConnectionItem({
         onClick={onSelect}
         className="flex-1 flex items-center gap-2.5 min-w-0"
       >
-        <Database size={16} className="shrink-0 opacity-70" />
+        {connection.emoji ? (
+          <span className="shrink-0 text-xl leading-none w-5 flex items-center justify-center">
+            {connection.emoji}
+          </span>
+        ) : (
+          <Database size={20} className="shrink-0 opacity-70" />
+        )}
         <div className="min-w-0 flex-1 text-left">
           <div className="truncate leading-snug font-medium">{connection.name}</div>
           <div

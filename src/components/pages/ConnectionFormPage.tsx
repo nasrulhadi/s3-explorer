@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save, Smile } from "lucide-react";
 import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { createS3Client } from "../../lib/s3Client";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
+import EmojiPicker from "../modals/EmojiPicker";
 import type { S3Provider, S3Connection, S3ConnectionFormData } from "../../types";
 
 // ─── Constants ──────────────────────────────────────────────
@@ -61,6 +62,8 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
   const [accessKeyId, setAccessKeyId] = useState(editConnection?.accessKeyId ?? "");
   const [secretAccessKey, setSecretAccessKey] = useState(editConnection?.secretAccessKey ?? "");
   const [bucket, setBucket] = useState(editConnection?.defaultBucket ?? "");
+  const [emoji, setEmoji] = useState<string | undefined>(editConnection?.emoji);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
@@ -186,6 +189,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
         accessKeyId: accessKeyId.trim(),
         secretAccessKey: secretAccessKey.trim(),
         defaultBucket: showBucket ? bucket.trim() : undefined,
+        emoji: emoji?.trim() || undefined,
       };
 
       if (!isEditMode) {
@@ -203,7 +207,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
       onDone();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [name, provider, endpoint, region, accessKeyId, secretAccessKey, showEndpoint, showBucket, bucket, isEditMode, addConnection, updateConnection, onDone],
+    [name, provider, endpoint, region, accessKeyId, secretAccessKey, showEndpoint, showBucket, bucket, emoji, isEditMode, addConnection, updateConnection, onDone],
   );
 
   // ──────────────────────────────────────────────────────────
@@ -229,15 +233,32 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
       {/* ── Scrollable form ─────────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
         <form onSubmit={handleSave} className="max-w-xl mx-auto p-8 space-y-5">
-          {/* Connection Name */}
+          {/* Icon + Connection Name */}
           <Field label="Connection Name" error={errors.name}>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. AWS Production"
-              className={INPUT_CLASS}
-            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEmojiPickerOpen(true)}
+                title="Choose icon"
+                className="
+                  shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
+                  border border-gray-300 dark:border-gray-600
+                  bg-white dark:bg-gray-800
+                  text-gray-500 dark:text-gray-400
+                  hover:bg-gray-50 dark:hover:bg-gray-700
+                  transition-colors cursor-pointer text-lg
+                "
+              >
+                {emoji || <Smile size={20} />}
+              </button>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. AWS Production"
+                className={INPUT_CLASS}
+              />
+            </div>
           </Field>
 
           {/* Provider */}
@@ -384,6 +405,15 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           </div>
         </form>
       </div>
+
+      {/* ── Emoji picker modal ── */}
+      <EmojiPicker
+        open={emojiPickerOpen}
+        selected={emoji}
+        onSelect={setEmoji}
+        onClear={() => setEmoji(undefined)}
+        onClose={() => setEmojiPickerOpen(false)}
+      />
     </div>
   );
 }
