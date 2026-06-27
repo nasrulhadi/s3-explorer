@@ -25,16 +25,6 @@ const PROVIDER_LABELS: Record<S3Provider, string> = {
   custom: "Custom S3",
 };
 
-/** Build metadata label: provider · region (or bucket for R2/B2) */
-function getMetadata(conn: S3Connection, activeBucket: string | null): string | null {
-  const label = PROVIDER_LABELS[conn.provider];
-  if (conn.provider === "r2" || conn.provider === "b2") {
-    const bucket = conn.defaultBucket ?? (activeBucket || null);
-    return bucket ? `${label} · ${bucket}` : label;
-  }
-  return conn.region ? `${label} · ${conn.region}` : label;
-}
-
 // ─── Connection Item ───────────────────────────────────────
 
 function ConnectionItem({
@@ -43,22 +33,18 @@ function ConnectionItem({
   onSelect,
   onEdit,
   onDelete,
-  activeBucket,
 }: {
   connection: S3Connection;
   isActive: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  activeBucket: string | null;
 }) {
-  const metadata = getMetadata(connection, isActive ? activeBucket : null);
-
   return (
     <div
       className={`
         relative w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
-        transition-colors duration-150 group rounded-md border-l-[3px]
+        transition-colors duration-150 group rounded-xl border-l-[3px]
         ${isActive
           ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
           : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
@@ -72,15 +58,13 @@ function ConnectionItem({
         <Database size={16} className="shrink-0 opacity-70" />
         <div className="min-w-0 flex-1 text-left">
           <div className="truncate leading-snug font-medium">{connection.name}</div>
-          {metadata && (
-            <div
-              className={`truncate text-[11px] leading-tight mt-0.5 ${
-                isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"
-              }`}
-            >
-              {metadata}
-            </div>
-          )}
+          <div
+            className={`truncate text-[11px] leading-tight mt-0.5 ${
+              isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"
+            }`}
+          >
+            {PROVIDER_LABELS[connection.provider]}
+          </div>
         </div>
       </button>
 
@@ -230,7 +214,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-[var(--s3-sidebar-bg)] text-[var(--s3-sidebar-text)] select-none">
+    <aside className="w-[268px] h-full flex flex-col bg-[var(--s3-sidebar-bg)] text-[var(--s3-sidebar-text)] select-none">
       {/* ── Header ──────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-baseline gap-1.5">
@@ -263,15 +247,15 @@ export default function Sidebar({
       {/* ── Filter form (toggle show/hide via search icon) ── */}
       {searchOpen && hasConnections && (
         <div className="px-3 pb-2">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-[var(--s3-sidebar-item-hover)]">
-            <Search size={13} className="shrink-0 text-gray-400" />
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <Search size={12} className="shrink-0 text-gray-400" />
             <input
               type="text"
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
-              placeholder="Filter connections…"
+              placeholder="Filter connections"
               autoFocus
-              className="flex-1 min-w-0 bg-transparent text-sm text-[var(--s3-sidebar-text)] placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+              className="flex-1 min-w-0 bg-transparent text-xs text-[var(--s3-sidebar-text)] placeholder-gray-400 dark:placeholder-gray-500 outline-none"
             />
             {filterQuery && (
               <button
@@ -287,7 +271,7 @@ export default function Sidebar({
       )}
 
       {/* ── Connections list ────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 overflow-y-auto pb-2">
         {!hasConnections ? (
           /* ── Empty: no connections at all ── */
           <div className="px-4 py-10 text-center">
@@ -308,13 +292,12 @@ export default function Sidebar({
           </div>
         ) : (
           /* ── Connection items ── */
-          <div className="space-y-0.5 px-2">
+          <div className="space-y-1 px-2">
             {filteredConnections.map((conn) => (
               <div key={conn.id}>
                 <ConnectionItem
                   connection={conn}
                   isActive={activeConnectionId === conn.id}
-                  activeBucket={activeBucket}
                   onSelect={() => handleConnectionClick(conn)}
                   onEdit={() => onEditConnection?.(conn.id)}
                   onDelete={() => onDeleteConnection?.(conn.id)}

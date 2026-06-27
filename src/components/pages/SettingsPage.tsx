@@ -7,7 +7,7 @@ import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
 import { encryptExport, decryptExport, isEncryptedExport } from "../../lib/crypto";
 import { ACCENT_COLORS } from "../../lib/accentColors";
-import buymeacoffee from "../../assets/buymeacoffee.png";
+import kofi from "../../assets/kofi2.png";
 
 // GitHub icon (inline SVG since it might not be in lucide-react)
 function GithubIcon({ size = 14 }: { size?: number }) {
@@ -509,14 +509,14 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                     Support this project
                   </p>
                   <a
-                    href="https://buymeacoffee.com/nasrulhadi"
+                    href="https://ko-fi.com/nasrulhadi"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block hover:opacity-80 transition-opacity"
                   >
                     <img
-                      src={buymeacoffee}
-                      alt="Buy Me a Coffee"
+                      src={kofi}
+                      alt="Ko-fi"
                       className="h-10 w-auto"
                     />
                   </a>
@@ -525,7 +525,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 {/* Version */}
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    S3 Explorer v1.0.0
+                    S3 Explorer {__APP_VERSION__}
                   </p>
                 </div>
               </div>

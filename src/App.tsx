@@ -6,6 +6,7 @@ import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
+import EmptyState from "./components/explorer/EmptyState";
 import ConnectionFormPage from "./components/pages/ConnectionFormPage";
 import DeleteConnectionPage from "./components/pages/DeleteConnectionPage";
 import SettingsPage from "./components/pages/SettingsPage";
@@ -238,22 +239,24 @@ function AppLayout() {
                 <SettingsPage onDone={() => setView("main")} />
               ) : (
                 <>
-                  <Toolbar
-                    connectionId={connectionId}
-                    bucket={bucket}
-                    prefix={prefix}
-                    history={history}
-                    onBack={goBack}
-                    onNavigate={handleNavigate}
-                    onRefresh={handleRefresh}
-                    onUpload={handleUpload}
-                    onNewFolder={handleNewFolder}
-                    onSearchChange={handleSearchChange}
-                    onDisconnect={handleDisconnect}
-                  />
+                  {connectionId && bucket && (
+                    <Toolbar
+                      connectionId={connectionId}
+                      bucket={bucket}
+                      prefix={prefix}
+                      history={history}
+                      onBack={goBack}
+                      onNavigate={handleNavigate}
+                      onRefresh={handleRefresh}
+                      onUpload={handleUpload}
+                      onNewFolder={handleNewFolder}
+                      onSearchChange={handleSearchChange}
+                      onDisconnect={handleDisconnect}
+                    />
+                  )}
 
                   {/* Content area */}
-                  <main className="flex-1 overflow-hidden bg-[var(--s3-window-bg)]" onContextMenu={(e) => e.preventDefault()}>
+                  <main className="flex-1 overflow-hidden bg-[var(--s3-window-bg)] rounded-tl-xl" onContextMenu={(e) => e.preventDefault()}>
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (
@@ -357,55 +360,7 @@ function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
 }
 
 /** Shown when connections exist but no bucket is selected */
-function EmptyState() {
-  const isOnline = useConnectivity();
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 dark:text-gray-500 px-8">
-      <svg
-        className="mb-4"
-        width="56"
-        height="56"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
-      </svg>
-      <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Select a bucket to browse</p>
-      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
-        Click a connection in the sidebar, then select a bucket to view and manage your files.
-      </p>
-      <div className="mt-6 text-xs text-gray-400 dark:text-gray-500 space-y-1">
-        <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">F5</kbd>{" "}
-          Refresh
-        </span>
-        <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">Backspace</kbd>{" "}
-          Go back
-        </span>
-        <span className="block">
-          <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">Ctrl+U</kbd>{" "}
-          Upload
-        </span>
-      </div>
-
-      {/* Connectivity indicator */}
-      <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-        <Circle
-          size={8}
-          className={isOnline ? "text-green-500" : "text-red-500"}
-          fill="currentColor"
-        />
-        <span>{isOnline ? "Online" : "Offline"}</span>
-      </div>
-    </div>
-  );
-}
+// EmptyState moved to src/components/explorer/EmptyState.tsx
 
 // ─── Public App component ────────────────────────────────────
 
