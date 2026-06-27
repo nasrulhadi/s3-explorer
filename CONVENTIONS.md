@@ -12,7 +12,7 @@ This file contains rules and conventions for AI coding assistants working on thi
 - **Icons**: Lucide React
 - **Font**: Onest (@fontsource/onest)
 - **Language**: Indonesian (user preference), English (code/comments)
-- **Current Version: v1.1.7
+- **Current Version: v1.2.0
 
 ## Architecture
 
@@ -430,4 +430,4 @@ pnpm tauri build --debug  # Debug build
 ---
 
 **Last Updated**: 2026-06-25
-**Current Version: v1.1.7
+**Current Version: v1.2.0

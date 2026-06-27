@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.2.0] - 2026-06-28
+
+### Added
+- **Emoji Icon Picker**: Customizable emoji icons for connections
+  - 200 curated emojis across 10 categories (Storage, Cloud, Tech, Security, Symbols, Places, Nature, Food, Activity, Misc)
+  - Search filter with keyword matching
+  - Compact grid picker modal (Notion/Linear style)
+  - Emoji shown in sidebar, fallback to `Database` icon
+  - Reset/Select/Cancel footer consistent with other modals
+  - B2-aware folder creation (`.bzEmpty` placeholder)
+
+### Changed
+- **Sidebar Polish**: Connection item icon size increased to 20px for emoji visibility
+- **ConnectionFormPage**: Emoji button beside connection name field
+- **Architecture**: S3 folder operations extracted to pure functions in `s3FolderOps.ts`
+  - `renameFolder`, `copyFolderRecursive` added alongside existing `deleteFolderRecursive`/`moveFolderRecursive`
+  - `confirmNewFolder` uses `createFolder` mutation (was inline AWS SDK)
+  - `confirmRename` uses `renameFolder` (was inline AWS SDK)
+  - `useFileClipboard` paste uses `copyFolderRecursive` (was inline AWS SDK)
+
+### Fixed
+- Removed dead code: `AddConnectionModal.tsx` (legacy, unused) and `greet` Rust command (boilerplate)
+
+---
+
 ## [1.1.7] - 2026-06-27
 
 ### Added
