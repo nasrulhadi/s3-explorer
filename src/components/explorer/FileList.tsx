@@ -10,7 +10,7 @@ import {
   Circle,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useS3 } from "../../hooks/useS3";
@@ -20,7 +20,7 @@ import { useTransferStore } from "../../store/transferStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { createS3Client } from "../../lib/s3Client";
 import { formatFileSize } from "../../lib/utils";
-import { deleteFolderRecursive } from "../../lib/s3FolderOps";
+import { deleteFolderRecursive, renameFolder } from "../../lib/s3FolderOps";
 import type { S3Item, SortField, SortDirection } from "../../types";
 import { ROW_HEIGHT, ROW_GRID } from "./FileRow";
 import FolderRow from "./FolderRow";
@@ -85,6 +85,7 @@ export default function FileList({
     renameItem,
     deleteItem,
     headObject,
+    createFolder,
   } = useS3();
 
   const connectionId = useNavigationStore((s) => s.connectionId);
@@ -238,23 +239,13 @@ export default function FileList({
     if (!connectionId || !bucket || !newFolderName.trim()) return;
     setNewFolderCreating(true);
     try {
-      const conn = getConnection(connectionId);
-      if (!conn) return;
-      const client = createS3Client(conn);
-      const isB2 = conn.provider === "b2";
-      await client.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: isB2 ? `${prefix}${newFolderName.trim()}/.bzEmpty` : `${prefix}${newFolderName.trim()}/`,
-          Body: "",
-        }),
-      );
+      await createFolder.mutateAsync({ connectionId, bucket, prefix, folderName: newFolderName.trim() });
       onNewFolderClose();
       queryClient.invalidateQueries({ queryKey: ["s3", "objects", connectionId, bucket, prefix] });
     } catch (_) { /* silent */ } finally {
       setNewFolderCreating(false);
     }
-  }, [connectionId, bucket, prefix, newFolderName, getConnection, queryClient, onNewFolderClose]);
+  }, [connectionId, bucket, prefix, newFolderName, createFolder, queryClient, onNewFolderClose]);
 
   // ── Refresh ──
   const handleRefresh = useCallback(() => {
@@ -289,28 +280,16 @@ export default function FileList({
     const lastSlash = baseKey.lastIndexOf("/");
     const newKeyBase = lastSlash === -1 ? renameName.trim() : baseKey.slice(0, lastSlash + 1) + renameName.trim();
     const newKey = isFolder ? newKeyBase + "/" : newKeyBase;
-    const client = createS3Client(conn);
     const oldKey = renameTarget.key;
     try {
       if (isFolder) {
-        const allObjects: { key: string }[] = [];
-        let ct: string | undefined;
-        do {
-          const lr = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: oldKey, ContinuationToken: ct }));
-          for (const obj of lr.Contents ?? []) { if (obj.Key) allObjects.push({ key: obj.Key }); }
-          ct = lr.NextContinuationToken;
-        } while (ct);
-        if (allObjects.length === 0) {
+        const client = createS3Client(conn);
+        const ok = await renameFolder(client, bucket, oldKey, newKey, conn.provider);
+        if (!ok) {
           setRenameError("This folder can't be renamed — it might be a virtual folder. Use New Folder to create a real folder first.");
           setRenameLoading(false);
           return;
         }
-        for (const obj of allObjects) {
-          await client.send(new CopyObjectCommand({
-            Bucket: bucket, CopySource: encodeURIComponent(`${bucket}/${obj.key}`), Key: newKey + obj.key.slice(oldKey.length),
-          }));
-        }
-        await deleteFolderRecursive(client, bucket, oldKey, conn.provider);
       } else {
         await renameItem.mutateAsync({ connectionId, bucket, oldKey, newKey });
       }

@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ListObjectsV2Command, CopyObjectCommand } from "@aws-sdk/client-s3";
+import { CopyObjectCommand } from "@aws-sdk/client-s3";
 import { useClipboardStore } from "../../../store/clipboardStore";
 import { useConnectionStore } from "../../../store/connectionStore";
 import { createS3Client } from "../../../lib/s3Client";
+import { copyFolderRecursive } from "../../../lib/s3FolderOps";
 import type { S3Item } from "../../../types";
 
 /**
@@ -74,27 +75,7 @@ export function useFileClipboard(
 
         if (isFolder) {
           const sourcePrefix = item.key;
-          const sourceClient = createS3Client(getConnection(connectionId));
-          const listed = await sourceClient.send(
-            new ListObjectsV2Command({
-              Bucket: clipboard.sourceBucket!,
-              Prefix: sourcePrefix,
-            }),
-          );
-
-          const objects = listed.Contents ?? [];
-          for (const obj of objects) {
-            if (!obj.Key) continue;
-            const suffix = obj.Key.slice(sourcePrefix.length);
-            const destObjKey = `${destPrefix}${suffix}`;
-            await client.send(
-              new CopyObjectCommand({
-                Bucket: bucket,
-                CopySource: encodeURIComponent(`${clipboard.sourceBucket}/${obj.Key}`),
-                Key: destObjKey,
-              }),
-            );
-          }
+          await copyFolderRecursive(client, clipboard.sourceBucket!, sourcePrefix, bucket, destPrefix);
           successCount++;
         } else {
           await client.send(

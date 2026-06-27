@@ -317,6 +317,8 @@ export function useS3() {
 
   /**
    * Create a virtual folder by putting an empty object whose key ends with "/".
+   * For B2, creates a placeholder object (`.bzEmpty`) inside the folder
+   * because B2 doesn't reliably show empty folder markers.
    */
   const createFolder = useMutation({
     mutationFn: async ({
@@ -336,8 +338,12 @@ export function useS3() {
         );
       }
 
-      const client = createS3Client(getConnection(connectionId));
-      const key = `${prefix}${folderName}/`;
+      const conn = getConnection(connectionId);
+      const client = createS3Client(conn);
+      const isB2 = conn.provider === "b2";
+      const key = isB2
+        ? `${prefix}${folderName}/.bzEmpty`
+        : `${prefix}${folderName}/`;
 
       await client.send(
         new PutObjectCommand({ Bucket: bucket, Key: key, Body: "" }),
