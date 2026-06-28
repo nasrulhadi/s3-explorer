@@ -2,6 +2,7 @@
   "name": "s3-explorer",
   "private": true,
   "version": "1.2.0",
+  "author": "Nasrul Hadi",
   "type": "module",
   "scripts": {
     "dev": "vite",
