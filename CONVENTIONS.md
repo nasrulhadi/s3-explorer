@@ -269,7 +269,7 @@ Add new section at top (below header):
 ```
 
 #### 4. Run version sync script
-Updates `package.json`, `README.md`, `CONVENTIONS.md`, `CLAUDE.md`, `.cursorrules` to the new version:
+Updates `package.json`, `src-tauri/tauri.conf.json`, `README.md`, `CONVENTIONS.md`, `CLAUDE.md`, `.cursorrules` to the new version:
 ```bash
 node scripts/release.mjs {x.x.x}
 ```

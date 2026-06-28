@@ -55,28 +55,31 @@ console.log(`\nSyncing version ${vVersion} (${version})\n`);
 // 1. package.json — version field (no v prefix)
 replace("package.json", /"version":\s*"[^"]*"/, `"version": "${version}"`);
 
-// 2. README.md — version badge
+// 2. tauri.conf.json — version field (no v prefix)
+replace("src-tauri/tauri.conf.json", /"version":\s*"[^"]*"/, `"version": "${version}"`);
+
+// 3. README.md — version badge
 replace(
   "README.md",
   /badge\/version-[^\]-]+-blue\.svg/,
   `badge/version-${version}-blue.svg`,
 );
 
-// 3. CONVENTIONS.md — header + footer (both "Current Version: vX.Y.Z")
+// 4. CONVENTIONS.md — header + footer (both "Current Version: vX.Y.Z")
 replace(
   "CONVENTIONS.md",
   /Current Version\**:\s*v\d+\.\d+\.\d+/g,
   `Current Version: ${vVersion}`,
 );
 
-// 4. CLAUDE.md — Current Version line
+// 5. CLAUDE.md — Current Version line
 replace(
   "CLAUDE.md",
   /Current Version\**:\s*v\d+\.\d+\.\d+/,
   `Current Version: ${vVersion}`,
 );
 
-// 5. .cursorrules — Current Version line
+// 6. .cursorrules — Current Version line
 replace(
   ".cursorrules",
   /Current Version:\s*v\d+\.\d+\.\d+/,

@@ -98,7 +98,7 @@ When user says "push", "release", or "commit+changelog+tag":
    - Bug fix description
    ```
 
-3. **Run version sync script** (updates package.json, README.md, CONVENTIONS.md, CLAUDE.md, .cursorrules):
+3. **Run version sync script** (updates package.json, src-tauri/tauri.conf.json, README.md, CONVENTIONS.md, CLAUDE.md, .cursorrules):
    ```bash
    node scripts/release.mjs {x.x.x}
    ```
