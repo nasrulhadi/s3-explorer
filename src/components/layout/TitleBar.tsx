@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import logo from "../../assets/server.png";
 
 // ─── Window control icons (inline SVG) ──────────────────────
 
@@ -79,14 +80,14 @@ export default function TitleBar() {
       <div
         data-tauri-drag-region
         onMouseDown={(e) => {
-          // Only drag on left-click and not on buttons/links
           if (e.button === 0) {
             getCurrentWindow().startDragging();
           }
         }}
-        className="flex-1 self-stretch flex items-center pl-4 cursor-grab"
+        className="flex-1 self-stretch flex items-center gap-2 pl-4 cursor-grab"
       >
-        <span className="text-xs font-medium text-[var(--s3-titlebar-text)] opacity-60 pointer-events-none">
+        <img src={logo} alt="" className="w-4 h-4 pointer-events-none select-none" draggable={false} />
+        <span className="text-sm font-medium text-[var(--s3-titlebar-text)] opacity-100 pointer-events-none">
           S3 Explorer
         </span>
       </div>

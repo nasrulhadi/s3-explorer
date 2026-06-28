@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.2.1] - 2026-06-29
+
+### Changed
+- **Welcome Screen**: Kept the sidebar visible during first launch and moved the onboarding view into the main content area
+- **Welcome Screen**: Added a dedicated hero illustration and simplified supported provider text with dot separators
+- **Sidebar**: Reduced the empty connection state to a subtle placeholder so the primary CTA stays in the welcome screen
+- **Appearance**: Changed the default accent color from Stone to Brown
+- **Title Bar**: Added the app logo beside the title and refined title styling
+
+### Fixed
+- **Version Sync**: Synced Rust package metadata and docs after the `v1.2.0` release
+- **Docs**: Updated README and assistant workflow notes with the latest app structure and release script behavior
+
+### Security
+- **CSP**: Enabled Content Security Policy for production builds with a separate development CSP for Vite/HMR
+
+---
+
 ## [1.2.0] - 2026-06-28
 
 ### Added

@@ -28,7 +28,7 @@ export default function DeleteConnectionPage({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* ── Page header ──────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-6 h-14 border-b border-[var(--s3-window-border)] bg-[var(--s3-window-bg)] shrink-0 rounded-tl-xl">
+      <div className="flex items-center gap-3 px-6 h-14 border-b border-[var(--s3-window-border)] bg-[var(--s3-window-bg)] shrink-0">
         <button
           onClick={onCancel}
           className="p-1.5 rounded-md text-[var(--s3-window-muted)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-window-hover-bg)] transition-colors"

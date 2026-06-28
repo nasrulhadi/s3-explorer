@@ -106,5 +106,5 @@ export const ACCENT_COLORS: AccentColor[] = [
 
 // Helper function to get color by ID
 export function getAccentColor(id: string): AccentColor {
-  return ACCENT_COLORS.find((c) => c.id === id) || ACCENT_COLORS[4]; // Default to stone
+  return ACCENT_COLORS.find((c) => c.id === id) || ACCENT_COLORS[3]; // Default to brown
 }

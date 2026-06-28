@@ -279,12 +279,10 @@ export default function Sidebar({
       <nav className="flex-1 overflow-y-auto pb-2">
         {!hasConnections ? (
           /* ── Empty: no connections at all ── */
-          <div className="px-4 py-10 text-center">
-            <Database size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">No connections yet</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Add one to get started
-            </p>
+          <div className="px-3 py-2">
+            <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 px-3 py-4 text-center">
+              <p className="text-xs text-gray-400 dark:text-gray-500">No connections</p>
+            </div>
           </div>
         ) : filteredConnections.length === 0 ? (
           /* ── Empty: filter has no match ── */

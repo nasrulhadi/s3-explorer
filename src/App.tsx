@@ -1,12 +1,12 @@
 import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { Circle } from "lucide-react";
 import TitleBar from "./components/layout/TitleBar";
 import Sidebar from "./components/layout/Sidebar";
 import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
 import EmptyState from "./components/explorer/EmptyState";
+import WelcomeScreen from "./components/explorer/WelcomeScreen";
 import ConnectionFormPage from "./components/pages/ConnectionFormPage";
 import DeleteConnectionPage from "./components/pages/DeleteConnectionPage";
 import SettingsPage from "./components/pages/SettingsPage";
@@ -14,7 +14,6 @@ import TransferPanel from "./components/layout/TransferPanel";
 import { useConnectionStore } from "./store/connectionStore";
 import { useNavigationStore } from "./store/navigationStore";
 import { useSettingsStore } from "./store/settingsStore";
-import { useConnectivity } from "./hooks/useConnectivity";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { getAccentColor } from "./lib/accentColors";
 import "./App.css";
@@ -207,27 +206,22 @@ function AppLayout() {
       {/* ── Custom title bar ──────────────────────────────── */}
       <TitleBar />
 
-      {/* ── Welcome screen (no connections at all) ───────── */}
-      {!hasConnections && view === "main" ? (
-        <WelcomeScreen onAddConnection={openAddConnection} />
-      ) : (
-        <>
-          {/* ── Main content row ─────────────────────────────── */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Left panel */}
-            <Sidebar
-              onAddConnection={openAddConnection}
-              onEditConnection={handleEditConnection}
-              onDeleteConnection={handleDeleteConnection}
-              onOpenSettings={() => setView("settings")}
-            />
+      {/* ── Main content row ─────────────────────────────── */}
+      <div className="flex flex-1 overflow-hidden bg-[var(--s3-sidebar-bg)]">
+        {/* Left panel — always visible */}
+        <Sidebar
+          onAddConnection={openAddConnection}
+          onEditConnection={handleEditConnection}
+          onDeleteConnection={handleDeleteConnection}
+          onOpenSettings={() => setView("settings")}
+        />
 
-            {/* Right panel */}
-            <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[var(--s3-sidebar-bg)]">
-              {view === "addConnection" || view === "editConnection" ? (
-                <ConnectionFormPage
-                  onDone={closeConnectionForm}
-                  editConnection={editingConnection ?? undefined}
+        {/* Right panel */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[var(--s3-sidebar-bg)] rounded-tl-xl">
+          {view === "addConnection" || view === "editConnection" ? (
+            <ConnectionFormPage
+              onDone={closeConnectionForm}
+              editConnection={editingConnection ?? undefined}
                 />
               ) : view === "deleteConnection" && editingConnection ? (
                 <DeleteConnectionPage
@@ -237,6 +231,8 @@ function AppLayout() {
                 />
               ) : view === "settings" ? (
                 <SettingsPage onDone={() => setView("main")} />
+              ) : !hasConnections ? (
+                <WelcomeScreen onAddConnection={openAddConnection} />
               ) : (
                 <>
                   {connectionId && bucket && (
@@ -256,7 +252,7 @@ function AppLayout() {
                   )}
 
                   {/* Content area */}
-                  <main className="flex-1 overflow-hidden bg-[var(--s3-window-bg)] rounded-tl-xl" onContextMenu={(e) => e.preventDefault()}>
+                  <main className="flex-1 overflow-hidden bg-[var(--s3-window-bg)]" onContextMenu={(e) => e.preventDefault()}>
                     {!connectionId || !bucket ? (
                       <EmptyState />
                     ) : (
@@ -275,89 +271,11 @@ function AppLayout() {
               )}
             </div>
           </div>
-        </>
-      )}
     </div>
   );
 }
 
-// ─── Welcome screen (no connections) ───────────────────────
-
-function WelcomeScreen({ onAddConnection }: { onAddConnection: () => void }) {
-  const isOnline = useConnectivity();
-
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-      {/* Cloud icon */}
-      <div className="w-20 h-20 rounded-2xl bg-[var(--s3-accent-base)] flex items-center justify-center mb-6">
-        <svg
-          width="40"
-          height="40"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-[var(--s3-accent-text)]"
-        >
-          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-        </svg>
-      </div>
-
-      <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-        Welcome to S3 Explorer
-      </h2>
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-        Connect to your S3-compatible storage to browse, upload, and manage
-        your files. Supports AWS S3, MinIO, Cloudflare R2, Backblaze B2, and
-        more.
-      </p>
-
-      <button
-        onClick={onAddConnection}
-        className="
-          mt-8 inline-flex items-center gap-2 px-5 py-2.5
-          text-sm font-medium text-white bg-[var(--s3-accent-active)] rounded-lg
-          hover:bg-[var(--s3-accent-hover)] active:bg-[var(--s3-accent-hover)]
-          transition-colors shadow-sm
-        "
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Add Your First Connection
-      </button>
-
-      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
-        You can also press the{" "}
-        <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-[10px] font-mono">
-          +
-        </kbd>{" "}
-        button in the sidebar at any time.
-      </p>
-
-      {/* Connectivity indicator */}
-      <div className="mt-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-        <Circle
-          size={8}
-          className={isOnline ? "text-green-500" : "text-red-500"}
-          fill="currentColor"
-        />
-        <span>{isOnline ? "Online" : "Offline"}</span>
-      </div>
-    </div>
-  );
-}
+// ─── Welcome screen moved to src/components/explorer/WelcomeScreen.tsx ──
 
 /** Shown when connections exist but no bucket is selected */
 // EmptyState moved to src/components/explorer/EmptyState.tsx

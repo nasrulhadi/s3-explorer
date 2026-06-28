@@ -8,7 +8,7 @@ interface SettingsState {
   restoreLastSession: boolean;
   // Appearance
   theme: ThemeMode;
-  accentColor: string;  // Accent color ID (default: "stone")
+  accentColor: string;  // Accent color ID (default: "brown")
   // Toolbar
   showFilter: boolean;
   showUpload: boolean;
@@ -36,7 +36,7 @@ export const useSettingsStore = create<SettingsStore>()(
       // ── State (all defaults) ────────────────────────────────
       restoreLastSession: false,
       theme: "system",
-      accentColor: "stone",  // Default accent color (easily changeable)
+      accentColor: "brown",  // Default accent color (easily changeable)
       showFilter: true,
       showUpload: true,
       showNewFolder: true,
