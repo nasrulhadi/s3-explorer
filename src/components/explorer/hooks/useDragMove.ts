@@ -135,7 +135,7 @@ export function useDragMove(
     [findDropTarget, displayedItems],
   );
 
-  const setDragSource = useCallback((items: S3Item[], item: S3Item) => {
+  const setDragSource = useCallback((item: S3Item) => {
     const d = dragRef.current;
     if (selectedKeys.size > 1 && selectedKeys.has(item.key)) {
       d.sourceKeys = [...selectedKeys];

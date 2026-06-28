@@ -186,7 +186,6 @@ export default function Sidebar({
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
   const setConnectionId = useNavigationStore((s) => s.setConnectionId);
   const setBucket = useNavigationStore((s) => s.setBucket);
-  const activeBucket = useNavigationStore((s) => s.bucket);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);

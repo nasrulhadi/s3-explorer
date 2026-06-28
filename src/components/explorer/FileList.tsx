@@ -191,7 +191,7 @@ export default function FileList({
   const {
     dragOverKey, movingKeys,
     handleContainerMouseMove, handleContainerMouseUp, onMouseLeave,
-    setDragSource, resetDrag, setMovingKeys, setDragOverKey,
+    setDragSource, resetDrag, setMovingKeys,
   } = useDragMove(connectionId, bucket, prefix, displayedItems, selectedKeys, clearSelection);
 
   // Clean up selection/drag on navigation
@@ -555,7 +555,7 @@ export default function FileList({
                       onMouseDown={(e) => {
                         if (e.button !== 0) return;
                         e.currentTarget.getBoundingClientRect(); // noop, suppress unused
-                        setDragSource(displayedItems, item);
+                        setDragSource(item);
                       }}
                       onContextMenu={() => setContextTarget({ type: "item", item })}
                     >

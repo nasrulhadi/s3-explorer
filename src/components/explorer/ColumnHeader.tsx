@@ -1,4 +1,3 @@
-import { React } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { ROW_GRID } from "./FileRow";
 import type { SortField, SortDirection } from "../../types";
