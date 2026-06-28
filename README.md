@@ -35,6 +35,9 @@
 - **Connectivity Indicator** — Real-time online/offline status detection (60s interval)
 - **Activity Indicator** — Visual feedback for loading states and transfers
 - **Toolbar Customization** — Toggle filter, upload, new folder, reload, and breadcrumb visibility
+- **Connection Emoji Icons** — Customize each connection with an emoji icon (200 curated emojis across 10 categories)
+- **Sidebar Redesign** — Notion-inspired layout with search filter, live connection count, and accent left-bar active state
+- **Empty State** — Hero illustration with shortcut hints when no bucket is selected
 
 ### 🔐 Security & Privacy
 - **Encrypted Export/Import** — Backup connections with AES-256-GCM encryption (PBKDF2 key derivation)
@@ -154,12 +157,11 @@ s3-explorer/
 │   ├── App.tsx                       # Root layout, view routing, theme/accent
 │   ├── App.css                       # Tailwind v4 + CSS custom properties
 │   ├── components/
-│   │   ├── ConnectionFormPage.tsx    # Add/edit connection (page)
-│   │   ├── DeleteConnectionPage.tsx  # Delete connection (page)
-│   │   ├── SettingsPage.tsx          # Settings (theme, accent, export/import)
-│   │   ├── explorer/                 # FileList, FileRow, FolderRow, UploadModal
+│   │   ├── pages/                    # ConnectionFormPage, DeleteConnectionPage, SettingsPage
+│   │   ├── explorer/                 # FileList, FileRow, FolderRow, EmptyState, ColumnHeader, ExplorerContextMenu
+│   │   │   └── hooks/                # useFileSelection, useFileClipboard, useDragMove
 │   │   ├── layout/                   # TitleBar, Sidebar, Toolbar, TransferPanel
-│   │   └── modals/                   # ImportConnectionsModal, PassphraseModal
+│   │   └── modals/                   # NewFolderModal, RenameModal, DeleteConfirmModal, InfoModal, UrlModal, ZipErrorModal, UploadModal, EmojiPicker, PassphraseModal, ImportConnectionsModal
 │   ├── hooks/
 │   │   ├── useS3.ts                  # S3 operations (queries + mutations)
 │   │   ├── useConnectivity.ts        # Internet connectivity detection
@@ -173,9 +175,12 @@ s3-explorer/
 │   │   └── clipboardStore.ts         # Copy/paste items
 │   ├── lib/
 │   │   ├── s3Client.ts               # S3 client factory + CORS-bypass handler
+│   │   ├── s3FolderOps.ts            # B2-safe recursive folder operations
 │   │   ├── utils.ts                  # Helper functions
 │   │   ├── crypto.ts                 # AES-256-GCM encryption for export/import
-│   │   └── accentColors.ts           # Accent color definitions
+│   │   ├── accentColors.ts           # Accent color definitions
+│   │   ├── emojis.ts                 # Curated emoji list for connection icons
+│   │   └── menuStyles.ts             # Shared context menu styling constants
 │   └── types/
 │       └── index.ts                  # TypeScript interfaces
 │
@@ -183,9 +188,13 @@ s3-explorer/
 │   ├── src/
 │   │   ├── main.rs                   # Binary entry point
 │   │   └── lib.rs                    # Tauri builder + plugins
-│   ├── Cargo.toml                    # Rust dependencies
+│   ├── icons/                        # App icons (generated from source PNG)
+│   ├── Cargo.toml                    # Rust dependencies + author
 │   ├── tauri.conf.json               # App config (frameless, 1200x800)
 │   └── capabilities/default.json     # Window/HTTP/opener permissions
+│
+├── scripts/
+│   └── release.mjs                   # Version sync script (git tag → all files)
 │
 ├── CHANGELOG.md                      # Version history
 ├── CONVENTIONS.md                    # Coding guidelines
