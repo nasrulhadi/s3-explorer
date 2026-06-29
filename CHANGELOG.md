@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.3.1] - 2026-06-30
+
+### Added
+- **Opened Connection Dot**: Green dot indicator for connections that have been opened
+  - Appears next to the connection provider label in the sidebar
+  - Clears automatically on disconnect or connection deletion
+  - Always visible regardless of hover state
+
+### UI
+- **Unlock Screen**: Hero image changed from `welcomeScreen.webp` to `unlockScreen.webp`, size matched with WelcomeScreen (`w-96`), lock icon badge removed
+
+---
+
 ## [1.3.0] - 2026-06-29
 
 ### Added
