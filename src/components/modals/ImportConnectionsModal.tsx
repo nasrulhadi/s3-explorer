@@ -21,13 +21,22 @@ interface ImportPreview {
 interface Props {
   /** Parsed connections ready to import */
   preview: ImportPreview[];
+  /** Whether imported data will be saved into an encrypted local vault */
+  isMasterPasswordEnabled?: boolean;
+  /** Called when user wants to protect imported connections after import */
+  onEnableMasterPassword?: () => void;
   /** Called when user cancels (before or after import) */
   onClose: () => void;
 }
 
 // ─── Component ──────────────────────────────────────────────
 
-export default function ImportConnectionsModal({ preview, onClose }: Props) {
+export default function ImportConnectionsModal({
+  preview,
+  isMasterPasswordEnabled = false,
+  onEnableMasterPassword,
+  onClose,
+}: Props) {
   const [result, setResult] = useState<{ added: number; updated: number; skipped: number } | null>(null);
 
   const newCount = preview.filter((p) => p.action === "new").length;
@@ -83,6 +92,22 @@ export default function ImportConnectionsModal({ preview, onClose }: Props) {
               </div>
             )}
           </div>
+
+          {!isMasterPasswordEnabled && result.added + result.updated > 0 && (
+            <div className="mx-5 mb-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 p-3">
+              <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                Imported connections are stored without master password protection. Enable master password to encrypt them on this device.
+              </p>
+              {onEnableMasterPassword && (
+                <button
+                  onClick={() => { onClose(); onEnableMasterPassword(); }}
+                  className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 transition-colors cursor-pointer"
+                >
+                  Enable Master Password
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Footer */}
           <div className="px-5 pb-5">

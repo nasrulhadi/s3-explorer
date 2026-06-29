@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.3.0] - 2026-06-29
+
+### Added
+- **Master Password**: Optional local vault protection for saved connections
+  - Encrypts the full connection list at rest using PBKDF2 SHA-256 + AES-256-GCM
+  - Shows an unlock screen on startup when protection is enabled
+  - Keeps connections hidden until the correct master password is entered
+  - Supports enable, disable, and change password flows from Settings
+  - Adds forgot-password reset flow that deletes local saved connections and returns to the welcome screen
+- **Secure Export Guard**: Exporting connections now requires the master password when local vault protection is enabled
+- **Security UX**: Warnings when imported or saved connections are stored without master password protection
+
+### Changed
+- **Connection Storage**: Stops persisting plaintext connection data when the secure vault is enabled
+- **Import Flow**: Imported connections are automatically written back into the encrypted vault when unlocked
+
+---
+
 ## [1.2.1] - 2026-06-29
 
 ### Changed

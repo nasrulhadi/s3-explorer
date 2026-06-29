@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { S3Connection, S3ConnectionFormData } from "../types";
+import { hasSecureVault, updateSecureVault } from "../lib/secureVault";
 
 // Generate a simple unique ID (crypto.randomUUID is available in modern browsers & Node 19+)
 function generateId(): string {
@@ -23,6 +24,10 @@ interface ConnectionActions {
   removeConnection: (id: string) => void;
   /** Set koneksi aktif; pass null untuk deselect */
   setActiveConnection: (id: string | null) => void;
+  /** Replace store state after decrypting secure vault */
+  replaceConnections: (connections: S3Connection[], activeConnectionId: string | null) => void;
+  /** Clear all in-memory and persisted connection state */
+  clearConnections: () => void;
   /** Import connections — merge by ID, skip duplicates, return summary */
   importConnections: (imported: S3Connection[]) => {
     added: number;
@@ -32,6 +37,15 @@ interface ConnectionActions {
 }
 
 export type ConnectionStore = ConnectionState & ConnectionActions;
+
+function syncSecureVault(state: ConnectionState) {
+  void updateSecureVault({
+    connections: state.connections,
+    activeConnectionId: state.activeConnectionId,
+  }).catch((error) => {
+    console.error("Failed to update secure connection vault", error);
+  });
+}
 
 export const useConnectionStore = create<ConnectionStore>()(
   persist(
@@ -53,6 +67,7 @@ export const useConnectionStore = create<ConnectionStore>()(
         set((state) => ({
           connections: [...state.connections, newConnection],
         }));
+        syncSecureVault(get());
 
         return id;
       },
@@ -63,6 +78,7 @@ export const useConnectionStore = create<ConnectionStore>()(
             conn.id === id ? { ...conn, ...data } : conn,
           ),
         }));
+        syncSecureVault(get());
       },
 
       removeConnection: (id) => {
@@ -72,13 +88,24 @@ export const useConnectionStore = create<ConnectionStore>()(
           activeConnectionId:
             state.activeConnectionId === id ? null : state.activeConnectionId,
         }));
+        syncSecureVault(get());
       },
 
       setActiveConnection: (id) => {
         // Validate that the ID exists (or is null) before setting
         if (id === null || get().connections.some((c) => c.id === id)) {
           set({ activeConnectionId: id });
+          syncSecureVault(get());
         }
+      },
+
+      replaceConnections: (connections, activeConnectionId) => {
+        set({ connections, activeConnectionId });
+      },
+
+      clearConnections: () => {
+        set({ connections: [], activeConnectionId: null });
+        syncSecureVault(get());
       },
 
       importConnections: (imported) => {
@@ -116,16 +143,25 @@ export const useConnectionStore = create<ConnectionStore>()(
         }
 
         set({ connections: merged });
+        syncSecureVault(get());
         return { added, updated, skipped };
       },
     }),
     {
       name: "s3-explorer-connections",
       // Only persist connections list and active ID; not the actions
-      partialize: (state) => ({
-        connections: state.connections,
-        activeConnectionId: state.activeConnectionId,
-      }),
+      partialize: (state) => (
+        hasSecureVault()
+          ? { connections: [], activeConnectionId: null }
+          : {
+              connections: state.connections,
+              activeConnectionId: state.activeConnectionId,
+            }
+      ),
+      merge: (persisted, current) => {
+        if (hasSecureVault()) return current;
+        return { ...current, ...(persisted as Partial<ConnectionState>) };
+      },
     },
   ),
 );

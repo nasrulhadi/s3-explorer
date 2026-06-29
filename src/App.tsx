@@ -7,6 +7,7 @@ import Toolbar from "./components/layout/Toolbar";
 import FileList from "./components/explorer/FileList";
 import EmptyState from "./components/explorer/EmptyState";
 import WelcomeScreen from "./components/explorer/WelcomeScreen";
+import UnlockScreen from "./components/explorer/UnlockScreen";
 import ConnectionFormPage from "./components/pages/ConnectionFormPage";
 import DeleteConnectionPage from "./components/pages/DeleteConnectionPage";
 import SettingsPage from "./components/pages/SettingsPage";
@@ -14,6 +15,7 @@ import TransferPanel from "./components/layout/TransferPanel";
 import { useConnectionStore } from "./store/connectionStore";
 import { useNavigationStore } from "./store/navigationStore";
 import { useSettingsStore } from "./store/settingsStore";
+import { useSecurityStore } from "./store/securityStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { getAccentColor } from "./lib/accentColors";
 import "./App.css";
@@ -47,7 +49,16 @@ function AppLayout() {
   // Store actions for delete
   const removeConnection = useConnectionStore((s) => s.removeConnection);
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
+  const replaceConnections = useConnectionStore((s) => s.replaceConnections);
+  const clearConnections = useConnectionStore((s) => s.clearConnections);
   const connections = useConnectionStore((s) => s.connections);
+
+  // Security state
+  const isMasterPasswordEnabled = useSecurityStore((s) => s.isMasterPasswordEnabled);
+  const isUnlocked = useSecurityStore((s) => s.isUnlocked);
+  const unlock = useSecurityStore((s) => s.unlock);
+  const resetMasterPasswordAndConnections = useSecurityStore((s) => s.resetMasterPasswordAndConnections);
+  const isLocked = isMasterPasswordEnabled && !isUnlocked;
 
   // ── Startup: check settings for session restore ────────────
   const restoreLastSession = useSettingsStore((s) => s.restoreLastSession);
@@ -99,21 +110,22 @@ function AppLayout() {
   // ── Callbacks ──────────────────────────────────────────────
 
   const handleRefresh = useCallback(() => {
-    if (!connectionId || !bucket) return;
+    if (isLocked || !connectionId || !bucket) return;
     queryClient.invalidateQueries({
       queryKey: ["s3", "objects", connectionId, bucket, prefix],
     });
-  }, [queryClient, connectionId, bucket, prefix]);
+  }, [queryClient, isLocked, connectionId, bucket, prefix]);
 
   const handleNavigate = useCallback(
     (targetPrefix: string) => {
+      if (isLocked) return;
       if (targetPrefix === "") {
         setPrefix("");
       } else {
         setPrefix(targetPrefix);
       }
     },
-    [setPrefix],
+    [isLocked, setPrefix],
   );
 
   const handleSearchChange = useCallback((query: string) => {
@@ -121,33 +133,38 @@ function AppLayout() {
   }, []);
 
   const handleUpload = useCallback(() => {
+    if (isLocked) return;
     setUploadOpen(true);
-  }, []);
+  }, [isLocked]);
 
   const handleNewFolder = useCallback(() => {
+    if (isLocked) return;
     setNewFolderOpen(true);
-  }, []);
+  }, [isLocked]);
 
   const handleDisconnect = useCallback(() => {
+    if (isLocked) return;
     goHome();
     setActiveConnection(null);
-  }, [goHome, setActiveConnection]);
+  }, [isLocked, goHome, setActiveConnection]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────
 
   useKeyboardShortcuts({
     onRefresh: handleRefresh,
     onBack: () => {
-      if (history.length > 0) goBack();
+      if (!isLocked && history.length > 0) goBack();
     },
     onUpload: handleUpload,
     onClose: () => {
+      if (isLocked) return;
       if (view !== "main") {
         setView("main");
         setEditingConnectionId(null);
       }
     },
     onDelete: () => {
+      if (isLocked) return;
       // Delete coming soon
     },
   });
@@ -155,25 +172,42 @@ function AppLayout() {
   // ── Edit / Delete connection handlers ───────────────────────
 
   const handleEditConnection = useCallback((id: string) => {
+    if (isLocked) return;
     setEditingConnectionId(id);
     setView("editConnection");
-  }, []);
+  }, [isLocked]);
 
   const handleDeleteConnection = useCallback((id: string) => {
+    if (isLocked) return;
     setEditingConnectionId(id);
     setView("deleteConnection");
-  }, []);
+  }, [isLocked]);
 
   // Handlers to open the connection form page
   const openAddConnection = useCallback(() => {
+    if (isLocked) return;
     setEditingConnectionId(null);
     setView("addConnection");
-  }, []);
+  }, [isLocked]);
 
   const closeConnectionForm = useCallback(() => {
     setView("main");
     setEditingConnectionId(null);
   }, []);
+
+  const handleUnlock = useCallback(async (password: string) => {
+    const vault = await unlock(password);
+    replaceConnections(vault.connections, vault.activeConnectionId);
+  }, [unlock, replaceConnections]);
+
+  const handleResetLockedConnections = useCallback(() => {
+    resetMasterPasswordAndConnections();
+    clearConnections();
+    useNavigationStore.getState().goHome();
+    queryClient.clear();
+    setView("main");
+    setEditingConnectionId(null);
+  }, [resetMasterPasswordAndConnections, clearConnections, queryClient]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!editingConnectionId) return;
@@ -206,7 +240,13 @@ function AppLayout() {
       {/* ── Custom title bar ──────────────────────────────── */}
       <TitleBar />
 
-      {/* ── Main content row ─────────────────────────────── */}
+      {isLocked ? (
+        <UnlockScreen
+          onUnlock={handleUnlock}
+          onResetConnections={handleResetLockedConnections}
+        />
+      ) : (
+      /* ── Main content row ─────────────────────────────── */
       <div className="flex flex-1 overflow-hidden bg-[var(--s3-sidebar-bg)]">
         {/* Left panel — always visible */}
         <Sidebar
@@ -271,6 +311,7 @@ function AppLayout() {
               )}
             </div>
           </div>
+      )}
     </div>
   );
 }

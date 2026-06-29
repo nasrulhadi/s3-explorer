@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Mail, Download, Upload } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useSettingsStore, type ThemeMode } from "../../store/settingsStore";
 import { useConnectionStore } from "../../store/connectionStore";
+import { useSecurityStore } from "../../store/securityStore";
 import type { S3Connection } from "../../types";
 import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
+import MasterPasswordModal, {
+  type MasterPasswordMode,
+  type MasterPasswordPayload,
+} from "../modals/MasterPasswordModal";
 import { encryptExport, decryptExport, isEncryptedExport } from "../../lib/crypto";
+import { verifySecureVaultPassword } from "../../lib/secureVault";
 import { ACCENT_COLORS } from "../../lib/accentColors";
 import kofi from "../../assets/kofi2.png";
 
@@ -173,6 +179,11 @@ function AccentColorSelect({
 export default function SettingsPage({ onDone }: SettingsPageProps) {
   const store = useSettingsStore();
   const connections = useConnectionStore((s) => s.connections);
+  const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
+  const isMasterPasswordEnabled = useSecurityStore((s) => s.isMasterPasswordEnabled);
+  const enableMasterPassword = useSecurityStore((s) => s.enableMasterPassword);
+  const disableMasterPassword = useSecurityStore((s) => s.disableMasterPassword);
+  const changeMasterPassword = useSecurityStore((s) => s.changeMasterPassword);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Import modal state
@@ -185,14 +196,55 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
   const [passphraseError, setPassphraseError] = useState("");
   const pendingEncryptedBytesRef = useRef<Uint8Array | null>(null);
 
+  // Master password modal state
+  const [masterPasswordMode, setMasterPasswordMode] = useState<MasterPasswordMode | null>(null);
+  const [masterPasswordError, setMasterPasswordError] = useState("");
+  const [masterPasswordBusy, setMasterPasswordBusy] = useState(false);
+
+  // ── Master Password ─────────────────────────────────────
+  const handleMasterPasswordConfirm = async (payload: MasterPasswordPayload) => {
+    if (!masterPasswordMode) return;
+
+    setMasterPasswordError("");
+    setMasterPasswordBusy(true);
+
+    const vaultData = {
+      connections,
+      activeConnectionId,
+    };
+
+    try {
+      if (masterPasswordMode === "enable") {
+        await enableMasterPassword(payload.newPassword ?? "", vaultData);
+      } else if (masterPasswordMode === "disable") {
+        await disableMasterPassword(payload.currentPassword ?? "", vaultData);
+      } else {
+        await changeMasterPassword(
+          payload.currentPassword ?? "",
+          payload.newPassword ?? "",
+          vaultData,
+        );
+      }
+      setMasterPasswordMode(null);
+    } catch (error) {
+      setMasterPasswordError(error instanceof Error ? error.message : "Master password operation failed.");
+    } finally {
+      setMasterPasswordBusy(false);
+    }
+  };
+
   // ── Export (encrypted) ──────────────────────────────────
   const handleExportClick = () => {
     setPassphraseMode("export");
   };
 
-  const handleExportWithPassphrase = async (passphrase: string) => {
+  const handleExportWithPassphrase = async (passphrase: string, masterPassword?: string) => {
     setPassphraseError("");
     try {
+      if (isMasterPasswordEnabled) {
+        await verifySecureVaultPassword(masterPassword ?? "");
+      }
+
       const data = {
         version: 1,
         exportedAt: new Date().toISOString(),
@@ -223,8 +275,14 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       }
 
       setPassphraseMode(null);
-    } catch {
-      setPassphraseError("Encryption failed. Please try again.");
+    } catch (error) {
+      setPassphraseError(
+        isMasterPasswordEnabled
+          ? error instanceof Error
+            ? error.message
+            : "Wrong master password or encryption failed."
+          : "Encryption failed. Please try again.",
+      );
     }
   };
 
@@ -387,6 +445,64 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             </div>
           </section>
 
+          {/* ── Security ────────────────────────────────── */}
+          <section>
+            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+              Security
+            </h3>
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                    {isMasterPasswordEnabled ? (
+                      <ShieldCheck size={15} className="text-[var(--s3-accent-text)]" />
+                    ) : (
+                      <LockKeyhole size={15} className="text-gray-400" />
+                    )}
+                    <span>Master Password</span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
+                    {isMasterPasswordEnabled
+                      ? "Saved connections are encrypted and require your master password on startup."
+                      : "Optionally encrypt saved connections and require a password when the app starts."}
+                  </p>
+                  {!isMasterPasswordEnabled && connections.length > 0 && (
+                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 px-3 py-2">
+                      <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                        Your saved connections are currently stored without master password protection.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {isMasterPasswordEnabled ? (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("change"); }}
+                      className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    >
+                      Change
+                    </button>
+                    <button
+                      onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("disable"); }}
+                      className="px-3 py-1.5 text-sm rounded-md border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+                    >
+                      Disable
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("enable"); }}
+                    className="shrink-0 px-3 py-1.5 text-sm rounded-md bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
+                  >
+                    Enable
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* ── Toolbar ─────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
@@ -433,7 +549,9 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 <div className="min-w-0 flex-1 pr-4">
                   <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    Save all connections to an encrypted backup file
+                    {isMasterPasswordEnabled
+                      ? "Requires your master password, then creates a separate encrypted backup file"
+                      : "Save all connections to an encrypted backup file"}
                   </div>
                 </div>
                 <button
@@ -548,6 +666,8 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       {importPreview && (
         <ImportConnectionsModal
           preview={importPreview}
+          isMasterPasswordEnabled={isMasterPasswordEnabled}
+          onEnableMasterPassword={() => { setMasterPasswordError(""); setMasterPasswordMode("enable"); }}
           onClose={() => setImportPreview(null)}
         />
       )}
@@ -557,8 +677,20 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
         <PassphraseModal
           mode={passphraseMode}
           externalError={passphraseError}
+          requireMasterPassword={passphraseMode === "export" && isMasterPasswordEnabled}
           onConfirm={passphraseMode === "export" ? handleExportWithPassphrase : handleImportWithPassphrase}
           onCancel={() => { setPassphraseMode(null); setPassphraseError(""); }}
+        />
+      )}
+
+      {/* Master password modal */}
+      {masterPasswordMode && (
+        <MasterPasswordModal
+          mode={masterPasswordMode}
+          externalError={masterPasswordError}
+          isBusy={masterPasswordBusy}
+          onConfirm={(payload) => void handleMasterPasswordConfirm(payload)}
+          onCancel={() => { setMasterPasswordMode(null); setMasterPasswordError(""); }}
         />
       )}
     </div>

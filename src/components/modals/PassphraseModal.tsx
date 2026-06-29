@@ -6,13 +6,23 @@ interface Props {
   mode: "export" | "import";
   /** External error from failed crypto operation (e.g. wrong passphrase) */
   externalError?: string;
-  onConfirm: (passphrase: string) => void;
+  /** Export-only: require current master password before creating a backup */
+  requireMasterPassword?: boolean;
+  onConfirm: (passphrase: string, masterPassword?: string) => void;
   onCancel: () => void;
 }
 
-export default function PassphraseModal({ mode, externalError, onConfirm, onCancel }: Props) {
+export default function PassphraseModal({
+  mode,
+  externalError,
+  requireMasterPassword = false,
+  onConfirm,
+  onCancel,
+}: Props) {
+  const [masterPassword, setMasterPassword] = useState("");
   const [pass, setPass] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +30,10 @@ export default function PassphraseModal({ mode, externalError, onConfirm, onCanc
   const handleSubmit = () => {
     setError("");
 
+    if (mode === "export" && requireMasterPassword && !masterPassword) {
+      setError("Master password is required to export connections.");
+      return;
+    }
     if (!pass) {
       setError("Passphrase is required.");
       return;
@@ -33,7 +47,7 @@ export default function PassphraseModal({ mode, externalError, onConfirm, onCanc
       return;
     }
 
-    onConfirm(pass);
+    onConfirm(pass, mode === "export" && requireMasterPassword ? masterPassword : undefined);
   };
 
   return (
@@ -55,13 +69,52 @@ export default function PassphraseModal({ mode, externalError, onConfirm, onCanc
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {mode === "export"
-              ? "Set a passphrase to encrypt your connection backup file."
+              ? requireMasterPassword
+                ? "Enter your master password, then set a separate passphrase for the backup file."
+                : "Set a passphrase to encrypt your connection backup file."
               : "Enter the passphrase used when this file was exported."}
           </p>
         </div>
 
         {/* Inputs */}
         <div className="px-5 pb-1 space-y-3">
+          {/* Master password (export only, when enabled) */}
+          {mode === "export" && requireMasterPassword && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Master Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showMasterPassword ? "text" : "password"}
+                  value={masterPassword}
+                  onChange={(e) => { setMasterPassword(e.target.value); setError(""); }}
+                  placeholder="Enter master password"
+                  autoFocus
+                  className="
+                    w-full pl-3 pr-9 py-2 text-sm
+                    border border-gray-300 dark:border-gray-600 rounded-lg
+                    bg-white dark:bg-gray-800
+                    text-gray-800 dark:text-gray-200
+                    placeholder-gray-400 dark:placeholder-gray-500
+                    outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+                    transition-all
+                    [&::-ms-reveal]:hidden
+                  "
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowMasterPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
+                  title={showMasterPassword ? "Hide" : "Show"}
+                >
+                  {showMasterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Passphrase */}
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -73,7 +126,7 @@ export default function PassphraseModal({ mode, externalError, onConfirm, onCanc
                 value={pass}
                 onChange={(e) => { setPass(e.target.value); setError(""); }}
                 placeholder={mode === "export" ? "Choose a strong passphrase" : "Enter passphrase"}
-                autoFocus
+                autoFocus={!(mode === "export" && requireMasterPassword)}
                 className="
                   w-full pl-3 pr-9 py-2 text-sm
                   border border-gray-300 dark:border-gray-600 rounded-lg
