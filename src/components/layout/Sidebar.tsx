@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Plus,
   Database,
@@ -9,6 +9,7 @@ import {
   Settings,
   Search,
   X,
+  Circle,
 } from "lucide-react";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
@@ -30,12 +31,14 @@ const PROVIDER_LABELS: Record<S3Provider, string> = {
 function ConnectionItem({
   connection,
   isActive,
+  isOpened,
   onSelect,
   onEdit,
   onDelete,
 }: {
   connection: S3Connection;
   isActive: boolean;
+  isOpened: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -74,30 +77,38 @@ function ConnectionItem({
         </div>
       </button>
 
-      {/* Edit / Delete — visible on hover */}
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-center">
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          title="Edit connection"
-          className={`p-1 rounded transition-colors ${
-            isActive
-              ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)] hover:bg-black/10"
-              : "text-gray-500 hover:text-[var(--s3-window-text)] hover:bg-black/5 dark:hover:bg-white/10"
-          }`}
-        >
-          <Pencil size={13} />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          title="Delete connection"
-          className={`p-1 rounded transition-colors ${
-            isActive
-              ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 hover:bg-red-500/20"
-              : "text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10"
-          }`}
-        >
-          <Trash2 size={13} />
-        </button>
+      {/* Edit / Delete — visible on hover, dot always at far right */}
+      <div className="flex items-center gap-1.5 w-14 h-7 justify-end shrink-0 self-center">
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            title="Edit connection"
+            className={`p-1 rounded transition-colors ${
+              isActive
+                ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)] hover:bg-black/10"
+                : "text-gray-500 hover:text-[var(--s3-window-text)] hover:bg-black/5 dark:hover:bg-white/10"
+            }`}
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            title="Delete connection"
+            className={`p-1 rounded transition-colors ${
+              isActive
+                ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 hover:bg-red-500/20"
+                : "text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10"
+            }`}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+        {/* Dot — always occupies same width, visible or invisible */}
+        {isOpened ? (
+          <Circle size={4} className="text-emerald-400/70" fill="currentColor" />
+        ) : (
+          <span className="w-1" />
+        )}
       </div>
     </div>
   );
@@ -190,6 +201,25 @@ export default function Sidebar({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
+  const openedRef = useRef<Set<string>>(new Set());
+  const lastActiveId = useRef<string | null>(null);
+
+  // When a connection is deleted from store → remove its dot
+  // When a connection is disconnected (activeConnectionId → null) → remove its dot
+  // This sync runs before every render.
+  const activeIds = new Set(connections.map((c) => c.id));
+  for (const id of openedRef.current) {
+    if (!activeIds.has(id)) {
+      openedRef.current.delete(id);
+    }
+  }
+  if (activeConnectionId === null && lastActiveId.current) {
+    openedRef.current.delete(lastActiveId.current);
+    lastActiveId.current = null;
+  }
+  if (activeConnectionId) {
+    lastActiveId.current = activeConnectionId;
+  }
 
   const hasConnections = connections.length > 0;
 
@@ -202,6 +232,8 @@ export default function Sidebar({
 
   function handleConnectionClick(conn: S3Connection) {
     setActiveConnection(conn.id);
+    openedRef.current.add(conn.id);
+    lastActiveId.current = conn.id;
 
     const currentConnectionId = useNavigationStore.getState().connectionId;
     if (currentConnectionId !== conn.id) {
@@ -301,6 +333,7 @@ export default function Sidebar({
                 <ConnectionItem
                   connection={conn}
                   isActive={activeConnectionId === conn.id}
+                  isOpened={openedRef.current.has(conn.id)}
                   onSelect={() => handleConnectionClick(conn)}
                   onEdit={() => onEditConnection?.(conn.id)}
                   onDelete={() => onDeleteConnection?.(conn.id)}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, LockKeyhole } from "lucide-react";
-import welcomeScreenImg from "../../assets/welcomeScreen.webp";
+import unlockScreenImg from "../../assets/unlockScreen.webp";
 
 interface UnlockScreenProps {
   onUnlock: (password: string) => Promise<void>;
@@ -39,15 +39,11 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
     <main className="flex-1 flex items-center justify-center bg-[var(--s3-window-bg)] px-8 select-none">
       <div className="w-full max-w-md text-center">
         <img
-          src={welcomeScreenImg}
+          src={unlockScreenImg}
           alt=""
           draggable={false}
-          className="w-80 h-auto mx-auto mb-6 opacity-90 dark:opacity-80 pointer-events-none"
+          className="w-96 h-auto mx-auto mb-6 opacity-90 dark:opacity-80 pointer-events-none"
         />
-
-        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] mb-4">
-          <LockKeyhole size={20} />
-        </div>
 
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
           S3 Explorer is locked
