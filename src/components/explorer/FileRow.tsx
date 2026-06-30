@@ -60,7 +60,7 @@ export default function FileRow({
       onContextMenu={(e) => onContextMenu?.(item, e)}
       style={colGridStyle(columnWidths)}
       className={`
-        grid items-center h-full px-3 gap-2 cursor-default select-none
+        grid items-center h-full px-3 gap-2 cursor-default select-none outline-none
         transition-colors duration-75
         ${isMoving ? "opacity-40 pointer-events-none" : ""}
         ${isSelected ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]" : "hover:bg-[var(--s3-window-hover-bg)]"}

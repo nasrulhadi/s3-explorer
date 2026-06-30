@@ -140,10 +140,16 @@ export default function UploadModal({
       return;
 
     setUploading(true);
+
+    // Close modal immediately — TransferPanel handles progress
+    const filesToUpload = [...pendingFiles];
+    onClose();
+    reset();
+
     const transferStore = useTransferStore.getState();
 
-    for (let i = 0; i < pendingFiles.length; i++) {
-      const pf = pendingFiles[i];
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const pf = filesToUpload[i];
       const key = `${prefix}${pf.relativePath}`;
 
       const id = `upload-${Date.now()}-${i}`;
@@ -184,9 +190,8 @@ export default function UploadModal({
       }
     }
 
-    setUploading(false);
+    // Refresh explorer after all uploads complete
     onUploadComplete();
-    onClose();
   }, [
     connectionId,
     bucket,
@@ -196,6 +201,7 @@ export default function UploadModal({
     getConnection,
     onUploadComplete,
     onClose,
+    reset,
   ]);
 
   // ── Format bytes ───────────────────────────────────────────

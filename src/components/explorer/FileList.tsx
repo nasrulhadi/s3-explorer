@@ -481,6 +481,7 @@ export default function FileList({
           <div className="flex-1">
             {Array.from({ length: skeletonCountRef.current }).map((_, i) => <SkeletonRow key={i} />)}
           </div>
+          <StatusBar />
         </div>
         <Modals />
       </>
@@ -537,7 +538,7 @@ export default function FileList({
   return (
     <>
       <ContextMenu.Root onOpenChange={(open) => { if (!open) setContextTarget({ type: "empty" }); }}>
-        <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden" onKeyDown={handleKeyDown} onContextMenu={(e) => e.preventDefault()} tabIndex={-1}>
+        <div className="h-full flex flex-col bg-[var(--s3-window-bg)] overflow-hidden outline-none" onKeyDown={handleKeyDown} onContextMenu={(e) => e.preventDefault()} tabIndex={-1}>
           <ColumnHeader sortField={sortField} sortDir={sortDir} onToggleSort={toggleSort} />
 
           <ContextMenu.Trigger asChild>

@@ -13,21 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org).
   - Column widths persisted in settings store (`columnWidths` field)
   - Survives app restart (stored in localStorage)
 - **Column Separators**: Subtle vertical dividers between column headers (60% opacity)
-
-### Changed
-- Column header layout unified with row grid via shared `colGridStyle()` function
-
-### Fixed
-- Resize handle no longer triggers sort when dragging columns
-
-### Added
 - **Opened Connection Dot**: Green dot indicator for connections that have been opened
   - Appears next to the connection provider label in the sidebar
   - Clears automatically on disconnect or connection deletion
   - Always visible regardless of hover state
 
-### UI
+### Changed
+- Column header layout unified with row grid via shared `colGridStyle()` function
 - **Unlock Screen**: Hero image changed from `welcomeScreen.webp` to `unlockScreen.webp`, size matched with WelcomeScreen (`w-96`), lock icon badge removed
+- **Upload Modal**: Closes immediately on upload start, progress handled by TransferPanel — no longer blocks the UI
+- **Status Bar**: Remains visible during loading/refetch states (was previously hidden during skeleton)
+
+### Fixed
+- Resize handle no longer triggers sort when dragging columns
+- Explorer no longer shows black focus outline on click (FileRow, FolderRow, container)
 
 ---
 

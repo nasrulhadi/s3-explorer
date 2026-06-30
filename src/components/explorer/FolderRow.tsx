@@ -45,7 +45,7 @@ export default function FolderRow({
       onContextMenu={(e) => onContextMenu?.(item, e)}
       style={colGridStyle(columnWidths)}
       className={`
-        grid items-center h-full px-3 gap-2 cursor-default select-none
+        grid items-center h-full px-3 gap-2 cursor-default select-none outline-none
         transition-colors duration-75
         ${isMoving ? "opacity-40 pointer-events-none" : ""}
         ${isDragOver ? "bg-[var(--s3-accent-base)] ring-2 ring-inset ring-[var(--s3-accent-active)]" : ""}
