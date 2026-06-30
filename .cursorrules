@@ -8,7 +8,7 @@
 - Icons: Lucide React | Font: Onest (`@fontsource/onest`)
 - Toasts: Sonner | Context menus: Radix UI | ZIP: JSZip
 - Language: Indonesian (user), English (code/comments)
-- Current Version: v1.3.1
+- Current Version: v1.4.0
 
 ## Architecture (CRITICAL)
 - **CORS Bypass**: All AWS SDK HTTP traffic routed through Tauri's `@tauri-apps/plugin-http` — S3 providers don't serve CORS headers. Custom handler in `src/lib/s3Client.ts`.

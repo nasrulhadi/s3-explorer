@@ -1,7 +1,8 @@
 import { Folder } from "lucide-react";
 import type { S3Item } from "../../types";
 import { formatDate } from "../../lib/utils";
-import { ROW_GRID } from "./FileRow";
+import { colGridStyle } from "./FileRow";
+import { useSettingsStore } from "../../store/settingsStore";
 
 // ─── Component ──────────────────────────────────────────────
 
@@ -27,6 +28,8 @@ export default function FolderRow({
   onOpen,
   onContextMenu,
 }: FolderRowProps) {
+  const columnWidths = useSettingsStore((s) => s.columnWidths);
+
   return (
     <div
       role="row"
@@ -40,8 +43,9 @@ export default function FolderRow({
         }
       }}
       onContextMenu={(e) => onContextMenu?.(item, e)}
+      style={colGridStyle(columnWidths)}
       className={`
-        ${ROW_GRID} h-full px-3 gap-2 cursor-default select-none
+        grid items-center h-full px-3 gap-2 cursor-default select-none
         transition-colors duration-75
         ${isMoving ? "opacity-40 pointer-events-none" : ""}
         ${isDragOver ? "bg-[var(--s3-accent-base)] ring-2 ring-inset ring-[var(--s3-accent-active)]" : ""}
@@ -56,18 +60,18 @@ export default function FolderRow({
       </div>
 
       {/* Name */}
-      <span className="truncate text-sm font-medium text-[var(--s3-window-text)]">{item.name}</span>
+      <span className="truncate text-sm font-medium text-[var(--s3-window-text)] pr-3">{item.name}</span>
 
       {/* Size — folders have no size */}
-      <span className="text-xs text-[var(--s3-window-muted)] text-right">—</span>
+      <span className="text-xs text-[var(--s3-window-muted)] text-right pr-3">—</span>
 
       {/* Last modified */}
-      <span className="text-xs text-[var(--s3-window-muted)] text-right tabular-nums">
+      <span className="text-xs text-[var(--s3-window-muted)] text-right tabular-nums pr-3">
         {item.lastModified ? formatDate(item.lastModified) : "—"}
       </span>
 
       {/* Storage class */}
-      <span className="text-xs text-[var(--s3-window-muted)] text-right">—</span>
+      <span className="text-xs text-[var(--s3-window-muted)] text-right pr-3">—</span>
     </div>
   );
 }

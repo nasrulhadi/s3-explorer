@@ -18,11 +18,12 @@ import { useConnectivity } from "../../hooks/useConnectivity";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useTransferStore } from "../../store/transferStore";
 import { useConnectionStore } from "../../store/connectionStore";
+import { useSettingsStore } from "../../store/settingsStore";
 import { createS3Client } from "../../lib/s3Client";
 import { formatFileSize } from "../../lib/utils";
 import { deleteFolderRecursive, renameFolder } from "../../lib/s3FolderOps";
 import type { S3Item, SortField, SortDirection } from "../../types";
-import { ROW_HEIGHT, ROW_GRID } from "./FileRow";
+import { ROW_HEIGHT, colGridStyle } from "./FileRow";
 import FolderRow from "./FolderRow";
 import FileRow from "./FileRow";
 import UploadModal from "../modals/UploadModal";
@@ -45,13 +46,14 @@ import { useDragMove } from "./hooks/useDragMove";
 // ─── Skeleton row (loading placeholder) ─────────────────────
 
 function SkeletonRow() {
+  const columnWidths = useSettingsStore((s) => s.columnWidths);
   return (
-    <div className={`${ROW_GRID} min-h-10 px-3 gap-2 items-center border-b border-[var(--s3-window-border)]`}>
+    <div style={colGridStyle(columnWidths)} className="grid min-h-10 px-3 gap-2 items-center border-b border-[var(--s3-window-border)]">
       <div className="h-4 w-4 rounded bg-[var(--s3-window-border)] animate-pulse" />
-      <div className="h-4 w-2/3 rounded bg-[var(--s3-window-border)] animate-pulse" />
-      <div className="h-4 w-12 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
-      <div className="h-4 w-20 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
-      <div className="h-4 w-14 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end" />
+      <div className="h-4 w-2/3 rounded bg-[var(--s3-window-border)] animate-pulse pr-3" />
+      <div className="h-4 w-12 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />
+      <div className="h-4 w-20 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />
+      <div className="h-4 w-14 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />
     </div>
   );
 }

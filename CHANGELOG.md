@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
-## [1.3.1] - 2026-06-30
+## [1.4.0] - 2026-07-01
+
+### Added
+- **Resizable Column Headers**: Drag between column headers (Name, Size, Modified) to resize
+  - Mouse-based drag with 3px threshold + vertical guide line
+  - Column widths persisted in settings store (`columnWidths` field)
+  - Survives app restart (stored in localStorage)
+- **Column Separators**: Subtle vertical dividers between column headers (60% opacity)
+
+### Changed
+- Column header layout unified with row grid via shared `colGridStyle()` function
+
+### Fixed
+- Resize handle no longer triggers sort when dragging columns
 
 ### Added
 - **Opened Connection Dot**: Green dot indicator for connections that have been opened

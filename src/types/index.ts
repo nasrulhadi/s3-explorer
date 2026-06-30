@@ -19,6 +19,14 @@ export type TransferStatus = "pending" | "active" | "done" | "error";
 /** Sortable fields for the file list */
 export type SortField = "name" | "size" | "lastModified" | "storageClass";
 
+/** Persisted column widths for the file list (-1 = flex/1fr) */
+export interface ColumnWidths {
+  name: number;
+  size: number;
+  modified: number;
+  class: number;
+}
+
 /** Sort direction */
 export type SortDirection = "asc" | "desc";
 
