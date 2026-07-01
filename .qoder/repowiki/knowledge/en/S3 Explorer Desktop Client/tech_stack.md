@@ -1,5 +1,0 @@
-- **Framework**: React 18 with Vite.
-- **Desktop Runtime**: Tauri (using `@tauri-apps/plugin-http` for native networking).
-- **State & Data**: Zustand (client state), TanStack Query (server state), TanStack Virtual (list virtualization).
-- **AWS SDK**: `@aws-sdk/client-s3` with custom fetch handler.
-- **Styling**: Tailwind CSS (inferred from class names like `flex-1`, `bg-gray-50`).

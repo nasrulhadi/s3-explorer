@@ -1,2 +1,0 @@
-- Shared versioning and product naming across `package.json` and `tauri.conf.json`.
-- Unified TypeScript types in `src/types/index.ts` consumed by both UI components and Tauri API calls.

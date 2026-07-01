@@ -1,4 +1,0 @@
-- Entry point: `src/main.rs` delegates to `s3_explorer_lib::run()` in `src/lib.rs`, keeping the binary minimal.
-- Application bootstrap: `lib.rs` uses `tauri::Builder` to register plugins (`tauri-plugin-opener`, `tauri-plugin-http`) and expose Tauri commands (currently a sample `greet` command) via `invoke_handler`.
-- Configuration-driven behavior: `tauri.conf.json` defines window defaults (size, decorations), build hooks (`pnpm dev`/`pnpm build`), and bundle icons; capabilities are enforced via `capabilities/default.json` with explicit permissions for window management, events, and HTTP access.
-- Dependency direction: frontend → Tauri IPC → Rust commands/plugins; no custom domain logic beyond the scaffolded command layer.

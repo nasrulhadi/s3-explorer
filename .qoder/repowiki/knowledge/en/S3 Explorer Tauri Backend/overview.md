@@ -1,1 +1,0 @@
-Provides the Rust-based desktop application shell and IPC bridge for the S3 Explorer frontend.

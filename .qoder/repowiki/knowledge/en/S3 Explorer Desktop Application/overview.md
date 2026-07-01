@@ -1,1 +1,0 @@
-Orchestrates a Tauri-based desktop environment by bridging a React frontend with a Rust backend for secure, cross-platform S3 storage management.
