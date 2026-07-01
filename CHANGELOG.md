@@ -502,12 +502,12 @@ and this project adheres to [Semantic Versioning](https://semver.org).
 
 ## Upcoming Features (Roadmap)
 
-- [ ] Upload dialog with drag & drop
-- [ ] Create folder dialog
-- [ ] Delete selected items with confirmation
-- [ ] Multi-select operations
+- [x] Upload dialog with drag & drop *(v1.1.2)*
+- [x] Create folder dialog *(v1.1.0)*
+- [x] Delete selected items with confirmation *(v1.1.0)*
+- [x] Multi-select operations *(v1.1.4)*
 - [ ] File preview for images/text
 - [ ] Search within bucket
 - [ ] Bucket management (create/delete)
-- [ ] Export/import connections
+- [x] Export/import connections *(v1.1.5)*
 - [ ] Changelog page in app UI

@@ -25,3 +25,13 @@ dist-ssr
 
 # Note task etc
 note-*
+
+# AI tool files
+CLAUDE.md
+CONVENTIONS.md
+PROJECT.md
+.cursorrules
+.github/copilot-instructions.md
+.qoder/
+.qwen/
+.commandcode/

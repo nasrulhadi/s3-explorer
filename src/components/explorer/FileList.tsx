@@ -7,14 +7,13 @@ import {
   FolderOpen,
   FileX,
   AlertCircle,
-  Circle,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useS3 } from "../../hooks/useS3";
-import { useConnectivity } from "../../hooks/useConnectivity";
+
 import { useNavigationStore } from "../../store/navigationStore";
 import { useTransferStore } from "../../store/transferStore";
 import { useConnectionStore } from "../../store/connectionStore";
@@ -105,8 +104,7 @@ export default function FileList({
   // ── Data ──
   const { data, isLoading, isFetching, isError, error } = listObjects(connectionId, bucket, prefix);
 
-  // ── Connectivity & Activity ──
-  const isOnline = useConnectivity();
+  // ── Activity ──
   const transfers = useTransferStore((s) => s.transfers);
   const activeTransfers = useMemo(
     () => transfers.filter((t) => t.status === "active"),
@@ -114,9 +112,7 @@ export default function FileList({
   );
   const hasActiveTransfers = activeTransfers.length > 0;
   const isActivity = isLoading || isFetching || hasActiveTransfers;
-  const activityTooltip = !isOnline
-    ? "No internet connection"
-    : isLoading || isFetching
+  const activityTooltip = isLoading || isFetching
     ? "Loading folder..."
     : hasActiveTransfers
     ? `${activeTransfers.length} transfer${activeTransfers.length > 1 ? "s" : ""} in progress`
@@ -442,10 +438,6 @@ export default function FileList({
             <span className="text-[var(--s3-accent-text)] font-medium">{selectedKeys.size} selected</span>
           )}
           <div className="flex items-center gap-2 w-20 justify-end">
-            <div className="flex items-center gap-1" title={isOnline ? "Online" : "Offline"}>
-              <Circle size={8} className={isOnline ? "text-green-500" : "text-red-500"} fill="currentColor" />
-              <span className="text-xs">{isOnline ? "Online" : "Offline"}</span>
-            </div>
             <div className="flex items-center gap-1" title={activityTooltip}>
               <ArrowUpDown size={14} className={isActivity ? "text-[var(--s3-accent-text)] animate-pulse" : "text-[var(--s3-window-muted)] opacity-40"} />
             </div>

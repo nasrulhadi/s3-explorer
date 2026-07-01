@@ -12,11 +12,13 @@ import ConnectionFormPage from "./components/pages/ConnectionFormPage";
 import DeleteConnectionPage from "./components/pages/DeleteConnectionPage";
 import SettingsPage from "./components/pages/SettingsPage";
 import TransferPanel from "./components/layout/TransferPanel";
+import UpdateModal from "./components/modals/UpdateModal";
 import { useConnectionStore } from "./store/connectionStore";
 import { useNavigationStore } from "./store/navigationStore";
 import { useSettingsStore } from "./store/settingsStore";
 import { useSecurityStore } from "./store/securityStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useUpdateChecker } from "./hooks/useUpdateChecker";
 import { getAccentColor } from "./lib/accentColors";
 import "./App.css";
 
@@ -147,6 +149,9 @@ function AppLayout() {
     goHome();
     setActiveConnection(null);
   }, [isLocked, goHome, setActiveConnection]);
+
+  // ── Update checker ────────────────────────────────────────
+  useUpdateChecker();
 
   // ── Keyboard shortcuts ─────────────────────────────────────
 
@@ -328,6 +333,7 @@ export default function App() {
     <>
       <AppLayout />
       <TransferPanel />
+      <UpdateModal />
       <Toaster
         position="bottom-right"
         richColors

@@ -28,7 +28,7 @@
         "style-src": "'self' 'unsafe-inline'",
         "img-src": "'self' asset: http://asset.localhost blob: data:",
         "font-src": "'self'",
-        "connect-src": "'self' ipc: http://ipc.localhost https://1.1.1.1",
+        "connect-src": "'self' ipc: http://ipc.localhost",
         "object-src": "'none'",
         "base-uri": "'none'",
         "form-action": "'none'",
@@ -40,7 +40,7 @@
         "style-src": "'self' 'unsafe-inline' http://localhost:1420",
         "img-src": "'self' asset: http://asset.localhost blob: data: http://localhost:1420",
         "font-src": "'self' data: http://localhost:1420",
-        "connect-src": "'self' ipc: http://ipc.localhost http://localhost:1420 ws://localhost:1420 ws://localhost:1421 https://1.1.1.1",
+        "connect-src": "'self' ipc: http://ipc.localhost http://localhost:1420 ws://localhost:1420 ws://localhost:1421",
         "object-src": "'none'",
         "base-uri": "'none'",
         "form-action": "'none'",
@@ -58,5 +58,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://raw.githubusercontent.com/nasrulhadi/s3-explorer/main/update.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2MDREQzBGQTNDMEI5MjUKUldRbHVjQ2pEOXdFRnFYcmVuSnF0VWx2NCtSTmxETTRIOHlEVXF2L2JpbWJvcWIvRyswTDlrT0UK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

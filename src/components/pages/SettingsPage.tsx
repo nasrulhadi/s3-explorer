@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck, RefreshCw } from "lucide-react";
 import { useSettingsStore, type ThemeMode } from "../../store/settingsStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useSecurityStore } from "../../store/securityStore";
 import type { S3Connection } from "../../types";
+import { check } from "@tauri-apps/plugin-updater";
+import { useUpdateStore } from "../../store/updateStore";
 import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
 import MasterPasswordModal, {
@@ -185,6 +187,29 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
   const disableMasterPassword = useSecurityStore((s) => s.disableMasterPassword);
   const changeMasterPassword = useSecurityStore((s) => s.changeMasterPassword);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [updateChecking, setUpdateChecking] = useState(false);
+
+  // ── Manual update check ──────────────────────────────────
+  const setUpdate = useUpdateStore((s) => s.setUpdate);
+  const [updateStatus, setUpdateStatus] = useState<{ text: string; error: boolean } | null>(null);
+
+  const handleCheckForUpdate = useCallback(async () => {
+    if (updateChecking) return;
+    setUpdateChecking(true);
+    setUpdateStatus(null);
+    try {
+      const update = await check();
+      if (!update) {
+        setUpdateStatus({ text: `Already up to date (v${__APP_VERSION__})`, error: false });
+        return;
+      }
+      setUpdate(update); // opens the modal
+    } catch {
+      setUpdateStatus({ text: "Could not reach update server", error: true });
+    } finally {
+      setUpdateChecking(false);
+    }
+  }, [updateChecking, setUpdate]);
 
   // Import modal state
   const [importPreview, setImportPreview] = useState<
@@ -645,6 +670,17 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     S3 Explorer {__APP_VERSION__}
                   </p>
+                  <button
+                    onClick={handleCheckForUpdate}
+                    disabled={updateChecking}
+                    className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw size={12} className={updateChecking ? "animate-spin" : ""} />
+                    {updateChecking ? "Checking..." : "Check for Updates"}
+                  </button>
+                  {updateStatus && (
+                    <p className={`mt-1.5 text-xs ${updateStatus.error ? "text-red-400" : "text-green-500 dark:text-green-400"}`}>{updateStatus.text}</p>
+                  )}
                 </div>
               </div>
             </div>

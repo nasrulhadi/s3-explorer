@@ -1,5 +1,3 @@
-import { Circle } from "lucide-react";
-import { useConnectivity } from "../../hooks/useConnectivity";
 import emptyStateImg from "../../assets/emptyState.webp";
 
 const SHORTCUTS = [
@@ -10,8 +8,6 @@ const SHORTCUTS = [
 
 /** Shown when connections exist but no bucket is selected */
 export default function EmptyState() {
-  const isOnline = useConnectivity();
-
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8 select-none">
       {/* ── Hero image ── */}
@@ -43,16 +39,6 @@ export default function EmptyState() {
             <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
           </div>
         ))}
-      </div>
-
-      {/* ── Connectivity ── */}
-      <div className="mt-8 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 opacity-70">
-        <Circle
-          size={8}
-          className={isOnline ? "text-green-500" : "text-red-500"}
-          fill="currentColor"
-        />
-        <span>{isOnline ? "Online" : "Offline"}</span>
       </div>
     </div>
   );
