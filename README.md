@@ -30,9 +30,11 @@
 ### 🎨 Modern UI/UX
 - **Dark Mode** — System / light / dark theme switching
 - **Accent Colors** — 5 accent color options (blue, green, yellow, brown, stone)
+- **Resizable Column Headers** — Drag column dividers to resize Name/Size/Modified width, persisted across restarts
+- **Bucket Connection Indicator** — Green dot next to opened connections in the sidebar
+- **Auto-Update** — Automatic update check on startup and every 30 minutes; inline modal with "Install & Relaunch"
 - **Virtual Scrolling** — Handle buckets with thousands of files smoothly
 - **Breadcrumb Navigation** — Clear path visualization with history-based back navigation
-- **Connectivity Indicator** — Real-time online/offline status detection (60s interval)
 - **Activity Indicator** — Visual feedback for loading states and transfers
 - **Toolbar Customization** — Toggle filter, upload, new folder, reload, and breadcrumb visibility
 - **Connection Emoji Icons** — Customize each connection with an emoji icon (200 curated emojis across 10 categories)
@@ -164,10 +166,10 @@ s3-explorer/
 │   │   ├── explorer/                 # FileList, FileRow, FolderRow, EmptyState, ColumnHeader, ExplorerContextMenu
 │   │   │   └── hooks/                # useFileSelection, useFileClipboard, useDragMove
 │   │   ├── layout/                   # TitleBar, Sidebar, Toolbar, TransferPanel
-│   │   └── modals/                   # NewFolderModal, RenameModal, DeleteConfirmModal, InfoModal, UrlModal, ZipErrorModal, UploadModal, EmojiPicker, PassphraseModal, ImportConnectionsModal
+│   │   └── modals/                   # NewFolderModal, RenameModal, DeleteConfirmModal, InfoModal, UrlModal, ZipErrorModal, UploadModal, UpdateModal, EmojiPicker, PassphraseModal, ImportConnectionsModal
 │   ├── hooks/
 │   │   ├── useS3.ts                  # S3 operations (queries + mutations)
-│   │   ├── useConnectivity.ts        # Internet connectivity detection
+│   │   ├── useUpdateChecker.ts        # Automatic update detection
 │   │   ├── useDownload.ts            # Download progress tracking
 │   │   └── useKeyboardShortcuts.ts   # Global keyboard shortcuts
 │   ├── store/                        # Zustand state stores
@@ -175,7 +177,8 @@ s3-explorer/
 │   │   ├── navigationStore.ts        # View state & history (partially persisted)
 │   │   ├── transferStore.ts          # Upload/download/move queue
 │   │   ├── settingsStore.ts          # User preferences (persisted)
-│   │   └── clipboardStore.ts         # Copy/paste items
+│   │   ├── clipboardStore.ts         # Copy/paste items
+│   │   └── updateStore.ts            # Auto-update state
 │   ├── lib/
 │   │   ├── s3Client.ts               # S3 client factory + CORS-bypass handler
 │   │   ├── s3FolderOps.ts            # B2-safe recursive folder operations
@@ -200,9 +203,6 @@ s3-explorer/
 │   └── release.mjs                   # Version sync script (git tag → all files)
 │
 ├── CHANGELOG.md                      # Version history
-├── CONVENTIONS.md                    # Coding guidelines
-├── CLAUDE.md                         # AI assistant quick reference
-├── PROJECT.md                        # Architecture docs
 └── README.md                         # This file
 ```
 
@@ -252,9 +252,6 @@ Contributions are welcome! Here's how you can help:
 - Use TypeScript strict mode
 - Write clear commit messages
 - Add comments for complex logic
-- Update documentation as needed
-
-See [CONVENTIONS.md](CONVENTIONS.md) for detailed guidelines.
 
 ---
 
@@ -304,7 +301,6 @@ Thanks to all the people who have contributed to this project!
 ## 📞 Support
 
 ### Getting Help
-- 📖 Check the [documentation](CONVENTIONS.md)
 - 🐛 Report issues on [GitHub Issues](https://github.com/nasrulhadi/s3-explorer/issues)
 - 💬 Join discussions on [GitHub Discussions](https://github.com/nasrulhadi/s3-explorer/discussions)
 
@@ -326,6 +322,6 @@ If you find this project useful, please consider giving it a star! It helps othe
 
 **Made with ❤️ by [Nasrul Hadi](https://github.com/nasrulhadi)**
 
-[Report Bug](https://github.com/nasrulhadi/s3-explorer/issues) · [Request Feature](https://github.com/nasrulhadi/s3-explorer/issues/new) · [Documentation](CONVENTIONS.md)
+[Report Bug](https://github.com/nasrulhadi/s3-explorer/issues) · [Request Feature](https://github.com/nasrulhadi/s3-explorer/issues/new)
 
 </div>
