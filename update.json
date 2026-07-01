@@ -1,7 +1,7 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "pub_date": "2026-07-01T00:00:00Z",
   "url": "",
   "signature": "",
-  "notes": "Initial release"
+  "notes": "Auto-update check, removed online indicator, AI file cleanup"
 }

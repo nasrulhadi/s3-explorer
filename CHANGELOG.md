@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.5.0] - 2026-07-01
+
+### Added
+- **Auto-Update Check**: Automatic update detection using Tauri updater plugin
+  - Checks for updates 3 seconds after startup and every 30 minutes
+  - Custom `UpdateModal` with "Install & Relaunch" and "Remind Later" buttons
+  - Progress and error states during download/install
+  - "Check for Updates" button in Settings → About section with inline status feedback
+  - ED25519 signing key generated, public key embedded in app binary
+  - `update.json` at repo root as release metadata endpoint
+
+### Removed
+- **Online/Offline Indicator**: Connectivity check removed from status bar and empty state
+  - Deleted `useConnectivity` hook (no longer pings 1.1.1.1)
+  - Removed Online/Offline dot + text from FileList StatusBar and EmptyState
+  - Cleaned up CSP entries for `https://1.1.1.1`
+
+### Maintenance
+- Removed AI tool files from git tracking (`.qoder/`, `.qwen/`, `.cursorrules`, `CLAUDE.md`, `CONVENTIONS.md`, `PROJECT.md`, `.github/copilot-instructions.md`) — kept local, added to `.gitignore`
+
+---
+
 ## [1.4.0] - 2026-07-01
 
 ### Added
