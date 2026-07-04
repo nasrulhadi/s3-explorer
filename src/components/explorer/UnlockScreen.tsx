@@ -36,24 +36,19 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center bg-[var(--s3-window-bg)] px-8 select-none">
-      <div className="w-full max-w-md text-center">
-        <img
-          src={unlockScreenImg}
-          alt=""
-          draggable={false}
-          className="w-96 h-auto mx-auto mb-6 opacity-90 dark:opacity-80 pointer-events-none"
-        />
-
-        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
-          S3 Explorer is locked
-        </h2>
-        <p className="mt-2 text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
-          Enter your master password to decrypt saved connections on this device.
-          Connections stay hidden until the app is unlocked.
-        </p>
-
-        <div className="mt-6 text-left">
+    <main className="flex-1 flex bg-[var(--s3-titlebar-bg)] select-none overflow-hidden">
+      {/* Left column - Form */}
+      <div className="w-2/5 flex items-center justify-center px-8">
+        <div className="w-full max-w-sm">
+          <div className="flex items-start gap-3 mb-10">
+            <h2 className="text-5xl font-bold text-gray-700">
+              S3 Explorer
+            </h2>
+            <span className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-orange-500 text-orange-500 text-xs font-medium">
+              <LockKeyhole size={12} />
+              Is Locked
+            </span>
+          </div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             Master Password
           </label>
@@ -85,60 +80,78 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
             </button>
           </div>
           {error && <p className="mt-2 text-xs text-red-500 dark:text-red-400">{error}</p>}
-        </div>
 
-        <button
-          onClick={() => void handleUnlock()}
-          disabled={isUnlocking}
-          className="
-            mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5
-            text-sm font-medium text-white bg-[var(--s3-accent-active)] rounded-lg
-            hover:bg-[var(--s3-accent-hover)] active:bg-[var(--s3-accent-hover)]
-            disabled:opacity-60 disabled:cursor-not-allowed
-            transition-colors shadow-sm cursor-pointer
-          "
-        >
-          <LockKeyhole size={16} />
-          {isUnlocking ? "Unlocking…" : "Unlock Connections"}
-        </button>
-
-        {!confirmReset ? (
           <button
-            onClick={() => setConfirmReset(true)}
-            className="mt-4 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+            onClick={() => void handleUnlock()}
+            disabled={isUnlocking}
+            className="
+              mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5
+              text-sm font-medium text-white bg-[var(--s3-accent-active)] rounded-lg
+              hover:bg-[var(--s3-accent-hover)] active:bg-[var(--s3-accent-hover)]
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition-colors shadow-sm cursor-pointer
+            "
           >
-            Forgot master password?
+            <LockKeyhole size={16} />
+            {isUnlocking ? "Unlocking…" : "Unlock Connections"}
           </button>
-        ) : (
-          <div className="mt-5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 p-4 text-left">
-            <div className="flex items-start gap-2">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-500" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-red-700 dark:text-red-300">
-                  Reset saved connections?
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-red-600/80 dark:text-red-300/80">
-                  This disables the master password and permanently deletes local saved connections.
-                  Existing encrypted backup files can still be imported with their backup passphrase.
-                </p>
+
+          {!confirmReset ? (
+            <button
+              onClick={() => setConfirmReset(true)}
+              className="mt-4 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+            >
+              Forgot master password?
+            </button>
+          ) : (
+            <div className="mt-5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 p-4 text-left">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-500" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                    Reset saved connections?
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-red-600/80 dark:text-red-300/80">
+                    This disables the master password and permanently deletes local saved connections.
+                    Existing encrypted backup files can still be imported with their backup passphrase.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => setConfirmReset(false)}
+                  className="flex-1 py-2 text-xs font-medium rounded-lg border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex-1 py-2 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer"
+                >
+                  Reset & Delete Connections
+                </button>
               </div>
             </div>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => setConfirmReset(false)}
-                className="flex-1 py-2 text-xs font-medium rounded-lg border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleReset}
-                className="flex-1 py-2 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer"
-              >
-                Reset & Delete Connections
-              </button>
-            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right column - Hero card */}
+      <div className="w-3/5 pt-1 px-6 pb-6">
+        <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <img
+              src={unlockScreenImg}
+              alt=""
+              draggable={false}
+              className="w-1/2 min-w-[26.5rem] max-w-[40rem] h-auto mx-auto opacity-90 dark:opacity-80 pointer-events-none"
+            />
+            <p className="mt-6 text-base text-gray-500 leading-relaxed">
+              Your saved connections are safely encrypted.
+              Enter your master password to access them.
+            </p>
           </div>
-        )}
+        </div>
       </div>
     </main>
   );

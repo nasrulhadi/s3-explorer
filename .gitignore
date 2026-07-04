@@ -35,3 +35,7 @@ PROJECT.md
 .qoder/
 .qwen/
 .commandcode/
+
+# Backup files
+*.backup
+*.bak

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.5.1] - 2026-07-05
+
+### Changed
+- **Unlock Screen**: Redesigned to 40:60 two-column layout
+  - Left column: title "S3 Explorer" + orange "Is Locked" pill badge (with lock icon) + master password form
+  - Right column: white rounded-2xl hero card with image + reassuring caption
+  - Background matches titlebar color (`--s3-titlebar-bg`)
+  - Hero image is responsive (grows when window is maximized, anchored at 26.5rem minimum)
+
+---
+
 ## [1.5.0] - 2026-07-01
 
 ### Added
