@@ -6,7 +6,15 @@ import { useConnectionStore } from "../../store/connectionStore";
 // ─── Provider label helper ──────────────────────────────────
 
 function providerLabel(p: string) {
-  return p === "r2" ? "R2" : p === "b2" ? "B2" : p === "minio" ? "MinIO" : "S3";
+  return p === "r2"
+    ? "Cloudflare R2"
+    : p === "b2"
+    ? "Backblaze B2"
+    : p === "minio"
+    ? "MinIO"
+    : p === "s3"
+    ? "AWS S3"
+    : "Custom S3";
 }
 
 // ─── Types ──────────────────────────────────────────────────
@@ -164,35 +172,42 @@ export default function ImportConnectionsModal({
 
         {/* Connection list */}
         <div className="px-5 py-3 max-h-60 overflow-y-auto space-y-1.5">
-          {preview.map((p) => (
-            <div
-              key={p.connection.id}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-sm"
-            >
-              {/* Icon */}
-              {p.action === "new" ? (
-                <Plus size={14} className="shrink-0 text-green-500" />
-              ) : p.action === "update" ? (
-                <RefreshCw size={14} className="shrink-0 text-amber-500" />
-              ) : (
-                <AlertCircle size={14} className="shrink-0 text-gray-400" />
-              )}
-              {/* Label */}
-              <div className="min-w-0 flex-1">
-                <span className="text-gray-800 dark:text-gray-200 truncate block">
-                  {p.connection.name}
-                </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {providerLabel(p.connection.provider)}
-                  {p.action === "update" && p.existingName
-                    ? ` — replaces "${p.existingName}"`
-                    : p.action === "skip"
-                    ? " — duplicate"
-                    : ""}
+          {preview.map((p) => {
+            const badge =
+              p.action === "new"
+                ? { label: "Insert", cls: "border-green-500 text-green-600 dark:text-green-400" }
+                : p.action === "update"
+                ? { label: "Update", cls: "border-amber-500 text-amber-600 dark:text-amber-400" }
+                : { label: "Skip", cls: "border-gray-400 text-gray-500 dark:text-gray-400" };
+            return (
+              <div
+                key={p.connection.id}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-sm"
+              >
+                {/* Icon */}
+                {/* Label */}
+                <div className="min-w-0 flex-1">
+                  <span className="text-gray-800 dark:text-gray-200 truncate block">
+                    {p.connection.name}
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {providerLabel(p.connection.provider)}
+                    {p.action === "update" && p.existingName
+                      ? ` — replaces "${p.existingName}"`
+                      : p.action === "skip"
+                      ? " — duplicate"
+                      : ""}
+                  </span>
+                </div>
+                {/* Status badge */}
+                <span
+                  className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${badge.cls}`}
+                >
+                  {badge.label}
                 </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Footer */}

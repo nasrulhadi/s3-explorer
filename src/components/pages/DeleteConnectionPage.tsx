@@ -118,7 +118,7 @@ export default function DeleteConnectionPage({
                 border border-[var(--s3-window-border)] rounded-lg
                 outline-none focus:border-[var(--s3-danger)] focus:ring-1 focus:ring-[var(--s3-danger-light)]
                 bg-[var(--s3-window-bg)] text-[var(--s3-window-text)]
-                placeholder-[var(--s3-window-muted)]
+                placeholder-[var(--s3-window-muted)] placeholder:opacity-60
                 transition-all
               "
               onKeyDown={(e) => {

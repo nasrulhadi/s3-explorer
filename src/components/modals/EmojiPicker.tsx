@@ -55,7 +55,7 @@ export default function EmojiPicker({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search emoji…"
-              className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+              className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 outline-none"
             />
             {query && (
               <button

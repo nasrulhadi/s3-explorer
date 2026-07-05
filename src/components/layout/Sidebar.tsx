@@ -292,7 +292,7 @@ export default function Sidebar({
               onChange={(e) => setFilterQuery(e.target.value)}
               placeholder="Filter connections"
               autoFocus
-              className="flex-1 min-w-0 bg-transparent text-xs text-[var(--s3-sidebar-text)] placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+              className="flex-1 min-w-0 bg-transparent text-xs text-[var(--s3-sidebar-text)] placeholder-gray-300 dark:placeholder-gray-600 outline-none"
             />
             {filterQuery && (
               <button

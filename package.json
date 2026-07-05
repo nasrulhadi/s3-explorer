@@ -1,7 +1,7 @@
 {
   "name": "s3-explorer",
   "private": true,
-  "version": "1.5.1",
+  "version": "1.6.0",
   "author": "Nasrul Hadi",
   "type": "module",
   "scripts": {

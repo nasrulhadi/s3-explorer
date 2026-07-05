@@ -64,7 +64,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
                 border border-gray-300 dark:border-gray-700 rounded-lg
                 bg-white dark:bg-gray-900
                 text-gray-800 dark:text-gray-200
-                placeholder-gray-400 dark:placeholder-gray-500
+                placeholder-gray-300 dark:placeholder-gray-600
                 outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
                 transition-all [&::-ms-reveal]:hidden
               "

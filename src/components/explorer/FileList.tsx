@@ -48,8 +48,8 @@ function SkeletonRow() {
   const columnWidths = useSettingsStore((s) => s.columnWidths);
   return (
     <div style={colGridStyle(columnWidths)} className="grid min-h-10 px-3 gap-2 items-center border-b border-[var(--s3-window-border)]">
-      <div className="h-4 w-4 rounded bg-[var(--s3-window-border)] animate-pulse" />
-      <div className="h-4 w-2/3 rounded bg-[var(--s3-window-border)] animate-pulse pr-3" />
+      <div className="h-4 w-4 rounded bg-[var(--s3-window-hover-bg)] animate-pulse" />
+      <div className="h-4 w-2/3 rounded bg-[var(--s3-window-hover-bg)] animate-pulse pr-3" />
       <div className="h-4 w-12 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />
       <div className="h-4 w-20 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />
       <div className="h-4 w-14 rounded bg-[var(--s3-window-hover-bg)] animate-pulse justify-self-end pr-3" />

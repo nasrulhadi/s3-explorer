@@ -250,6 +250,8 @@ function AppLayout() {
           onUnlock={handleUnlock}
           onResetConnections={handleResetLockedConnections}
         />
+      ) : !hasConnections && view === "main" ? (
+        <WelcomeScreen onAddConnection={openAddConnection} />
       ) : (
       /* ── Main content row ─────────────────────────────── */
       <div className="flex flex-1 overflow-hidden bg-[var(--s3-sidebar-bg)]">
@@ -276,8 +278,6 @@ function AppLayout() {
                 />
               ) : view === "settings" ? (
                 <SettingsPage onDone={() => setView("main")} />
-              ) : !hasConnections ? (
-                <WelcomeScreen onAddConnection={openAddConnection} />
               ) : (
                 <>
                   {connectionId && bucket && (

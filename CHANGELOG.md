@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.0] - 2026-07-05
+
+### Added
+- **Welcome Screen**: Import Connections button for restoring from `.enc` backup
+  - Full flow: file picker → passphrase modal → import preview → apply
+  - File picker accepts only `.enc` encrypted backups
+
+### Changed
+- **Welcome Screen**: Redesigned to 40:60 two-column layout matching UnlockScreen pattern
+  - Left column: title + "Add Connection" + tapered divider + "Import Connections" + supported providers list
+  - Right column: white rounded-2xl hero card with image + caption
+  - Sidebar hidden on WelcomeScreen (was previously always visible)
+  - Background matches titlebar color (`--s3-titlebar-bg`)
+  - Hero image is responsive (grows when window is maximized, anchored at 26.5rem minimum)
+- **Import Connections Modal**: Provider labels show full names ("Cloudflare R2", "Backblaze B2") instead of abbreviations
+- **Import Connections Modal**: Each item shows a right-aligned outline pill badge for status (Insert / Update / Skip)
+- **Form Placeholders**: Subtle gray-300 / gray-600 across all forms (ConnectionFormPage, modals, sidebar search, delete page, toolbar filter)
+- **FileList Skeleton**: All column placeholders use the same color (`--s3-window-hover-bg`) — name column no longer darker
+
+---
+
 ## [1.5.1] - 2026-07-05
 
 ### Changed
