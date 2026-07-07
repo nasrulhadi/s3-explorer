@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.1] - 2026-07-05
+
+### Changed
+- **Empty State**: Caption rewritten ("Choose a connection from the sidebar...") — verb consistency with title
+- **Empty State**: Title removed, caption font upgraded to match WS/US pattern
+- **Empty State**: Shortcut pills redesigned to glass/frosted style with `backdrop-blur` + translucent backgrounds
+- **Empty State**: Hero image responsive sizing matches WS/US (`min-w-[26.5rem]` / `max-w-[40rem]`)
+- **Sidebar Connection Item**: Removed left accent bar — active state now uses background only
+
+### Tweaked
+- **Sidebar Opened Dot**: Indicator size 4px → 6px for better visibility
+
+---
+
 ## [1.6.0] - 2026-07-05
 
 ### Added

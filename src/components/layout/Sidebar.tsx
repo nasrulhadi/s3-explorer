@@ -44,16 +44,16 @@ function ConnectionItem({
   onDelete: () => void;
 }) {
   return (
-    <div
-      className={`
-        relative w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
-        transition-colors duration-150 group rounded-xl border-l-[3px]
-        ${isActive
-          ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
-          : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
-        }
-      `}
-    >
+      <div
+        className={`
+          relative w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
+          transition-colors duration-150 group rounded-xl
+          ${isActive
+            ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+            : "text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
+          }
+        `}
+      >
       <button
         onClick={onSelect}
         className="flex-1 flex items-center gap-2.5 min-w-0"
@@ -105,7 +105,7 @@ function ConnectionItem({
         </div>
         {/* Dot — always occupies same width, visible or invisible */}
         {isOpened ? (
-          <Circle size={4} className="text-emerald-400/70" fill="currentColor" />
+          <Circle size={6} className="text-emerald-400/70" fill="currentColor" />
         ) : (
           <span className="w-1" />
         )}
