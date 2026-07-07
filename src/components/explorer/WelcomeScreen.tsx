@@ -158,7 +158,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
             onClick={handleImportClick}
             className="
               w-full inline-flex items-center justify-center gap-2 px-5 py-2.5
-              text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800
+              text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-800
               border border-gray-300 dark:border-gray-600 rounded-lg
               hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer
             "

@@ -1,6 +1,6 @@
 [package]
 name = "s3-explorer"
-version = "1.6.1"
+version = "1.6.2"
 description = "Desktop application for S3-compatible object storage management"
 authors = ["Nasrul Hadi"]
 edition = "2021"

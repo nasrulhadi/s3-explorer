@@ -41,7 +41,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
       <div className="w-2/5 flex items-center justify-center px-8">
         <div className="w-full max-w-sm">
           <div className="flex items-start gap-3 mb-10">
-            <h2 className="text-5xl font-bold text-gray-700">
+            <h2 className="text-5xl font-bold text-gray-700 dark:text-gray-300">
               S3 Explorer
             </h2>
             <span className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-orange-500 text-orange-500 text-xs font-medium">
@@ -61,11 +61,11 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
               autoFocus
               className="
                 w-full pl-3 pr-10 py-2.5 text-sm
-                border border-gray-300 dark:border-gray-700 rounded-lg
-                bg-white dark:bg-gray-900
+                border border-gray-300 dark:border-zinc-700 rounded-lg
+                bg-white dark:bg-zinc-900
                 text-gray-800 dark:text-gray-200
                 placeholder-gray-300 dark:placeholder-gray-600
-                outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+                outline-none focus:border-zinc-500
                 transition-all [&::-ms-reveal]:hidden
               "
               onKeyDown={(e) => { if (e.key === "Enter") void handleUnlock(); }}
@@ -138,7 +138,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
 
       {/* Right column - Hero card */}
       <div className="w-3/5 pt-1 px-6 pb-6">
-        <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center">
+        <div className="w-full h-full bg-white dark:bg-white/5 backdrop-blur-2xl dark:border dark:border-white/7 rounded-2xl flex items-center justify-center">
           <div className="text-center max-w-md">
             <img
               src={unlockScreenImg}
@@ -146,7 +146,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
               draggable={false}
               className="w-1/2 min-w-[26.5rem] max-w-[40rem] h-auto mx-auto opacity-90 dark:opacity-80 pointer-events-none"
             />
-            <p className="mt-6 text-base text-gray-500 leading-relaxed">
+            <p className="mt-6 text-base text-gray-500 dark:text-gray-400 leading-relaxed">
               Your saved connections are safely encrypted.
               Enter your master password to access them.
             </p>

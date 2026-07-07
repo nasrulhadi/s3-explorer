@@ -107,9 +107,9 @@ function SelectRow({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="
-          text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5
-          text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 outline-none
-          focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+          text-sm border border-gray-300 dark:border-zinc-600 rounded-md px-2.5 py-1.5
+          text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-900 outline-none
+          focus:border-zinc-500
           transition-all cursor-pointer
         "
       >

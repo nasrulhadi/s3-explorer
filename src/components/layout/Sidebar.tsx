@@ -150,7 +150,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
   }
 
   return (
-    <div className="ml-[3px] border-l border-gray-200 dark:border-gray-700">
+    <div className="ml-[3px] border-l border-gray-200 dark:border-zinc-700">
       {data.map((bucket) => {
         const isActive =
           activeConnId === connectionId && activeBucket === bucket.name;
@@ -284,7 +284,7 @@ export default function Sidebar({
       {/* ── Filter form (toggle show/hide via search icon) ── */}
       {searchOpen && hasConnections && (
         <div className="px-3 pb-2">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             <Search size={12} className="shrink-0 text-gray-400" />
             <input
               type="text"
@@ -312,7 +312,7 @@ export default function Sidebar({
         {!hasConnections ? (
           /* ── Empty: no connections at all ── */
           <div className="px-3 py-2">
-            <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 px-3 py-4 text-center">
+            <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 px-3 py-4 text-center">
               <p className="text-xs text-gray-400 dark:text-gray-500">No connections</p>
             </div>
           </div>
@@ -354,8 +354,8 @@ export default function Sidebar({
           className="
             flex-1 flex items-center justify-center gap-1.5
             px-3 py-2 text-xs font-medium rounded-full
-            bg-white dark:bg-gray-800
-            border border-gray-200 dark:border-gray-700
+            bg-white dark:bg-zinc-800
+            border border-gray-200 dark:border-zinc-700
             text-gray-700 dark:text-gray-200
             hover:bg-gray-50 dark:hover:bg-gray-700
             transition-colors cursor-pointer
@@ -370,8 +370,8 @@ export default function Sidebar({
           className="
             flex items-center justify-center
             w-9 h-9 rounded-full
-            bg-white dark:bg-gray-800
-            border border-gray-200 dark:border-gray-700
+            bg-white dark:bg-zinc-800
+            border border-gray-200 dark:border-zinc-700
             text-gray-700 dark:text-gray-200
             hover:bg-gray-50 dark:hover:bg-gray-700
             transition-colors cursor-pointer

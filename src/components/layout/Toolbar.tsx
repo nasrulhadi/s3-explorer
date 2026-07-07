@@ -242,7 +242,7 @@ export default function Toolbar({
             className="
               w-full pl-8 pr-8 py-1.5 text-sm
               border border-[var(--s3-window-border)] rounded-md
-              outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+              outline-none focus:border-zinc-500
               text-[var(--s3-window-text)] placeholder-[var(--s3-window-muted)] placeholder:opacity-60
               bg-[var(--s3-window-bg)]
               transition-all

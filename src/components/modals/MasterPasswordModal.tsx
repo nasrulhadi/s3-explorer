@@ -90,7 +90,7 @@ export default function MasterPasswordModal({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-3">
@@ -209,10 +209,10 @@ function PasswordField({
           className="
             w-full pl-3 pr-9 py-2 text-sm
             border border-gray-300 dark:border-gray-600 rounded-lg
-            bg-white dark:bg-gray-800
+            bg-white dark:bg-zinc-800
             text-gray-800 dark:text-gray-200
             placeholder-gray-300 dark:placeholder-gray-600
-            outline-none focus:border-[var(--s3-accent-text)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+            outline-none focus:border-zinc-500
             transition-all [&::-ms-reveal]:hidden
           "
           onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}

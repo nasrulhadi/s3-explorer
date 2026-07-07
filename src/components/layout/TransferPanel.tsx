@@ -186,9 +186,9 @@ export default function TransferPanel() {
   ).length;
 
   return (
-    <div className="fixed bottom-10 right-4 w-96 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-40 overflow-hidden">
+    <div className="fixed bottom-10 right-4 w-96 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 z-40 overflow-hidden">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 h-11 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-4 h-11 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           Transfers
           {activeCount > 0 && (

@@ -38,7 +38,7 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 // ─── Input styling ──────────────────────────────────────────
 
 const INPUT_CLASS =
-  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)] transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600";
+  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg outline-none focus:border-zinc-500 transition-all bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600";
 
 // ─── Component ──────────────────────────────────────────────
 
@@ -242,8 +242,8 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
                 title="Choose icon"
                 className="
                   shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
-                  border border-gray-300 dark:border-gray-600
-                  bg-white dark:bg-gray-800
+                  border border-gray-300 dark:border-zinc-600
+                  bg-white dark:bg-zinc-800
                   text-gray-500 dark:text-gray-400
                   hover:bg-gray-50 dark:hover:bg-gray-700
                   transition-colors cursor-pointer text-lg
@@ -383,7 +383,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
               disabled={testStatus === "testing"}
               className="
                 flex-1 px-4 py-2.5 text-sm font-medium rounded-lg
-                border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200
+                border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-200
                 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed
               "

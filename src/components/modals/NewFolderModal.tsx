@@ -23,7 +23,7 @@ export default function NewFolderModal({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-3">
@@ -50,7 +50,7 @@ export default function NewFolderModal({
             autoFocus
             className="
               w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-              outline-none focus:border-[var(--s3-accent-active)] focus:ring-1 focus:ring-[var(--s3-accent-base)]
+              outline-none focus:border-zinc-500
               bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200
               placeholder-gray-300 dark:placeholder-gray-600
               transition-all

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.2] - 2026-07-05
+
+### Changed
+- **Uniform Dark Form Styling**: All form inputs now use `zinc` palette (warm toned) instead of `gray` (bluish)
+  - `dark:bg-zinc-900` for fields, `dark:bg-zinc-800` for modal cards
+  - `dark:border-zinc-700` for borders
+  - `focus:border-zinc-500` with no ring (consistent focus indicator across all forms)
+  - Applied to: ConnectionFormPage, Toolbar, Sidebar search, all modal inputs, SettingsPage, UnlockScreen
+- **Modal Containers**: All modal dialog backgrounds & borders standardized to `zinc` palette
+
+---
+
 ## [1.6.1] - 2026-07-05
 
 ### Changed

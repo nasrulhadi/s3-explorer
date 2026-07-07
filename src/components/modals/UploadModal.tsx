@@ -220,7 +220,7 @@ export default function UploadModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-md mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Hidden inputs ───────────────────────────── */}

@@ -42,12 +42,12 @@ export default function EmojiPicker({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header / Search ── */}
-        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="p-3 border-b border-gray-200 dark:border-zinc-700">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             <Search size={14} className="shrink-0 text-gray-400" />
             <input
               ref={inputRef}
