@@ -42,7 +42,7 @@ export default function EmojiPicker({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header / Search ── */}
@@ -113,7 +113,7 @@ export default function EmojiPicker({
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-gray-200 dark:border-zinc-700">
           {onClear ? (
             <button
               onClick={onClear}

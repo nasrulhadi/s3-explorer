@@ -416,7 +416,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* ── Page header ──────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-gray-700 bg-[var(--s3-window-bg)] shrink-0">
+      <div className="flex items-center gap-3 px-6 h-14 border-b border-gray-200 dark:border-zinc-700 bg-[var(--s3-window-bg)] shrink-0">
         <button
           onClick={onDone}
           className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -436,7 +436,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               General
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2">
               <ToggleRow
                 label="Restore last session"
                 description="Reopen the last viewed bucket and folder on startup"
@@ -451,7 +451,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Appearance
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <SelectRow
                 label="Theme"
                 value={store.theme}
@@ -475,7 +475,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Security
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 py-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
@@ -533,7 +533,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Toolbar
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <ToggleRow
                 label="Breadcrumbs"
                 description="Show folder path navigation"
@@ -569,7 +569,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Data
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
                   <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
@@ -647,7 +647,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 </div>
 
                 {/* Buy Me a Coffee */}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
                     Support this project
                   </p>
@@ -666,7 +666,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 </div>
 
                 {/* Version */}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     S3 Explorer {__APP_VERSION__}
                   </p>

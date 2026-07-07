@@ -57,7 +57,7 @@ export default function RenameModal({
             className="
               w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
               outline-none focus:border-zinc-500
-              bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200
+              bg-white dark:bg-zinc-700 text-gray-800 dark:text-gray-200
               placeholder-gray-300 dark:placeholder-gray-600
               transition-all
             "

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.3] - 2026-07-05
+
+### Changed
+- **Context Menu**: All right-click menus updated to zinc palette (bg, border, separator)
+- **Menu Styles**: Dark mode background `dark:bg-zinc-800`, border `dark:border-zinc-700`, separator `dark:bg-zinc-700`
+- **Form Borders**: All remaining `dark:border-gray-700` → `dark:border-zinc-700` (SettingsPage cards, ConnectionFormPage, modals)
+- **Input Bg**: NewFolderModal, RenameModal inputs `dark:bg-zinc-700`
+- **Separator**: Transparent border and vertical dividers normalized to zinc palette
+
+---
+
 ## [1.6.2] - 2026-07-05
 
 ### Changed
