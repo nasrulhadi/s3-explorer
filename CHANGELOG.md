@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.8.0] - 2026-07-05
+
+### Added
+- **Multi-language Support (i18n)**: English and Indonesian translations
+  - Type-safe translation system with `useT()` hook and shared `Translations` interface
+  - Language switcher in Settings → Appearance (English / Indonesia button group)
+  - Language preference persisted across sessions in settings store
+  - 251 translation keys covering all UI surfaces (welcome, unlock, empty state, sidebar, toolbar, connection form, delete page, settings, all modals, context menu, status bar)
+- **Indonesian Translation**: All user-facing text translated to Indonesian
+
+### Changed
+- **Provider Selector**: Replaced dropdown with icon button group (Cloud/Server/Globe/HardDrive/Box)
+- **Delete Connection Page**: Provider labels now use shared translation system
+
+---
+
 ## [1.7.0] - 2026-07-05
 
 ### Changed

@@ -1,3 +1,5 @@
+import { useT } from "../../i18n";
+
 interface NewFolderModalProps {
   open: boolean;
   name: string;
@@ -15,6 +17,7 @@ export default function NewFolderModal({
   onConfirm,
   onCancel,
 }: NewFolderModalProps) {
+  const t = useT();
   if (!open) return null;
 
   return (
@@ -28,10 +31,10 @@ export default function NewFolderModal({
       >
         <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            New Folder
+            {t.modals.newFolder.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Enter a name for the new folder.
+            {t.modals.newFolder.description}
           </p>
         </div>
 
@@ -46,7 +49,7 @@ export default function NewFolderModal({
               }
               if (e.key === "Escape") onCancel();
             }}
-            placeholder="Folder name"
+            placeholder={t.modals.newFolder.placeholder}
             autoFocus
             className="
               w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg
@@ -70,7 +73,7 @@ export default function NewFolderModal({
               transition-colors
             "
           >
-            Cancel
+            {t.modals.newFolder.cancel}
           </button>
           <button
             onClick={onConfirm}
@@ -83,7 +86,7 @@ export default function NewFolderModal({
               transition-colors
             "
           >
-            {creating ? "Creating…" : "Create"}
+            {creating ? t.modals.newFolder.creating : t.modals.newFolder.create}
           </button>
         </div>
       </div>

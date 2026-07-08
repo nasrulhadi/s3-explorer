@@ -1,3 +1,4 @@
+import { useT } from "../../i18n";
 import type { S3Item } from "../../types";
 
 interface RenameModalProps {
@@ -21,7 +22,10 @@ export default function RenameModal({
   onConfirm,
   onCancel,
 }: RenameModalProps) {
+  const t = useT();
   if (!open || !item) return null;
+
+  const isFolder = item.type === "folder";
 
   return (
     <div
@@ -34,7 +38,7 @@ export default function RenameModal({
       >
         <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            Rename {item.type === "folder" ? "Folder" : "File"}
+            {isFolder ? t.modals.rename.titleFolder : t.modals.rename.titleFile}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Enter a new name for <strong>{item.name}</strong>.
@@ -52,7 +56,7 @@ export default function RenameModal({
               }
               if (e.key === "Escape") onCancel();
             }}
-            placeholder="New name"
+            placeholder={t.modals.rename.placeholder}
             autoFocus
             className="
               w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg
@@ -83,7 +87,7 @@ export default function RenameModal({
               transition-colors
             "
           >
-            Cancel
+            {t.modals.rename.cancel}
           </button>
           <button
             onClick={onConfirm}
@@ -96,7 +100,7 @@ export default function RenameModal({
               transition-colors
             "
           >
-            {loading ? "Renaming…" : "Rename"}
+            {loading ? t.modals.rename.rename : t.modals.rename.rename}
           </button>
         </div>
       </div>
