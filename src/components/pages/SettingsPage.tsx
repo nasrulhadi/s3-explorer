@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck, RefreshCw } from "lucide-react";
-import { useSettingsStore, type ThemeMode } from "../../store/settingsStore";
+import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck, RefreshCw, Sun, Moon, Monitor } from "lucide-react";
+import { useSettingsStore } from "../../store/settingsStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useSecurityStore } from "../../store/securityStore";
 import type { S3Connection } from "../../types";
@@ -81,47 +81,6 @@ function ToggleRow({
 }
 
 // ─── Reusable select row ────────────────────────────────────
-
-function SelectRow({
-  label,
-  description,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <div className="min-w-0 flex-1 pr-4">
-        <div className="text-sm text-gray-700 dark:text-gray-200">{label}</div>
-        {description && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{description}</div>
-        )}
-      </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="
-          text-sm border border-gray-300 dark:border-zinc-600 rounded-md px-2.5 py-1.5
-          text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-900 outline-none
-          focus:border-zinc-500
-          transition-all cursor-pointer
-        "
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 // ─── Accent color select with preview ──────────────────────
 
@@ -428,7 +387,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       </div>
 
       {/* ── Scrollable content ──────────────────────────── */}
-      <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)]">
+      <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
         <div className="max-w-xl mx-auto p-8 space-y-8">
 
           {/* ── General ─────────────────────────────────── */}
@@ -451,17 +410,37 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Appearance
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
-              <SelectRow
-                label="Theme"
-                value={store.theme}
-                options={[
-                  { value: "system", label: "System" },
-                  { value: "light", label: "Light" },
-                  { value: "dark", label: "Dark" },
-                ]}
-                onChange={(v) => store.setTheme(v as ThemeMode)}
-              />
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 flex-1 pr-4">
+                  <div className="text-sm text-gray-700 dark:text-gray-200">Theme</div>
+                </div>
+                <div className="flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+                  {([
+                    { value: "system", icon: Monitor, label: "System" },
+                    { value: "light", icon: Sun, label: "Light" },
+                    { value: "dark", icon: Moon, label: "Dark" },
+                  ] as const).map(({ value, icon: Icon, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => store.setTheme(value)}
+                      title={label}
+                      className={`
+                        flex items-center gap-1.5 px-2.5 py-1.5 text-xs
+                        border-r border-gray-200 dark:border-zinc-700 last:border-r-0
+                        transition-colors cursor-pointer
+                        ${store.theme === value
+                          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                        }
+                      `}
+                    >
+                      <Icon size={14} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <AccentColorSelect
                 label="Accent Color"
                 value={store.accentColor}
@@ -505,7 +484,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("change"); }}
-                      className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                     >
                       Change
                     </button>
@@ -533,7 +512,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Toolbar
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
               <ToggleRow
                 label="Breadcrumbs"
                 description="Show folder path navigation"
@@ -569,7 +548,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Data
             </h3>
-            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
                   <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
@@ -584,8 +563,8 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   disabled={connections.length === 0}
                   className="
                     flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
-                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer
+                    border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300
+                    hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer
                     disabled:opacity-40 disabled:cursor-not-allowed
                   "
                 >
@@ -605,8 +584,8 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   onClick={handleImportClick}
                   className="
                     flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
-                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer
+                    border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300
+                    hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer
                   "
                 >
                   <Upload size={14} />
@@ -673,7 +652,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   <button
                     onClick={handleCheckForUpdate}
                     disabled={updateChecking}
-                    className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <RefreshCw size={12} className={updateChecking ? "animate-spin" : ""} />
                     {updateChecking ? "Checking..." : "Check for Updates"}

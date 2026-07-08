@@ -26,7 +26,7 @@ export default function NewFolderModal({
         className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
             New Folder
           </h3>
@@ -35,7 +35,7 @@ export default function NewFolderModal({
           </p>
         </div>
 
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-6">
           <input
             type="text"
             value={name}
@@ -49,24 +49,24 @@ export default function NewFolderModal({
             placeholder="Folder name"
             autoFocus
             className="
-              w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-              outline-none focus:border-zinc-500
-              bg-white dark:bg-zinc-700 text-gray-800 dark:text-gray-200
+              w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg
+              bg-white dark:bg-zinc-900/50 text-gray-800 dark:text-gray-200
               placeholder-gray-300 dark:placeholder-gray-600
-              transition-all
+              outline-none focus:border-zinc-500
+              [&::-ms-reveal]:hidden
             "
           />
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 pb-5">
+        <div className="flex items-center justify-end gap-2 px-5 pb-6">
           <button
             onClick={onCancel}
             disabled={creating}
             className="
               px-4 py-2 text-sm font-medium rounded-lg
-              border border-gray-300 dark:border-gray-600
+              border border-gray-300 dark:border-zinc-700
               text-gray-700 dark:text-gray-200
-              hover:bg-gray-50 dark:hover:bg-gray-700
+              hover:bg-gray-50 dark:hover:bg-zinc-700
               transition-colors
             "
           >

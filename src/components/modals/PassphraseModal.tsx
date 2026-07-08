@@ -60,7 +60,7 @@ export default function PassphraseModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-5 pb-5">
           <div className="flex items-center gap-2">
             <Lock size={18} className="text-[var(--s3-accent-text)]" />
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
@@ -93,8 +93,8 @@ export default function PassphraseModal({
                   autoFocus
                   className="
                     w-full pl-3 pr-9 py-2 text-sm
-                    border border-gray-300 dark:border-gray-600 rounded-lg
-                    bg-white dark:bg-zinc-800
+                    border border-gray-300 dark:border-zinc-700 rounded-lg
+                    bg-white dark:bg-zinc-900/50
                     text-gray-800 dark:text-gray-200
                     placeholder-gray-300 dark:placeholder-gray-600
                     outline-none focus:border-zinc-500
@@ -129,8 +129,8 @@ export default function PassphraseModal({
                 autoFocus={!(mode === "export" && requireMasterPassword)}
                 className="
                   w-full pl-3 pr-9 py-2 text-sm
-                  border border-gray-300 dark:border-gray-600 rounded-lg
-                  bg-white dark:bg-zinc-800
+border border-gray-300 dark:border-zinc-700 rounded-lg
+                bg-white dark:bg-zinc-900/50
                   text-gray-800 dark:text-gray-200
                   placeholder-gray-300 dark:placeholder-gray-600
                   outline-none focus:border-zinc-500
@@ -164,8 +164,8 @@ export default function PassphraseModal({
                   placeholder="Re-enter passphrase"
                   className="
                     w-full pl-3 pr-9 py-2 text-sm
-                    border border-gray-300 dark:border-gray-600 rounded-lg
-                    bg-white dark:bg-zinc-800
+                    border border-gray-300 dark:border-zinc-700 rounded-lg
+                    bg-white dark:bg-zinc-900/50
                     text-gray-800 dark:text-gray-200
                     placeholder-gray-300 dark:placeholder-gray-600
                     outline-none focus:border-zinc-500
@@ -193,10 +193,10 @@ export default function PassphraseModal({
         )}
 
         {/* Footer */}
-        <div className="px-5 pt-4 pb-5 flex gap-2">
+        <div className="px-5 pt-5 mt-1 pb-5 flex gap-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+            className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
             Cancel
           </button>

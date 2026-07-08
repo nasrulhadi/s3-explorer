@@ -129,7 +129,7 @@ export default function EmojiPicker({
                 px-4 py-2 text-sm font-medium rounded-lg
                 border border-gray-300 dark:border-gray-600
                 text-gray-700 dark:text-gray-200
-                hover:bg-gray-50 dark:hover:bg-gray-700
+                hover:bg-gray-50 dark:hover:bg-zinc-700
                 transition-colors
               "
             >
@@ -171,7 +171,7 @@ function EmojiButton({
         w-7 h-7 flex items-center justify-center rounded-md text-base transition-colors
         ${isSelected
           ? "bg-[var(--s3-accent-base)] ring-1 ring-[var(--s3-accent-active)]"
-          : "hover:bg-gray-100 dark:hover:bg-gray-700"
+          : "hover:bg-gray-100 dark:hover:bg-zinc-700"
         }
       `}
     >

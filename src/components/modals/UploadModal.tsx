@@ -244,7 +244,7 @@ export default function UploadModal({
           /* ══════════ STAGE: CHOICE ══════════ */
           <>
             {/* Header */}
-            <div className="px-5 pt-5 pb-3">
+            <div className="px-5 pt-5 pb-5">
               <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
                 Upload to{" "}
                 <span className="text-[var(--s3-accent-text)]">
@@ -254,7 +254,7 @@ export default function UploadModal({
             </div>
 
             {/* Buttons */}
-            <div className="px-5 pb-4 flex gap-3">
+            <div className="px-5 pb-6 flex gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="flex-1 flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-[var(--s3-accent-active)] hover:bg-[var(--s3-accent-base)] transition-all cursor-pointer"
@@ -282,7 +282,7 @@ export default function UploadModal({
             </div>
 
             {/* Notice */}
-            <div className="mx-5 mb-3 px-4 py-6 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-center">
+            <div className="mx-5 mb-3 px-4 py-6 rounded-lg bg-gray-100 dark:bg-zinc-700/50 text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Select files or a folder using the buttons above
               </p>
@@ -306,10 +306,12 @@ export default function UploadModal({
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end px-5 pb-5">
+            <div className="flex items-center justify-end px-5 pb-6 pt-4
+
+              ">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
               >
                 Cancel
               </button>
@@ -319,7 +321,7 @@ export default function UploadModal({
           /* ══════════ STAGE: REVIEW ══════════ */
           <>
             {/* Header */}
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-5 pt-5 pb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
                   Upload Files
@@ -344,7 +346,7 @@ export default function UploadModal({
             </div>
 
             {/* File list */}
-            <div className="px-5 pb-4 max-h-64 overflow-y-auto space-y-1">
+            <div className="px-5 pb-6 max-h-64 overflow-y-auto space-y-1">
               {pendingFiles.map((pf, i) => (
                 <div
                   key={i}
@@ -388,11 +390,11 @@ export default function UploadModal({
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2 px-5 pb-5">
+            <div className="flex items-center justify-end gap-2 px-5 pb-6">
               <button
                 onClick={onClose}
                 disabled={uploading}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>

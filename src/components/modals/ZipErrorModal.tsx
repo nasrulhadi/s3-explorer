@@ -15,7 +15,7 @@ export default function ZipErrorModal({ message, onClose }: ZipErrorModalProps) 
         className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-red-600 dark:text-red-400">
             Download Limit Exceeded
           </h3>
@@ -23,10 +23,10 @@ export default function ZipErrorModal({ message, onClose }: ZipErrorModalProps) 
             {message}
           </p>
         </div>
-        <div className="flex items-center justify-end px-5 pb-5">
+        <div className="flex items-center justify-end px-5 pb-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
           >
             Close
           </button>

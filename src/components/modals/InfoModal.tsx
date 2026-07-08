@@ -26,18 +26,18 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
         className="w-full max-w-sm mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">
             {data.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{data.type} Info</p>
         </div>
 
-        <div className="px-5 pb-2 space-y-1 max-h-72 overflow-y-auto">
+        <div className="px-5 pb-2 space-y-1 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
           {data.rows.map((row, i) => (
             <div
               key={i}
-              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50"
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50"
             >
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-400 dark:text-gray-500">{row.label}</p>
@@ -60,10 +60,10 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
           ))}
         </div>
 
-        <div className="flex items-center justify-end px-5 pb-3">
+        <div className="flex items-center justify-end px-5 pb-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer mt-2"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer mt-4"
           >
             Close
           </button>

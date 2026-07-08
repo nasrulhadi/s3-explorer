@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.4] - 2026-07-05
+
+### Changed
+- **Form Inputs**: All modal input fields unified to `dark:bg-zinc-900/50` + `dark:border-zinc-700`
+- **Modal Cards**: Container backgrounds kept at `dark:bg-zinc-800`, borders `dark:border-zinc-700`
+- **Modal Spacing**: Header → body spacing +1 level (pb-4), footer spacing +1 level (pt-5)
+- **Theme Selector**: Replaced dropdown with icon button group (Monitor / Sun / Moon) with accent active state
+- **Scrollbar**: Custom thin scrollbar with dark mode styles across SettingsPage, ConnectionFormPage, InfoModal
+- **Input Focus**: Removed transition flash from RenameModal & NewFolderModal (parent re-render caused border flicker)
+
+---
+
 ## [1.6.3] - 2026-07-05
 
 ### Changed

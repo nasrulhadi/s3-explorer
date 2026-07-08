@@ -70,7 +70,7 @@ export default function ImportConnectionsModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-5 pt-5 pb-3">
+          <div className="px-5 pt-5 pb-4">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
               Import Complete
             </h3>
@@ -80,7 +80,7 @@ export default function ImportConnectionsModal({
           </div>
 
           {/* Result stats */}
-          <div className="px-5 pb-4 space-y-2">
+          <div className="px-5 pb-6 space-y-2">
             {result.added > 0 && (
               <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                 <Plus size={14} />
@@ -142,7 +142,7 @@ export default function ImportConnectionsModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-5 pb-4">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
             Import Connections
           </h3>
@@ -214,7 +214,7 @@ export default function ImportConnectionsModal({
         <div className="px-5 pb-5 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+            className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
             Cancel
           </button>

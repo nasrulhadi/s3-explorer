@@ -117,7 +117,7 @@ export default function DeleteConnectionPage({
                 w-full px-3 py-2.5 text-sm
                 border border-[var(--s3-window-border)] rounded-lg
                 outline-none focus:border-[var(--s3-danger)] focus:ring-1 focus:ring-[var(--s3-danger-light)]
-                bg-[var(--s3-window-bg)] text-[var(--s3-window-text)]
+                bg-[var(--s3-window-bg)] text-[var(--s3-window-text)] dark:bg-zinc-800/30
                 placeholder-[var(--s3-window-muted)] placeholder:opacity-60
                 transition-all
               "
@@ -130,7 +130,7 @@ export default function DeleteConnectionPage({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-3 pt-8">
+          <div className="flex items-center gap-3 pt-5">
             <button
               onClick={onCancel}
               className="
