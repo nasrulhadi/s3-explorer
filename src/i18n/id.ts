@@ -77,7 +77,7 @@ export const id = {
     warningDesc:
       "Semua data kredensial untuk koneksi ini akan dihapus permanen, termasuk access key, endpoint, dan pengaturan region.",
     connectionToDelete: "Koneksi yang akan dihapus",
-    confirmPrompt: "Ketik NAMA untuk konfirmasi",
+    confirmPrompt: "Ketik {name} untuk konfirmasi",
     cancel: "Batal",
     deleteButton: "Hapus Koneksi",
   },

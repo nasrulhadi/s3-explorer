@@ -97,7 +97,13 @@ export default function DeleteConnectionPage({
           {/* Confirm input */}
           <div>
             <label className="block text-sm font-medium text-[var(--s3-window-text)] mb-1.5">
-              {t.deletePage.confirmPrompt.replace("NAME", connection.name)}
+              {t.deletePage.confirmPrompt.split("{name}").map((part, i) =>
+                i === 0 ? (
+                  <span key={i}>{part}</span>
+                ) : (
+                  <span key={i}><strong className="text-[var(--s3-danger)]">{connection.name}</strong>{part}</span>
+                )
+              )}
             </label>
             <input
               type="text"

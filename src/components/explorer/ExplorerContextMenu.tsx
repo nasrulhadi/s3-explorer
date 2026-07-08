@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useT } from "../../i18n";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import {
   Copy,
@@ -59,6 +60,7 @@ export default function ExplorerContextMenu({
   onGetUrl,
   onGetInfo,
 }: ExplorerContextMenuProps) {
+  const t = useT();
   const menuItems = useMemo(() => {
     let items: S3Item[];
     if (contextTarget.type === "item" && contextTarget.item) {
@@ -96,19 +98,19 @@ export default function ExplorerContextMenu({
         {menuItems.isItemMulti ? (
           <>
             <ContextMenu.Item className={MENU_ITEM} disabled={selectedKeys.size === 0} onSelect={onCopy}>
-              <Copy size={15} /> Copy <span className={MENU_SHORTCUT}>{menuItems.count}</span>
+              <Copy size={15} /> {t.contextMenu.copy} <span className={MENU_SHORTCUT}>{menuItems.count}</span>
             </ContextMenu.Item>
             <ContextMenu.Item className={MENU_ITEM} disabled={clipboardCount === 0} onSelect={onPaste}>
-              <ClipboardPaste size={15} /> Paste
+              <ClipboardPaste size={15} /> {t.contextMenu.paste}
             </ContextMenu.Item>
             <ContextMenu.Item className={MENU_ITEM} onSelect={() => onBulkDelete(menuItems.items)}>
-              <Trash2 size={15} /> Delete <span className={MENU_SHORTCUT}>{menuItems.count}</span>
+              <Trash2 size={15} /> {t.contextMenu.delete} <span className={MENU_SHORTCUT}>{menuItems.count}</span>
             </ContextMenu.Item>
             {!menuItems.isMixed && (
               <>
                 <ContextMenu.Separator className={MENU_SEPARATOR} />
                 <ContextMenu.Item className={MENU_ITEM} onSelect={() => onDownloadZip(menuItems.items)}>
-                  <Archive size={15} /> Download as ZIP
+                  <Archive size={15} /> {t.contextMenu.downloadZip}
                 </ContextMenu.Item>
               </>
             )}
@@ -117,71 +119,71 @@ export default function ExplorerContextMenu({
           menuItems.isSingleFile ? (
             <>
               <ContextMenu.Item className={MENU_ITEM} onSelect={onCopy}>
-                <Copy size={15} /> Copy
+                <Copy size={15} /> {t.contextMenu.copy}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} disabled={clipboardCount === 0} onSelect={onPaste}>
-                <ClipboardPaste size={15} /> Paste
+                <ClipboardPaste size={15} /> {t.contextMenu.paste}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onRename(menuItems.items[0])}>
-                <Pencil size={15} /> Rename
+                <Pencil size={15} /> {t.contextMenu.rename}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onDelete(menuItems.items[0])}>
-                <Trash2 size={15} /> Delete
+                <Trash2 size={15} /> {t.contextMenu.delete}
               </ContextMenu.Item>
               <ContextMenu.Separator className={MENU_SEPARATOR} />
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onDownloadItem(menuItems.items[0])}>
-                <Download size={15} /> Download
+                <Download size={15} /> {t.contextMenu.download}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onGetUrl(menuItems.items[0])}>
-                <Link size={15} /> Get URL
+                <Link size={15} /> {t.contextMenu.getUrl}
               </ContextMenu.Item>
               <ContextMenu.Separator className={MENU_SEPARATOR} />
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onGetInfo(menuItems.items[0])}>
-                <Info size={15} /> Get Info
+                <Info size={15} /> {t.contextMenu.getInfo}
               </ContextMenu.Item>
             </>
           ) : (
             <>
               <ContextMenu.Item className={MENU_ITEM} onSelect={onCopy}>
-                <Copy size={15} /> Copy
+                <Copy size={15} /> {t.contextMenu.copy}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} disabled={clipboardCount === 0} onSelect={onPaste}>
-                <ClipboardPaste size={15} /> Paste
+                <ClipboardPaste size={15} /> {t.contextMenu.paste}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onRename(menuItems.items[0])}>
-                <Pencil size={15} /> Rename
+                <Pencil size={15} /> {t.contextMenu.rename}
               </ContextMenu.Item>
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onDelete(menuItems.items[0])}>
-                <Trash2 size={15} /> Delete
+                <Trash2 size={15} /> {t.contextMenu.delete}
               </ContextMenu.Item>
               <ContextMenu.Separator className={MENU_SEPARATOR} />
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onDownloadZip(menuItems.items)}>
-                <Archive size={15} /> Download as ZIP
+                <Archive size={15} /> {t.contextMenu.downloadZip}
               </ContextMenu.Item>
               <ContextMenu.Separator className={MENU_SEPARATOR} />
               <ContextMenu.Item className={MENU_ITEM} onSelect={() => onGetInfo(menuItems.items[0])}>
-                <Info size={15} /> Get Info
+                <Info size={15} /> {t.contextMenu.getInfo}
               </ContextMenu.Item>
             </>
           )
         ) : (
           <>
             <ContextMenu.Item className={MENU_ITEM} disabled={selectedKeys.size === 0} onSelect={onCopy}>
-              <Copy size={15} /> Copy <span className={MENU_SHORTCUT}>{selectedKeys.size > 0 ? `${selectedKeys.size}` : ""}</span>
+              <Copy size={15} /> {t.contextMenu.copy} <span className={MENU_SHORTCUT}>{selectedKeys.size > 0 ? `${selectedKeys.size}` : ""}</span>
             </ContextMenu.Item>
             <ContextMenu.Item className={MENU_ITEM} disabled={clipboardCount === 0} onSelect={onPaste}>
-              <ClipboardPaste size={15} /> Paste
+              <ClipboardPaste size={15} /> {t.contextMenu.paste}
             </ContextMenu.Item>
             <ContextMenu.Separator className={MENU_SEPARATOR} />
             <ContextMenu.Item className={MENU_ITEM} onSelect={onUpload}>
-              <Upload size={15} /> Upload <span className={MENU_SHORTCUT}>Ctrl+U</span>
+              <Upload size={15} /> {t.contextMenu.upload} <span className={MENU_SHORTCUT}>Ctrl+U</span>
             </ContextMenu.Item>
             <ContextMenu.Item className={MENU_ITEM} onSelect={onNewFolder}>
-              <FolderPlus size={15} /> New Folder <span className={MENU_SHORTCUT}>Ctrl+N</span>
+              <FolderPlus size={15} /> {t.contextMenu.newFolder} <span className={MENU_SHORTCUT}>Ctrl+N</span>
             </ContextMenu.Item>
             <ContextMenu.Separator className={MENU_SEPARATOR} />
             <ContextMenu.Item className={MENU_ITEM} onSelect={onRefresh}>
-              <RefreshCw size={15} /> Reload <span className={MENU_SHORTCUT}>F5</span>
+              <RefreshCw size={15} /> {t.contextMenu.reload} <span className={MENU_SHORTCUT}>F5</span>
             </ContextMenu.Item>
           </>
         )}

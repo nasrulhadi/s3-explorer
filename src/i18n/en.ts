@@ -77,7 +77,7 @@ export const en = {
     warningDesc:
       "All credential data for this connection will be permanently deleted, including access keys, endpoint, and region settings.",
     connectionToDelete: "Connection to delete",
-    confirmPrompt: "Type NAME to confirm",
+    confirmPrompt: "Type {name} to confirm",
     cancel: "Cancel",
     deleteButton: "Delete Connection",
   },

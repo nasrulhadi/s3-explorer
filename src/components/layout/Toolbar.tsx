@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
+import { useT } from "../../i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ export default function Toolbar({
   onSearchChange,
   onDisconnect,
 }: ToolbarProps) {
+  const t = useT();
   const [searchInput, setSearchInput] = useState("");
   const [maximized, setMaximized] = useState(false);
 
@@ -238,7 +240,7 @@ export default function Toolbar({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Filter…"
+            placeholder={t.toolbar.filterPlaceholder}
             className="
               w-full pl-8 pr-8 py-1.5 text-sm
               border border-[var(--s3-window-border)] rounded-md
@@ -315,7 +317,7 @@ export default function Toolbar({
         <button
           onClick={onDisconnect}
           disabled={!hasBucketSelected}
-          title="Disconnect"
+          title={t.toolbar.disconnect}
           className="
             p-1.5 rounded-md text-[var(--s3-window-muted)]
             hover:bg-[var(--s3-danger-light)] hover:text-[var(--s3-danger)] transition-colors
