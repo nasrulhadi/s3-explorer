@@ -29,6 +29,7 @@
 
 ### 🎨 Modern UI/UX
 - **Dark Mode** — System / light / dark theme switching
+- **Multi-language** — English and Indonesian language support with instant switching
 - **Accent Colors** — 5 accent color options (blue, green, yellow, brown, stone)
 - **Resizable Column Headers** — Drag column dividers to resize Name/Size/Modified width, persisted across restarts
 - **Bucket Connection Indicator** — Green dot next to opened connections in the sidebar
