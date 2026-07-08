@@ -65,7 +65,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
                 bg-white dark:bg-zinc-900
                 text-gray-800 dark:text-gray-200
                 placeholder-gray-300 dark:placeholder-gray-600
-                outline-none focus:border-zinc-500
+                outline-none focus:border-gray-400 dark:focus:border-zinc-500
                 transition-all [&::-ms-reveal]:hidden
               "
               onKeyDown={(e) => { if (e.key === "Enter") void handleUnlock(); }}

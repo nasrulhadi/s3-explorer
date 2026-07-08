@@ -47,7 +47,7 @@ export default function EmojiPicker({
       >
         {/* ── Header / Search ── */}
         <div className="p-3 border-b border-gray-200 dark:border-zinc-700">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
             <Search size={14} className="shrink-0 text-gray-400" />
             <input
               ref={inputRef}

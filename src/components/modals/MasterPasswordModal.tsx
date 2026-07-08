@@ -209,10 +209,10 @@ function PasswordField({
           className="
             w-full pl-3 pr-9 py-2 text-sm
             border border-gray-300 dark:border-zinc-700 rounded-lg
-bg-white dark:bg-zinc-900/50
-               text-gray-800 dark:text-gray-200
+            bg-zinc-50/50 dark:bg-zinc-900/50
+            text-gray-800 dark:text-gray-200
             placeholder-gray-300 dark:placeholder-gray-600
-            outline-none focus:border-zinc-500
+            outline-none focus:border-gray-400 dark:focus:border-zinc-500
             transition-all [&::-ms-reveal]:hidden
           "
           onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}

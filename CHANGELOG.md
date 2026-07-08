@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.6.5] - 2026-07-05
+
+### Tweaked
+- **Input Fields**: Light mode background replaced with subtle `bg-zinc-50` tint (was solid white)
+- **Focus Border**: Light mode focus ring uses `border-gray-400` instead of `border-zinc-500` for subtle contrast
+- Both changes applied across all modals, ConnectionFormPage, DeleteConnectionPage, and UnlockScreen
+
+---
+
 ## [1.6.4] - 2026-07-05
 
 ### Changed

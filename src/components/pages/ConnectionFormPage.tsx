@@ -38,7 +38,7 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 // ─── Input styling ──────────────────────────────────────────
 
 const INPUT_CLASS =
-  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg outline-none focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800/30 text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600";
+  "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-all bg-zinc-50/30 dark:bg-zinc-800/30 text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600";
 
 // ─── Component ──────────────────────────────────────────────
 
