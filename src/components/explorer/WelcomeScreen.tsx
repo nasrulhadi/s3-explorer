@@ -6,6 +6,7 @@ import { useConnectionStore } from "../../store/connectionStore";
 import { useSecurityStore } from "../../store/securityStore";
 import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
+import { useT } from "../../i18n";
 import type { S3Connection } from "../../types";
 
 interface WelcomeScreenProps {
@@ -16,6 +17,8 @@ const PROVIDERS = ["AWS S3", "Cloudflare R2", "Backblaze B2", "MinIO", "Custom S
 
 /** Shown on first launch when no connections exist */
 export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
+  const t = useT();
+
   // ── Import state ────────────────────────────────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingEncryptedBytesRef = useRef<Uint8Array | null>(null);
@@ -130,8 +133,8 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
       <div className="w-2/5 flex items-center justify-center px-8">
         <div className="w-full max-w-sm">
           <h2 className="font-bold text-gray-700 mb-10">
-            <span className="block text-4xl">Welcome to</span>
-            <span className="block text-5xl">S3 Explorer</span>
+            <span className="block text-4xl">{t.welcome.titleLine1}</span>
+            <span className="block text-5xl">{t.welcome.titleLine2}</span>
           </h2>
 
           <button
@@ -144,13 +147,13 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
             "
           >
             <Plus size={16} />
-            Add Your First Connection
+            {t.welcome.addFirstConnection}
           </button>
 
           {/* ── Divider ── */}
           <div className="my-4 flex items-center gap-3">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-600" />
-            <span className="text-xs text-gray-300 dark:text-gray-600">Or</span>
+            <span className="text-xs text-gray-300 dark:text-gray-600">{t.welcome.or}</span>
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gray-300 dark:to-gray-600" />
           </div>
 
@@ -164,7 +167,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
             "
           >
             <Upload size={16} />
-            Import Connections
+            {t.welcome.importConnections}
           </button>
 
           {/* ── Supported providers ── */}
@@ -199,8 +202,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
               className="w-1/2 min-w-[26.5rem] max-w-[40rem] h-auto mx-auto opacity-90 dark:opacity-80 pointer-events-none"
             />
             <p className="mt-6 text-base text-gray-500 leading-relaxed">
-              One app, many providers.
-              Manage buckets, upload, download, and organize files with a familiar file-browser experience.
+              {t.welcome.caption}
             </p>
           </div>
         </div>

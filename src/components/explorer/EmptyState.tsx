@@ -1,4 +1,5 @@
 import emptyStateImg from "../../assets/emptyState.webp";
+import { useT } from "../../i18n";
 
 const SHORTCUTS = [
   { key: "F5", label: "Refresh" },
@@ -8,6 +9,8 @@ const SHORTCUTS = [
 
 /** Shown when connections exist but no bucket is selected */
 export default function EmptyState() {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8 select-none">
       {/* ── Hero image ── */}
@@ -20,7 +23,7 @@ export default function EmptyState() {
 
       {/* ── Caption ── */}
       <p className="text-base text-gray-500 leading-relaxed max-w-md">
-        Choose a connection from the sidebar to start exploring your buckets.
+        {t.emptyState.caption}
       </p>
 
       {/* ── Shortcut hints (glass pills) ── */}

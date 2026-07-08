@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import unlockScreenImg from "../../assets/unlockScreen.webp";
+import { useT } from "../../i18n";
 
 interface UnlockScreenProps {
   onUnlock: (password: string) => Promise<void>;
@@ -8,6 +9,7 @@ interface UnlockScreenProps {
 }
 
 export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScreenProps) {
+  const t = useT();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +19,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
   const handleUnlock = async () => {
     setError("");
     if (!password) {
-      setError("Enter your master password to continue.");
+      setError(t.unlock.errorEmpty);
       return;
     }
 
@@ -25,7 +27,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
     try {
       await onUnlock(password);
     } catch {
-      setError("Incorrect master password. Your connections are still locked.");
+      setError(t.unlock.errorWrong);
     } finally {
       setIsUnlocking(false);
     }
@@ -42,22 +44,22 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
         <div className="w-full max-w-sm">
           <div className="flex items-start gap-3 mb-10">
             <h2 className="text-5xl font-bold text-gray-700 dark:text-gray-300">
-              S3 Explorer
+              {t.unlock.title}
             </h2>
             <span className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-orange-500 text-orange-500 text-xs font-medium">
               <LockKeyhole size={12} />
-              Is Locked
+              {t.unlock.badge}
             </span>
           </div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-            Master Password
+            {t.unlock.masterPassword}
           </label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(""); }}
-              placeholder="Enter master password"
+              placeholder={t.unlock.placeholder}
               autoFocus
               className="
                 w-full pl-3 pr-10 py-2.5 text-sm
@@ -93,7 +95,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
             "
           >
             <LockKeyhole size={16} />
-            {isUnlocking ? "Unlocking…" : "Unlock Connections"}
+            {isUnlocking ? t.unlock.unlocking : t.unlock.unlockButton}
           </button>
 
           {!confirmReset ? (
@@ -101,7 +103,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
               onClick={() => setConfirmReset(true)}
               className="mt-4 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
             >
-              Forgot master password?
+              {t.unlock.forgotPassword}
             </button>
           ) : (
             <div className="mt-5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 p-4 text-left">
@@ -109,11 +111,10 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
                 <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-500" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-red-700 dark:text-red-300">
-                    Reset saved connections?
+                    {t.unlock.resetTitle}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-red-600/80 dark:text-red-300/80">
-                    This disables the master password and permanently deletes local saved connections.
-                    Existing encrypted backup files can still be imported with their backup passphrase.
+                    {t.unlock.resetDescription}
                   </p>
                 </div>
               </div>
@@ -122,13 +123,13 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
                   onClick={() => setConfirmReset(false)}
                   className="flex-1 py-2 text-xs font-medium rounded-lg border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {t.unlock.cancel}
                 </button>
                 <button
                   onClick={handleReset}
                   className="flex-1 py-2 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer"
                 >
-                  Reset & Delete Connections
+                  {t.unlock.resetButton}
                 </button>
               </div>
             </div>

@@ -14,17 +14,8 @@ import {
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useS3 } from "../../hooks/useS3";
+import { useT } from "../../i18n";
 import type { S3Connection, S3Provider } from "../../types";
-
-// ─── Provider labels ────────────────────────────────────────
-
-const PROVIDER_LABELS: Record<S3Provider, string> = {
-  aws: "AWS S3",
-  minio: "MinIO",
-  r2: "Cloudflare R2",
-  b2: "Backblaze B2",
-  custom: "Custom S3",
-};
 
 // ─── Connection Item ───────────────────────────────────────
 
@@ -43,6 +34,8 @@ function ConnectionItem({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
+  const providerLabel = t.providers[connection.provider as S3Provider];
   return (
       <div
         className={`
@@ -72,7 +65,7 @@ function ConnectionItem({
               isActive ? "text-[var(--s3-accent-text)]/60" : "text-gray-500 dark:text-gray-400"
             }`}
           >
-            {PROVIDER_LABELS[connection.provider]}
+            {providerLabel}
           </div>
         </div>
       </button>
@@ -116,6 +109,7 @@ function ConnectionItem({
 
 /** Bucket list rendered under an expanded connection (non-R2/B2 only) */
 function BucketList({ connectionId }: { connectionId: string }) {
+  const t = useT();
   const { listBuckets } = useS3();
   const { data, isLoading, error } = listBuckets(connectionId);
 
@@ -127,7 +121,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
     return (
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs text-gray-400">
         <Loader2 size={12} className="animate-spin" />
-        Loading buckets…
+        {t.sidebar.loadingBuckets}
       </div>
     );
   }
@@ -144,7 +138,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
   if (!data || data.length === 0) {
     return (
       <div className="px-4 py-2.5 text-xs text-gray-500 italic">
-        No buckets found
+        {t.sidebar.noBuckets}
       </div>
     );
   }
@@ -194,6 +188,7 @@ export default function Sidebar({
   onOpenSettings,
   onSelectConnection,
 }: SidebarProps) {
+  const t = useT();
   const connections = useConnectionStore((s) => s.connections);
   const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
@@ -259,7 +254,7 @@ export default function Sidebar({
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-baseline gap-1.5">
           <h1 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            Connections
+            {t.sidebar.header}
           </h1>
           {hasConnections && (
             <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -293,7 +288,7 @@ export default function Sidebar({
               type="text"
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
-              placeholder="Filter connections"
+              placeholder={t.sidebar.searchPlaceholder}
               autoFocus
               className="flex-1 min-w-0 bg-transparent text-xs text-[var(--s3-sidebar-text)] placeholder-gray-300 dark:placeholder-gray-600 outline-none"
             />
@@ -316,16 +311,16 @@ export default function Sidebar({
           /* ── Empty: no connections at all ── */
           <div className="px-3 py-2">
             <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 px-3 py-4 text-center">
-              <p className="text-xs text-gray-400 dark:text-gray-500">No connections</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t.sidebar.noConnections}</p>
             </div>
           </div>
         ) : filteredConnections.length === 0 ? (
           /* ── Empty: filter has no match ── */
           <div className="px-4 py-10 text-center">
             <Search size={28} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">No connections match</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t.sidebar.noMatch}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Try a different search term
+              {t.sidebar.noMatchHint}
             </p>
           </div>
         ) : (
@@ -365,11 +360,11 @@ export default function Sidebar({
           "
         >
           <Plus size={14} />
-          Add Connection
+          {t.sidebar.addConnection}
         </button>
         <button
           onClick={onOpenSettings}
-          title="Settings"
+          title={t.sidebar.settings}
           className="
             flex items-center justify-center
             w-9 h-9 rounded-full
