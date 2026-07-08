@@ -38,6 +38,10 @@ export interface Translations {
     settings: string;
     loadingBuckets: string;
     noBuckets: string;
+    editConnectionTitle: string;
+    deleteConnectionTitle: string;
+    searchConnectionsTitle: string;
+    clearTitle: string;
   };
   toolbar: {
     filterPlaceholder: string;
@@ -49,6 +53,15 @@ export interface Translations {
     uploadButton: string;
     newFolderButton: string;
     reloadButton: string;
+    backTitle: string;
+    homeTitle: string;
+    showHiddenTitle: string;
+    clearFilterTitle: string;
+    uploadTitle: string;
+    uploadLabel: string;
+    newFolderTitle: string;
+    newFolderLabel: string;
+    refreshTitle: string;
   };
   connectionForm: {
     pageTitleAdd: string;
@@ -121,18 +134,21 @@ export interface Translations {
   };
   modals: {
     newFolder: { title: string; description: string; placeholder: string; cancel: string; creating: string; create: string };
-    rename: { titleFile: string; titleFolder: string; placeholder: string; cancel: string; rename: string };
+    rename: { titleFile: string; titleFolder: string; placeholder: string; cancel: string; rename: string; description: string };
     deleteConfirm: { titleFile: string; titleFolder: string; titleBulk: string; confirmText: string; confirmBulkText: string; folderWarning: string; cannotUndo: string; cancel: string; delete: string };
     info: { close: string; fileInfo: string; folderInfo: string };
-    url: { close: string };
-    upload: { title: string; reviewTitle: string; uploadFile: string; uploadFolder: string; browseFiles: string; browseFolders: string; selectedFiles: string; cancel: string; upload: string; uploading: string; maxSize: string };
+    url: { title: string; description: string; copyTitle: string; close: string };
+    upload: { title: string; reviewTitle: string; uploadFile: string; uploadFolder: string; browseFiles: string; browseFolders: string; selectedFiles: string; selectFilesNotice: string; maxSize: string; cancel: string; upload: string; uploading: string; addMore: string; exceedsLimit: string };
     passphrase: { encryptExport: string; decryptImport: string; masterPasswordLabel: string; passphraseLabel: string; confirmLabel: string; confirmPlaceholder: string; cancel: string; encryptSave: string; decryptContinue: string; exportDesc: string; exportDescWithMaster: string; importDesc: string };
     importConnections: { title: string; found: string; importComplete: string; processed: string; added: string; updated: string; skipped: string; masterPasswordWarning: string; enableMasterPassword: string; done: string; cancel: string; import: string; insert: string; update: string; skip: string; replaces: string; duplicate: string };
     updateAvailable: { title: string; description: string; remindLater: string; installRelaunch: string; installing: string; failed: string };
+    zipError: { title: string; close: string };
   };
   statusBar: { items: string; filtered: string; selected: string; activity: { loading: string; transfers: string; none: string } };
-  transferPanel: { title: string; noTransfers: string };
+  transferPanel: { title: string; noTransfers: string; done: string; error: string; moving: string; cancel: string; remove: string; clearCompleted: string; expand: string; collapse: string };
   contextMenu: { copy: string; paste: string; rename: string; delete: string; download: string; downloadZip: string; getUrl: string; getInfo: string; upload: string; newFolder: string; reload: string };
   providers: { aws: string; minio: string; r2: string; b2: string; custom: string };
-  common: { name: string; provider: string; endpoint: string; region: string; bucket: string; file: string; folder: string; cancel: string; close: string; save: string; back: string };
+  emojiPicker: { searchPlaceholder: string; noResults: string; reset: string; cancel: string; select: string };
+  common: { name: string; key: string; type: string; size: string; lastModified: string; contentType: string; storageClass: string; modified: string; class: string; provider: string; endpoint: string; region: string; bucket: string; file: string; folder: string; cancel: string; close: string; save: string; back: string };
+  masterPassword: { currentPasswordLabel: string; newPasswordLabel: string; confirmPasswordLabel: string; enterCurrentPassword: string; chooseStrongPassword: string; reEnterPassword: string; working: string; enableProtection: string; disableProtection: string; changePassword: string; encryptDescription: string; disableDescription: string; changeDescription: string; forgotPasswordWarning: string; currentPasswordRequired: string; newPasswordRequired: string; passwordTooShort: string; passwordsDontMatch: string; errorWrongOrCorrupted: string; };
 }

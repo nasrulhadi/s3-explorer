@@ -43,7 +43,12 @@ export default function DeleteConfirmModal({
               <span>{t.modals.deleteConfirm.confirmBulkText.replace("{count}", String(bulkCount))}</span>
             ) : (
               <>
-                {t.modals.deleteConfirm.confirmText.replace("{name}", item!.name)}
+                {(() => {
+                  const parts = t.modals.deleteConfirm.confirmText.split("{name}");
+                  return parts.length === 2
+                    ? <>{parts[0]}<strong className="font-semibold">{item!.name}</strong>{parts[1]}</>
+                    : t.modals.deleteConfirm.confirmText;
+                })()}
                 {item!.type === "folder" && (
                   <span className="block mt-1">{t.modals.deleteConfirm.folderWarning}</span>
                 )}

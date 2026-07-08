@@ -135,7 +135,7 @@ export default function ImportConnectionsModal({
         </div>
 
         {/* Summary badges */}
-        <div className="px-5 pb-1 flex items-center gap-3 text-xs">
+        <div className="px-5 pb-1 flex items-center gap-3 text-xs mt-2">
           {newCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
               <Plus size={10} /> {newCount} {t.modals.importConnections.insert.toLowerCase()}
@@ -165,7 +165,7 @@ export default function ImportConnectionsModal({
             return (
               <div
                 key={p.connection.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-sm"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50 text-sm"
               >
                 <div className="min-w-0 flex-1">
                   <span className="text-gray-800 dark:text-gray-200 truncate block">
@@ -174,7 +174,12 @@ export default function ImportConnectionsModal({
                   <span className="text-xs text-gray-400 dark:text-gray-500">
                     {t.providers[p.connection.provider as keyof typeof t.providers]}
                     {p.action === "update" && p.existingName
-                      ? t.modals.importConnections.replaces.replace("NAME", p.existingName)
+                      ? (() => {
+                          const parts = t.modals.importConnections.replaces.split("{name}");
+                          return parts.length === 2
+                            ? <>{parts[0]}<strong className="font-semibold">{p.existingName}</strong>{parts[1]}</>
+                            : t.modals.importConnections.replaces;
+                        })()
                       : p.action === "skip"
                       ? t.modals.importConnections.duplicate
                       : ""}

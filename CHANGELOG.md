@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.9.0] - 2026-07-09
+
+### Added
+- **Multi-language Support (i18n)**: English and Indonesian translations across entire app
+  - Type-safe `useT()` hook with `Translations` interface
+  - Language switcher in Settings → Appearance (English / Indonesia button group)
+  - Auto-persisted language preference via settings store
+  - 300+ translation keys: Welcome, Unlock, Sidebar, Toolbar, StatusBar, Connection Form, Delete Page, Settings, all 12 modals, TransferPanel, ContextMenu, Column Headers, Provider Labels
+  - Indonesian translations with conversational, natural phrasing
+
+### Changed
+- **Column Headers**: Labels (Name/Size/Modified/Class) localized
+- **Settings → Security**: Error messages, descriptions, and buttons localized
+- **Toolbar**: All tooltips and button labels translated
+- **Sidebar**: All tooltips and titles translated
+- **Modal Polish**: All 12 modals fully translated (NewFolder, Rename, DeleteConfirm, Info, Url, Upload, Passphrase, ImportConnections, Update, MasterPassword, EmojiPicker, ZipError)
+- **StatusBar**: Items/selected/filtered/activity tooltips translated
+- **TransferPanel**: Title, buttons, and status text translated
+- **ContextMenu**: All menu items translated
+- **Provider Labels**: Full localized names throughout app
+
+### Fixed
+- **Import Modal**: Placeholder mismatches (`NAME` vs `NAMA`, `ITEM` vs `ITEMS`) — unified to `{name}` and `ITEMS`
+- **Delete Modal**: File/folder name in confirmation text now bold (`font-semibold`)
+- **Upload Modal**: "Add more" button no longer resets file list
+- **Sidebar Navigation**: Clicking connection while on Settings/Form/Delete now returns to explorer
+- **Add Connection Form**: Form state resets properly after switching between add/edit modes
+- **Dark Mode**: WelcomeScreen right column now uses glass/frosted effect matching UnlockScreen
+- **Column Header Labels**: Use `labelMap` with fallback for localized column names
+
+---
+
 ## [1.8.0] - 2026-07-05
 
 ### Added

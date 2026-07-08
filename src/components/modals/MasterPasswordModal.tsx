@@ -37,19 +37,19 @@ export default function MasterPasswordModal({
   const needsNew = mode === "enable" || mode === "change";
 
   const title =
-    mode === "enable" ? t.settings.enableMasterPassword :
-    mode === "disable" ? t.settings.disableMasterPassword :
-    t.settings.changeMasterPassword;
+    mode === "enable" ? t.masterPassword.enableProtection :
+    mode === "disable" ? t.masterPassword.disableProtection :
+    t.masterPassword.changePassword;
 
   const description =
-    mode === "enable" ? "Encrypt saved connections and require this password when S3 Explorer starts." :
-    mode === "disable" ? "Enter your current master password to decrypt and store connections normally again." :
-    "Re-encrypt saved connections with a new master password.";
+    mode === "enable" ? t.masterPassword.encryptDescription :
+    mode === "disable" ? t.masterPassword.disableDescription :
+    t.masterPassword.changeDescription;
 
   const confirmBtn =
-    mode === "enable" ? "Enable Protection" :
-    mode === "disable" ? "Disable Protection" :
-    "Change Password";
+    mode === "enable" ? t.masterPassword.enableProtection :
+    mode === "disable" ? t.masterPassword.disableProtection :
+    t.masterPassword.changePassword;
 
   const clearError = () => setError("");
 
@@ -57,21 +57,21 @@ export default function MasterPasswordModal({
     setError("");
 
     if (needsCurrent && !currentPassword) {
-      setError("Current master password is required.");
+      setError(t.masterPassword.currentPasswordRequired);
       return;
     }
 
     if (needsNew) {
       if (!newPassword) {
-        setError("New master password is required.");
+        setError(t.masterPassword.newPasswordRequired);
         return;
       }
       if (newPassword.length < 8) {
-        setError("Master password must be at least 8 characters.");
+        setError(t.masterPassword.passwordTooShort);
         return;
       }
       if (newPassword !== confirmPassword) {
-        setError("Master passwords do not match.");
+        setError(t.masterPassword.passwordsDontMatch);
         return;
       }
     }
@@ -106,11 +106,11 @@ export default function MasterPasswordModal({
         <div className="px-5 pb-1 space-y-3">
           {needsCurrent && (
             <PasswordField
-              label="Current Master Password"
+              label={t.masterPassword.currentPasswordLabel}
               value={currentPassword}
               show={showCurrent}
               autoFocus
-              placeholder="Enter current password"
+              placeholder={t.masterPassword.enterCurrentPassword}
               onChange={(value) => { setCurrentPassword(value); clearError(); }}
               onToggleShow={() => setShowCurrent((v) => !v)}
               onSubmit={handleSubmit}
@@ -120,20 +120,20 @@ export default function MasterPasswordModal({
           {needsNew && (
             <>
               <PasswordField
-                label={mode === "enable" ? "Master Password" : "New Master Password"}
+                label={t.masterPassword.newPasswordLabel}
                 value={newPassword}
                 show={showNew}
                 autoFocus={!needsCurrent}
-                placeholder="Choose a strong password"
+                placeholder={t.masterPassword.chooseStrongPassword}
                 onChange={(value) => { setNewPassword(value); clearError(); }}
                 onToggleShow={() => setShowNew((v) => !v)}
                 onSubmit={handleSubmit}
               />
               <PasswordField
-                label="Confirm Master Password"
+                label={t.masterPassword.confirmPasswordLabel}
                 value={confirmPassword}
                 show={showConfirm}
-                placeholder="Re-enter password"
+                placeholder={t.masterPassword.reEnterPassword}
                 onChange={(value) => { setConfirmPassword(value); clearError(); }}
                 onToggleShow={() => setShowConfirm((v) => !v)}
                 onSubmit={handleSubmit}
@@ -148,7 +148,7 @@ export default function MasterPasswordModal({
 
         {mode === "enable" && (
           <p className="px-5 pt-3 text-xs leading-relaxed text-amber-600 dark:text-amber-400">
-            If you forget this password, saved connections cannot be recovered. You can only reset and delete them.
+            {t.masterPassword.forgotPasswordWarning}
           </p>
         )}
 
@@ -165,7 +165,7 @@ export default function MasterPasswordModal({
             disabled={isBusy}
             className="flex-1 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] disabled:opacity-60 transition-colors cursor-pointer"
           >
-            {isBusy ? "Working…" : confirmBtn}
+            {isBusy ? t.masterPassword.working : confirmBtn}
           </button>
         </div>
       </div>

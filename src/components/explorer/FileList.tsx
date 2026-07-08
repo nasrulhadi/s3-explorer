@@ -18,6 +18,7 @@ import { useNavigationStore } from "../../store/navigationStore";
 import { useTransferStore } from "../../store/transferStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useSettingsStore } from "../../store/settingsStore";
+import { useT } from "../../i18n";
 import { createS3Client } from "../../lib/s3Client";
 import { formatFileSize } from "../../lib/utils";
 import { deleteFolderRecursive, renameFolder } from "../../lib/s3FolderOps";
@@ -90,6 +91,7 @@ export default function FileList({
   } = useS3();
 
   const connectionId = useNavigationStore((s) => s.connectionId);
+  const t = useT();
   const bucket = useNavigationStore((s) => s.bucket);
   const prefix = useNavigationStore((s) => s.prefix);
   const setPrefix = useNavigationStore((s) => s.setPrefix);
@@ -113,10 +115,10 @@ export default function FileList({
   const hasActiveTransfers = activeTransfers.length > 0;
   const isActivity = isLoading || isFetching || hasActiveTransfers;
   const activityTooltip = isLoading || isFetching
-    ? "Loading folder..."
+    ? t.statusBar.activity.loading
     : hasActiveTransfers
-    ? `${activeTransfers.length} transfer${activeTransfers.length > 1 ? "s" : ""} in progress`
-    : "No activity";
+    ? t.statusBar.activity.transfers.replace("ITEMS", String(activeTransfers.length))
+    : t.statusBar.activity.none;
 
   // ── Sort ──
   const [sortField, setSortField] = useState<SortField>("name");
@@ -431,13 +433,13 @@ export default function FileList({
   // ── Status bar ─────────────────────────────────────────────
   function StatusBar() {
     return (
-      <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
-        <span>{displayedItems.length} item{displayedItems.length !== 1 ? "s" : ""}{filterQuery ? ` (filtered)` : ""}</span>
-        <div className="flex items-center gap-3">
-          {selectedKeys.size > 0 && (
-            <span className="text-[var(--s3-accent-text)] font-medium">{selectedKeys.size} selected</span>
-          )}
-          <div className="flex items-center gap-2 w-20 justify-end">
+	      <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
+	        <span>{t.statusBar.items.replace("ITEMS", String(displayedItems.length))}{filterQuery ? t.statusBar.filtered : ""}</span>
+	        <div className="flex items-center gap-3">
+	          {selectedKeys.size > 0 && (
+	            <span className="text-[var(--s3-accent-text)] font-medium">{t.statusBar.selected.replace("ITEMS", String(selectedKeys.size))}</span>
+	          )}
+          <div className="flex items-center gap-2 justify-end">
             <div className="flex items-center gap-1" title={activityTooltip}>
               <ArrowUpDown size={14} className={isActivity ? "text-[var(--s3-accent-text)] animate-pulse" : "text-[var(--s3-window-muted)] opacity-40"} />
             </div>

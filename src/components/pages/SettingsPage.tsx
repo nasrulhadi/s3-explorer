@@ -213,7 +213,13 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       }
       setMasterPasswordMode(null);
     } catch (error) {
-      setMasterPasswordError(error instanceof Error ? error.message : "Master password operation failed.");
+      setMasterPasswordError(
+        error instanceof Error
+          ? error.message === "Wrong master password or corrupted vault."
+            ? t.masterPassword.errorWrongOrCorrupted
+            : error.message
+          : "Master password operation failed."
+      );
     } finally {
       setMasterPasswordBusy(false);
     }
@@ -266,7 +272,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
         isMasterPasswordEnabled
           ? error instanceof Error
             ? error.message
-            : "Wrong master password or encryption failed."
+            : t.masterPassword.errorWrongOrCorrupted
           : "Encryption failed. Please try again.",
       );
     }

@@ -75,7 +75,7 @@ function ConnectionItem({
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            title="Edit connection"
+            title={t.sidebar.editConnectionTitle}
             className={`p-1 rounded transition-colors ${
               isActive
                 ? "text-[var(--s3-accent-text)]/70 hover:text-[var(--s3-accent-text)] hover:bg-black/10"
@@ -86,7 +86,7 @@ function ConnectionItem({
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            title="Delete connection"
+            title={t.sidebar.deleteConnectionTitle}
             className={`p-1 rounded transition-colors ${
               isActive
                 ? "text-[var(--s3-accent-text)]/70 hover:text-red-600 hover:bg-red-500/20"
@@ -265,7 +265,7 @@ export default function Sidebar({
         <button
           onClick={() => hasConnections && setSearchOpen((v) => !v)}
           disabled={!hasConnections}
-          title="Search connections"
+          title={t.sidebar.searchConnectionsTitle}
           className={`
             p-1 rounded transition-colors
             ${searchOpen
@@ -295,7 +295,7 @@ export default function Sidebar({
             {filterQuery && (
               <button
                 onClick={() => setFilterQuery("")}
-                title="Clear"
+                title={t.sidebar.clearTitle}
                 className="shrink-0 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X size={13} />

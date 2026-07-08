@@ -4,6 +4,7 @@ import { useTransferStore } from "../../store/transferStore";
 import type { S3Connection } from "../../types";
 import { createS3Client } from "../../lib/s3Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { useT } from "../../i18n";
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -13,7 +14,6 @@ const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
 
 interface PendingFile {
   file: File;
-  /** Relative path for folder uploads, plain name for single files */
   relativePath: string;
   size: number;
 }
@@ -28,7 +28,6 @@ interface UploadModalProps {
   getConnection: (id: string) => S3Connection | undefined;
   onClose: () => void;
   onUploadComplete: () => void;
-  /** Files pre-loaded from drag & drop */
   dropFiles?: PendingFile[];
 }
 
@@ -44,20 +43,18 @@ export default function UploadModal({
   onUploadComplete,
   dropFiles,
 }: UploadModalProps) {
-  // ── Stage ──────────────────────────────────────────────────
+  const t = useT();
+
   type Stage = "choice" | "review";
   const [stage, setStage] = useState<Stage>("choice");
 
-  // ── Pending files ──────────────────────────────────────────
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [rejectedFiles, setRejectedFiles] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // ── Hidden file inputs ─────────────────────────────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Reset when opened ─────────────────────────────────────
   const reset = useCallback(() => {
     setStage("choice");
     setPendingFiles([]);
@@ -65,14 +62,13 @@ export default function UploadModal({
     setUploading(false);
   }, []);
 
-  // Handle incoming dropFiles on open
   useEffect(() => {
     if (open && dropFiles && dropFiles.length > 0) {
       const accepted: PendingFile[] = [];
       const rejected: string[] = [];
       for (const f of dropFiles) {
         if (f.size > MAX_FILE_SIZE) {
-          rejected.push(`${f.relativePath} exceeds 200 MB limit`);
+          rejected.push(`${f.relativePath} ${t.modals.upload.exceedsLimit}`);
         } else {
           accepted.push(f);
         }
@@ -81,9 +77,8 @@ export default function UploadModal({
       setRejectedFiles(rejected);
       setStage("review");
     }
-  }, [open, dropFiles]);
+  }, [open, dropFiles, t]);
 
-  // ── File validation ────────────────────────────────────────
   const addFiles = useCallback((fileList: FileList, isFolder: boolean) => {
     const accepted: PendingFile[] = [];
     const rejected: string[] = [];
@@ -92,7 +87,7 @@ export default function UploadModal({
       const file = fileList[i];
 
       if (file.size > MAX_FILE_SIZE) {
-        rejected.push(`${file.name} exceeds 200 MB limit`);
+        rejected.push(`${file.name} ${t.modals.upload.exceedsLimit}`);
         continue;
       }
 
@@ -110,9 +105,8 @@ export default function UploadModal({
       setStage("review");
     }
     setRejectedFiles((prev) => [...prev, ...rejected]);
-  }, []);
+  }, [t]);
 
-  // ── Handlers: file / folder picker ─────────────────────────
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files?.length) addFiles(e.target.files, false);
@@ -129,19 +123,16 @@ export default function UploadModal({
     [addFiles],
   );
 
-  // ── Remove pending file ────────────────────────────────────
   const removeFile = useCallback((index: number) => {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // ── Upload all ─────────────────────────────────────────────
   const handleUpload = useCallback(async () => {
     if (!connectionId || !bucket || pendingFiles.length === 0 || uploading)
       return;
 
     setUploading(true);
 
-    // Close modal immediately — TransferPanel handles progress
     const filesToUpload = [...pendingFiles];
     onClose();
     reset();
@@ -190,7 +181,6 @@ export default function UploadModal({
       }
     }
 
-    // Refresh explorer after all uploads complete
     onUploadComplete();
   }, [
     connectionId,
@@ -204,15 +194,15 @@ export default function UploadModal({
     reset,
   ]);
 
-  // ── Format bytes ───────────────────────────────────────────
   const fmtSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // ── Render ─────────────────────────────────────────────────
   if (!open) return null;
+
+  const uploadCount = pendingFiles.length;
 
   return (
     <div
@@ -223,7 +213,6 @@ export default function UploadModal({
         className="w-full max-w-md mx-4 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Hidden inputs ───────────────────────────── */}
         <input
           type="file"
           multiple
@@ -241,57 +230,49 @@ export default function UploadModal({
         />
 
         {stage === "choice" ? (
-          /* ══════════ STAGE: CHOICE ══════════ */
           <>
-            {/* Header */}
             <div className="px-5 pt-5 pb-5">
               <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-                Upload to{" "}
-                <span className="text-[var(--s3-accent-text)]">
-                  /{bucket}/{prefix}
-                </span>
+                {t.modals.upload.title.replace("PATH", `/${bucket}/${prefix}`)}
               </h3>
             </div>
 
-            {/* Buttons */}
             <div className="px-5 pb-6 flex gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-[var(--s3-accent-active)] hover:bg-[var(--s3-accent-base)] transition-all cursor-pointer"
+                className="flex-1 flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-zinc-600 hover:border-[var(--s3-accent-active)] hover:bg-[var(--s3-accent-base)] transition-all cursor-pointer"
               >
                 <Upload size={28} className="text-[var(--s3-accent-text)]" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Upload File
+                  {t.modals.upload.uploadFile}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Browse files
+                  {t.modals.upload.browseFiles}
                 </span>
               </button>
               <button
                 onClick={() => folderInputRef.current?.click()}
-                className="flex-1 flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-[var(--s3-accent-active)] hover:bg-[var(--s3-accent-base)] transition-all cursor-pointer"
+                className="flex-1 flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-zinc-600 hover:border-[var(--s3-accent-active)] hover:bg-[var(--s3-accent-base)] transition-all cursor-pointer"
               >
                 <FolderUp size={28} className="text-[var(--s3-accent-text)]" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Upload Folder
+                  {t.modals.upload.uploadFolder}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Browse folders
+                  {t.modals.upload.browseFolders}
                 </span>
               </button>
             </div>
 
-            {/* Notice */}
             <div className="mx-5 mb-3 px-4 py-6 rounded-lg bg-gray-100 dark:bg-zinc-700/50 text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Select files or a folder using the buttons above
+                {t.modals.upload.selectFilesNotice}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                Max file size: 200 MB per file
+                {t.modals.upload.maxSize}
               </p>
             </div>
 
-            {/* Rejected warnings */}
             {rejectedFiles.length > 0 && (
               <div className="px-5 pb-3">
                 {rejectedFiles.map((msg, i) => (
@@ -305,52 +286,44 @@ export default function UploadModal({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex items-center justify-end px-5 pb-6 pt-4
-
-              ">
+            <div className="flex items-center justify-end px-5 pb-6 pt-4">
               <button
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
               >
-                Cancel
+                {t.modals.upload.cancel}
               </button>
             </div>
           </>
         ) : (
-          /* ══════════ STAGE: REVIEW ══════════ */
           <>
-            {/* Header */}
             <div className="px-5 pt-5 pb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-                  Upload Files
+                  {t.modals.upload.reviewTitle}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {pendingFiles.length} file{pendingFiles.length > 1 ? "s" : ""}{" "}
-                  selected ·{" "}
+                  {t.modals.upload.selectedFiles.replace("ITEMS", String(uploadCount))} ·{" "}
                   {fmtSize(pendingFiles.reduce((s, f) => s + f.size, 0))}
                 </p>
               </div>
               {!uploading && (
                 <button
                   onClick={() => {
-                    reset();
                     fileInputRef.current?.click();
                   }}
                   className="text-xs text-[var(--s3-accent-text)] hover:underline"
                 >
-                  Add more
+                  {t.modals.upload.addMore}
                 </button>
               )}
             </div>
 
-            {/* File list */}
             <div className="px-5 pb-6 max-h-64 overflow-y-auto space-y-1">
               {pendingFiles.map((pf, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50"
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <FileIcon size={14} className="text-gray-400 shrink-0" />
@@ -375,7 +348,6 @@ export default function UploadModal({
               ))}
             </div>
 
-            {/* Rejected warnings */}
             {rejectedFiles.length > 0 && (
               <div className="px-5 pb-3">
                 {rejectedFiles.map((msg, i) => (
@@ -389,14 +361,13 @@ export default function UploadModal({
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-2 px-5 pb-6">
               <button
                 onClick={onClose}
                 disabled={uploading}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
               >
-                Cancel
+                {t.modals.upload.cancel}
               </button>
               <button
                 onClick={handleUpload}
@@ -404,8 +375,8 @@ export default function UploadModal({
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] disabled:opacity-50 transition-colors"
               >
                 {uploading
-                  ? `Uploading ${pendingFiles.length} file${pendingFiles.length > 1 ? "s" : ""}…`
-                  : `Upload ${pendingFiles.length} file${pendingFiles.length > 1 ? "s" : ""}`}
+                  ? `${t.modals.upload.uploading} ${uploadCount} file${uploadCount > 1 ? "s" : ""}…`
+                  : `${t.modals.upload.upload} ${uploadCount} file${uploadCount > 1 ? "s" : ""}`}
               </button>
             </div>
           </>

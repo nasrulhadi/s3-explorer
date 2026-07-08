@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTransferStore } from "../../store/transferStore";
 import { useDownload } from "../../hooks/useDownload";
+import { useT } from "../../i18n";
 import { formatFileSize } from "../../lib/utils";
 import type { Transfer } from "../../types";
 
@@ -29,6 +30,7 @@ function formatSpeed(bytesPerSecond: number): string {
 // ─── Single transfer row ────────────────────────────────────
 
 function TransferRow({ transfer }: { transfer: Transfer }) {
+  const t = useT();
   const { cancelDownload } = useDownload();
   const removeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -93,9 +95,9 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
             {transfer.fileName}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 shrink-0 tabular-nums">
-            {isDone && (isMove ? "Done" : "Done")}
-            {isError && (transfer.error ?? "Error")}
-            {isActive && isMove && "Moving..."}
+            {isDone && (isMove ? t.transferPanel.done : t.transferPanel.done)}
+            {isError && (transfer.error ?? t.transferPanel.error)}
+            {isActive && isMove && t.transferPanel.moving}
             {isActive && !isMove && transfer.totalBytes > 0 && (
               <>
                 {formatFileSize(transfer.transferredBytes)} /{" "}
@@ -158,7 +160,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
             : useTransferStore.getState().removeTransfer(transfer.id);
         }}
         className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
-        title={isActive ? "Cancel" : "Remove"}
+        title={isActive ? t.transferPanel.cancel : t.transferPanel.remove}
       >
         {isActive ? (
           <Loader2 size={14} className="animate-spin" />
@@ -173,6 +175,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
 // ─── Main Panel ─────────────────────────────────────────────
 
 export default function TransferPanel() {
+  const t = useT();
   const transfers = useTransferStore((s) => s.transfers);
   const clearCompleted = useTransferStore((s) => s.clearCompleted);
   const [collapsed, setCollapsed] = useState(false);
@@ -190,7 +193,7 @@ export default function TransferPanel() {
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 h-11 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-          Transfers
+          {t.transferPanel.title}
           {activeCount > 0 && (
             <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)] rounded-full">
               {activeCount}
@@ -202,7 +205,7 @@ export default function TransferPanel() {
           {completedCount > 0 && (
             <button
               onClick={clearCompleted}
-              title="Clear completed"
+              title={t.transferPanel.clearCompleted}
               className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Trash2 size={14} />
@@ -210,7 +213,7 @@ export default function TransferPanel() {
           )}
           <button
             onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? "Expand" : "Collapse"}
+            title={collapsed ? t.transferPanel.expand : t.transferPanel.collapse}
             className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {collapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

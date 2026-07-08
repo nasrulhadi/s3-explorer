@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import type { SortField, SortDirection, ColumnWidths } from "../../types";
 import { colGridStyle } from "./FileRow";
+import { useT } from "../../i18n";
 import { useSettingsStore } from "../../store/settingsStore";
 
 type ResizeTarget = keyof ColumnWidths;
@@ -19,7 +20,9 @@ export default function ColumnHeader({
   sortDir,
   onToggleSort,
 }: ColumnHeaderProps) {
+  const t = useT();
   const columnWidths = useSettingsStore((s) => s.columnWidths);
+  const labelMap: Record<string, string> = { name: t.common.name, size: t.common.size, modified: t.common.modified, class: t.common.class };
 
   const [resizing, setResizing] = useState<ResizeTarget | null>(null);
   const startXRef = useRef(0);
@@ -88,7 +91,7 @@ export default function ColumnHeader({
         if (disabled || !onToggleSort || !sortField || !sortDir) {
           return (
             <span key={f.key} className={`truncate ${borderCls} pr-2 ${alignCls}`}>
-              {f.label}
+              {labelMap[f.key] || f.label}
             </span>
           );
         }
@@ -108,7 +111,7 @@ export default function ColumnHeader({
               hover:text-[var(--s3-window-text)] transition-colors
             `}
           >
-            <span className="truncate">{f.label}</span>
+            <span className="truncate">{labelMap[f.key] || f.label}</span>
             <SortIcon field={f.key} sortField={sortField!} sortDir={sortDir!} />
             {f.resizeKey && (
               <div

@@ -41,7 +41,12 @@ export default function RenameModal({
             {isFolder ? t.modals.rename.titleFolder : t.modals.rename.titleFile}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Enter a new name for <strong>{item.name}</strong>.
+            {(() => {
+              const parts = t.modals.rename.description.split("{name}");
+              return parts.length === 2
+                ? <>{parts[0]}<strong>{item.name}</strong>{parts[1]}</>
+                : t.modals.rename.description;
+            })()}
           </p>
         </div>
 

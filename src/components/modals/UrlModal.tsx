@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useT } from "../../i18n";
 
 interface UrlModalProps {
   url: string | null;
@@ -7,6 +8,7 @@ interface UrlModalProps {
 }
 
 export default function UrlModal({ url, onClose }: UrlModalProps) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   const copyUrl = async () => {
@@ -29,22 +31,22 @@ export default function UrlModal({ url, onClose }: UrlModalProps) {
       >
         <div className="px-5 pt-5 pb-5">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            Presigned URL
+            {t.modals.url.title}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            This URL expires in 1 hour. Already copied to clipboard.
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+            {t.modals.url.description}
           </p>
         </div>
 
         <div className="px-5 pb-6">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50">
             <p className="flex-1 text-sm text-gray-800 dark:text-gray-200 font-mono truncate min-w-0">
               {url}
             </p>
             <button
               onClick={copyUrl}
               className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)] transition-colors"
-              title="Copy URL"
+              title={t.modals.url.copyTitle}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
@@ -56,7 +58,7 @@ export default function UrlModal({ url, onClose }: UrlModalProps) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
           >
-            Close
+            {t.modals.url.close}
           </button>
         </div>
       </div>

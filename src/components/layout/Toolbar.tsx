@@ -123,7 +123,7 @@ export default function Toolbar({
       <button
         onClick={onBack}
         disabled={history.length === 0}
-        title="Back (Backspace)"
+        title={t.toolbar.backTitle}
         className="
           p-1.5 rounded-md text-[var(--s3-window-muted)]
           hover:bg-[var(--s3-window-hover-bg)] transition-colors
@@ -142,7 +142,7 @@ export default function Toolbar({
             shrink-0 p-1 rounded transition-colors
             ${bucket ? "text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)]" : "text-[var(--s3-window-text)]"}
           `}
-          title="Home"
+          title={t.toolbar.homeTitle}
         >
           <Home size={16} />
         </button>
@@ -170,7 +170,7 @@ export default function Toolbar({
               <button
                 onClick={() => setShowCollapsed((v) => !v)}
                 className="rounded px-1 py-0.5 text-[var(--s3-window-muted)] hover:text-[var(--s3-accent-text)] hover:bg-[var(--s3-accent-base)] transition-colors"
-                title="Show hidden folders"
+                title={t.toolbar.showHiddenTitle}
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -254,7 +254,7 @@ export default function Toolbar({
             <button
               onClick={() => setSearchInput("")}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[var(--s3-window-muted)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-window-hover-bg)] transition-colors"
-              title="Clear filter"
+              title={t.toolbar.clearFilterTitle}
             >
               <X size={14} />
             </button>
@@ -268,7 +268,7 @@ export default function Toolbar({
         <button
           onClick={onUpload}
           disabled={!hasBucketSelected}
-          title="Upload File (Ctrl+U)"
+          title={t.toolbar.uploadTitle}
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
             bg-[var(--s3-accent-active)] text-white
@@ -277,7 +277,7 @@ export default function Toolbar({
           "
         >
           <Upload size={15} />
-          Upload
+          {t.toolbar.uploadLabel}
         </button>
         )}
 
@@ -285,7 +285,7 @@ export default function Toolbar({
         <button
           onClick={onNewFolder}
           disabled={!hasBucketSelected}
-          title="New Folder"
+          title={t.toolbar.newFolderTitle}
           className="
             flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
             border border-[var(--s3-window-border)] text-[var(--s3-window-muted)]
@@ -294,7 +294,7 @@ export default function Toolbar({
           "
         >
           <FolderPlus size={15} />
-          New Folder
+          {t.toolbar.newFolderLabel}
         </button>
         )}
 
@@ -302,7 +302,7 @@ export default function Toolbar({
         <button
           onClick={onRefresh}
           disabled={!hasBucketSelected}
-          title="Refresh (F5)"
+          title={t.toolbar.refreshTitle}
           className="
             p-1.5 rounded-md text-[var(--s3-window-muted)]
             hover:bg-[var(--s3-window-hover-bg)] hover:text-[var(--s3-window-text)] transition-colors

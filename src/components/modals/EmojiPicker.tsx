@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { EMOJI_CATEGORIES, ALL_EMOJIS } from "../../lib/emojis";
+import { useT } from "../../i18n";
 
 interface EmojiPickerProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function EmojiPicker({
   onClear,
   onClose,
 }: EmojiPickerProps) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +56,7 @@ export default function EmojiPicker({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search emoji…"
+              placeholder={t.emojiPicker.searchPlaceholder}
               className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 outline-none"
             />
             {query && (
@@ -69,7 +71,7 @@ export default function EmojiPicker({
         </div>
 
         {/* ── Body: scrollable emoji grid ── */}
-        <div className="max-h-64 overflow-y-auto p-2">
+        <div className="max-h-64 overflow-y-auto p-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
           {searchResults ? (
             // Search mode: flat grid
             searchResults.length > 0 ? (
@@ -85,7 +87,7 @@ export default function EmojiPicker({
               </div>
             ) : (
               <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                No emoji found
+                {t.emojiPicker.noResults}
               </p>
             )
           ) : (
@@ -119,7 +121,7 @@ export default function EmojiPicker({
               onClick={onClear}
               className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
             >
-              Reset
+              {t.emojiPicker.reset}
             </button>
           ) : <span />}
           <div className="flex items-center gap-2">
@@ -133,7 +135,7 @@ export default function EmojiPicker({
                 transition-colors
               "
             >
-              Cancel
+              {t.emojiPicker.cancel}
             </button>
             <button
               onClick={() => { if (selected) { onSelect(selected); } onClose(); }}
@@ -146,7 +148,7 @@ export default function EmojiPicker({
                 transition-colors
               "
             >
-              Select
+              {t.emojiPicker.select}
             </button>
           </div>
         </div>

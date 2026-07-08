@@ -11,6 +11,16 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
   const t = useT();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
+  const labelMap: Record<string, string> = {
+    Name: t.common.name,
+    Key: t.common.key,
+    Type: t.common.type,
+    Size: t.common.size,
+    "Last Modified": t.common.lastModified,
+    "Content Type": t.common.contentType,
+    "Storage Class": t.common.storageClass,
+  };
+
   const copyToClipboard = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text);
     setCopiedIndex(index);
@@ -42,7 +52,7 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
               className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-gray-400 dark:text-gray-500">{row.label}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{labelMap[row.label] || row.label}</p>
                 <p className="text-sm text-gray-800 dark:text-gray-200 truncate font-mono">
                   {row.value}
                 </p>
