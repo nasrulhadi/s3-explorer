@@ -38,8 +38,10 @@
 - **Activity Indicator** — Visual feedback for loading states and transfers
 - **Toolbar Customization** — Toggle filter, upload, new folder, reload, and breadcrumb visibility
 - **Connection Emoji Icons** — Customize each connection with an emoji icon (200 curated emojis across 10 categories)
-- **Sidebar Redesign** — Notion-inspired layout with search filter, live connection count, and accent left-bar active state
+- **Sidebar Redesign** — Notion-inspired layout with search filter, live connection count, and accent background active state
+- **Welcome & Unlock Screens** — Redesigned 40:60 split layout with hero cards and glass/frosted effects
 - **Empty State** — Hero illustration with shortcut hints when no bucket is selected
+- **Import Connections** — Restore saved connections from encrypted `.enc` backup files on first launch
 
 ### 🔐 Security & Privacy
 - **Optional Master Password** — Lock the app on startup and encrypt saved connections at rest
