@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.7.0] - 2026-07-05
+
+### Changed
+- **Provider Selector**: Replaced dropdown with icon button group (Cloud/Server/Globe/HardDrive/Box) — click to select provider
+- **Form Width**: All form container widths reduced to `max-w-lg` for better visual balance
+
+### Fixed
+- **Add Connection After Edit**: Form no longer retains previous connection data — `key` prop forces remount
+- **Sidebar Navigation**: Clicking a connection while on Settings / Form / Delete page now navigates back to explorer
+
+---
+
 ## [1.6.5] - 2026-07-05
 
 ### Tweaked

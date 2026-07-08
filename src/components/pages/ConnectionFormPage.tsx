@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save, Smile } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save, Smile, Cloud, Server, Globe, HardDrive, Box } from "lucide-react";
 import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { createS3Client } from "../../lib/s3Client";
 import { useConnectionStore } from "../../store/connectionStore";
@@ -9,12 +9,12 @@ import type { S3Provider, S3Connection, S3ConnectionFormData } from "../../types
 
 // ─── Constants ──────────────────────────────────────────────
 
-const PROVIDERS: { value: S3Provider; label: string }[] = [
-  { value: "aws", label: "AWS S3" },
-  { value: "minio", label: "MinIO" },
-  { value: "r2", label: "Cloudflare R2" },
-  { value: "b2", label: "Backblaze B2" },
-  { value: "custom", label: "Custom S3" },
+const PROVIDERS: { value: S3Provider; label: string; icon: typeof Cloud }[] = [
+  { value: "aws", label: "AWS S3", icon: Cloud },
+    { value: "minio", label: "MinIO", icon: Server },
+  { value: "r2", label: "Cloudflare R2", icon: Globe },
+  { value: "b2", label: "Backblaze B2", icon: HardDrive },
+  { value: "custom", label: "Custom S3", icon: Box },
 ];
 
 const AWS_REGIONS = [
@@ -263,18 +263,30 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
 
           {/* Provider */}
           <Field label="Provider">
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value as S3Provider)}
-              disabled={providerLocked}
-              className={`${INPUT_CLASS} ${providerLocked ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
+            <div className="flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
               {PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value}>
+                <button
+                  key={p.value}
+                  onClick={() => !providerLocked && setProvider(p.value)}
+                  disabled={providerLocked}
+                  title={p.label}
+                  className={`
+                    flex items-center gap-1.5 py-2 text-xs
+                    ${p.value === "minio" ? "px-3.5" : "px-2.5"}
+                    border-r border-gray-200 dark:border-zinc-700 last:border-r-0
+                    transition-colors cursor-pointer
+                    ${provider === p.value
+                      ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                    }
+                    ${providerLocked ? "opacity-60 cursor-not-allowed" : ""}
+                  `}
+                >
+                  <p.icon size={14} />
                   {p.label}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </Field>
 
           {/* Endpoint URL */}

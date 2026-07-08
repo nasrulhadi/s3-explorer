@@ -184,6 +184,7 @@ interface SidebarProps {
   onEditConnection?: (id: string) => void;
   onDeleteConnection?: (id: string) => void;
   onOpenSettings?: () => void;
+  onSelectConnection?: () => void;
 }
 
 export default function Sidebar({
@@ -191,6 +192,7 @@ export default function Sidebar({
   onEditConnection,
   onDeleteConnection,
   onOpenSettings,
+  onSelectConnection,
 }: SidebarProps) {
   const connections = useConnectionStore((s) => s.connections);
   const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
@@ -231,6 +233,7 @@ export default function Sidebar({
   }, [connections, filterQuery]);
 
   function handleConnectionClick(conn: S3Connection) {
+    onSelectConnection?.();
     setActiveConnection(conn.id);
     openedRef.current.add(conn.id);
     lastActiveId.current = conn.id;

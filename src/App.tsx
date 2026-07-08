@@ -261,12 +261,14 @@ function AppLayout() {
           onEditConnection={handleEditConnection}
           onDeleteConnection={handleDeleteConnection}
           onOpenSettings={() => setView("settings")}
+          onSelectConnection={() => setView("main")}
         />
 
         {/* Right panel */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[var(--s3-sidebar-bg)] rounded-tl-xl">
           {view === "addConnection" || view === "editConnection" ? (
             <ConnectionFormPage
+              key={editingConnectionId ?? "add"}
               onDone={closeConnectionForm}
               editConnection={editingConnection ?? undefined}
                 />
