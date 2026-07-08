@@ -1,26 +1,18 @@
 import { useState } from "react";
 import { ArrowLeft, Trash2, AlertTriangle } from "lucide-react";
-import type { S3Connection, S3Provider } from "../../types";
-
-const PROVIDER_LABELS: Record<S3Provider, string> = {
-  aws: "AWS S3",
-  minio: "MinIO",
-  r2: "Cloudflare R2",
-  b2: "Backblaze B2",
-  custom: "Custom S3",
-};
-
-interface DeleteConnectionPageProps {
-  connection: S3Connection;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
+import { useT } from "../../i18n";
+import type { S3Connection } from "../../types";
 
 export default function DeleteConnectionPage({
   connection,
   onConfirm,
   onCancel,
-}: DeleteConnectionPageProps) {
+}: {
+  connection: S3Connection;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const t = useT();
   const [inputName, setInputName] = useState("");
 
   const canDelete = inputName.trim() === connection.name;
@@ -32,12 +24,12 @@ export default function DeleteConnectionPage({
         <button
           onClick={onCancel}
           className="p-1.5 rounded-md text-[var(--s3-window-muted)] hover:text-[var(--s3-window-text)] hover:bg-[var(--s3-window-hover-bg)] transition-colors"
-          title="Back"
+          title={t.common.back}
         >
           <ArrowLeft size={18} />
         </button>
         <h2 className="text-base font-semibold text-[var(--s3-danger)]">
-          Delete Connection
+          {t.deletePage.pageTitle}
         </h2>
       </div>
 
@@ -49,11 +41,10 @@ export default function DeleteConnectionPage({
             <AlertTriangle size={20} className="text-[var(--s3-danger)] shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-[var(--s3-danger)]">
-                This action cannot be undone
+                {t.deletePage.warning}
               </p>
               <p className="text-xs text-[var(--s3-window-muted)] mt-1">
-                All credential data for this connection will be permanently deleted,
-                including access keys, endpoint, and region settings.
+                {t.deletePage.warningDesc}
               </p>
             </div>
           </div>
@@ -61,24 +52,24 @@ export default function DeleteConnectionPage({
           {/* Connection info */}
           <div className="p-4 rounded-lg border border-[var(--s3-window-border)] bg-[var(--s3-statusbar-bg)]">
             <p className="text-xs text-[var(--s3-window-muted)] uppercase tracking-wider mb-2">
-              Connection to delete
+              {t.deletePage.connectionToDelete}
             </p>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--s3-window-muted)] w-20">Name</span>
+                <span className="text-xs text-[var(--s3-window-muted)] w-20">{t.common.name}</span>
                 <span className="text-sm font-medium text-[var(--s3-window-text)]">
                   {connection.name}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--s3-window-muted)] w-20">Provider</span>
+                <span className="text-xs text-[var(--s3-window-muted)] w-20">{t.common.provider}</span>
                 <span className="text-sm text-[var(--s3-window-text)]">
-                  {PROVIDER_LABELS[connection.provider]}
+                  {t.providers[connection.provider]}
                 </span>
               </div>
               {connection.endpoint && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--s3-window-muted)] w-20">Endpoint</span>
+                  <span className="text-xs text-[var(--s3-window-muted)] w-20">{t.common.endpoint}</span>
                   <span className="text-sm text-[var(--s3-window-text)]" title={connection.endpoint}>
                     {connection.endpoint.length > 50
                       ? connection.endpoint.slice(0, 50) + "..."
@@ -87,14 +78,14 @@ export default function DeleteConnectionPage({
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--s3-window-muted)] w-20">Region</span>
+                <span className="text-xs text-[var(--s3-window-muted)] w-20">{t.common.region}</span>
                 <span className="text-sm text-[var(--s3-window-text)]">
                   {connection.region}
                 </span>
               </div>
               {connection.defaultBucket && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--s3-window-muted)] w-20">Bucket</span>
+                  <span className="text-xs text-[var(--s3-window-muted)] w-20">{t.common.bucket}</span>
                   <span className="text-sm text-[var(--s3-window-text)]">
                     {connection.defaultBucket}
                   </span>
@@ -106,7 +97,7 @@ export default function DeleteConnectionPage({
           {/* Confirm input */}
           <div>
             <label className="block text-sm font-medium text-[var(--s3-window-text)] mb-1.5">
-              Type <strong className="text-[var(--s3-danger)]">{connection.name}</strong> to confirm
+              {t.deletePage.confirmPrompt.replace("NAME", connection.name)}
             </label>
             <input
               type="text"
@@ -139,7 +130,7 @@ export default function DeleteConnectionPage({
                 hover:bg-[var(--s3-window-hover-bg)] transition-colors
               "
             >
-              Cancel
+              {t.common.cancel}
             </button>
             <button
               onClick={onConfirm}
@@ -153,7 +144,7 @@ export default function DeleteConnectionPage({
               "
             >
               <Trash2 size={15} />
-              Delete Connection
+              {t.deletePage.deleteButton}
             </button>
           </div>
         </div>

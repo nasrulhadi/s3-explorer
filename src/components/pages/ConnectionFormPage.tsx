@@ -5,6 +5,7 @@ import { createS3Client } from "../../lib/s3Client";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import EmojiPicker from "../modals/EmojiPicker";
+import { useT } from "../../i18n";
 import type { S3Provider, S3Connection, S3ConnectionFormData } from "../../types";
 
 // ─── Constants ──────────────────────────────────────────────
@@ -50,6 +51,7 @@ interface ConnectionFormPageProps {
 }
 
 export default function ConnectionFormPage({ onDone, editConnection }: ConnectionFormPageProps) {
+  const t = useT();
   const addConnection = useConnectionStore((s) => s.addConnection);
   const updateConnection = useConnectionStore((s) => s.updateConnection);
   const isEditMode = !!editConnection;
@@ -88,12 +90,12 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
   // ── Validation ─────────────────────────────────────────────
   function validate(): boolean {
     const e: FormErrors = {};
-    if (!name.trim()) e.name = "Connection name is required.";
+    if (!name.trim()) e.name = t.connectionForm.errors.nameRequired;
     if (showEndpoint && !endpoint.trim()) e.endpoint = "Endpoint URL is required for this provider.";
     if (!region.trim()) e.region = "Region is required.";
     if (!accessKeyId.trim()) e.accessKeyId = "Access Key ID is required.";
     if (!secretAccessKey.trim()) e.secretAccessKey = "Secret Access Key is required.";
-    if (showBucket && !bucket.trim()) e.bucket = "Bucket name is required.";
+    if (showBucket && !bucket.trim()) e.bucket = t.connectionForm.errors.bucketRequired;
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -156,7 +158,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
             const msg = (err as Error).message;
             if (msg.includes("AccessDenied") || msg.includes("Access Denied") || msg.includes("NotEntitled") || msg.includes("not entitled")) {
               setTestStatus("success");
-              setTestMessage("Connection OK! Bucket listing not supported — enter bucket name in the sidebar.");
+              setTestMessage(t.connectionForm.bucketListingNote);
             } else {
               throw err;
             }
@@ -221,12 +223,12 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
         <button
           onClick={onDone}
           className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title="Back"
+          title={t.common.back}
         >
           <ArrowLeft size={18} />
         </button>
         <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-          {isEditMode ? "Edit Connection" : "New Connection"}
+          {isEditMode ? t.connectionForm.pageTitleEdit : t.connectionForm.pageTitleAdd}
         </h2>
       </div>
 
@@ -234,7 +236,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
       <div className="flex-1 overflow-y-auto bg-[var(--s3-window-bg)] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
         <form onSubmit={handleSave} className="max-w-xl mx-auto p-8 space-y-5">
           {/* Icon + Connection Name */}
-          <Field label="Connection Name" error={errors.name}>
+          <Field label={t.connectionForm.connectionName} error={errors.name}>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -291,7 +293,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
 
           {/* Endpoint URL */}
           {showEndpoint && (
-            <Field label="Endpoint URL" error={errors.endpoint}>
+            <Field label={t.connectionForm.endpointUrl} error={errors.endpoint}>
               <input
                 type="url"
                 value={endpoint}
@@ -303,7 +305,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           )}
 
           {/* Region */}
-          <Field label="Region" error={errors.region}>
+          <Field label={t.connectionForm.region} error={errors.region}>
             {provider === "aws" ? (
               <select
                 value={region}
@@ -328,7 +330,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           </Field>
 
           {/* Access Key ID */}
-          <Field label={provider === "b2" ? "Key ID" : "Access Key ID"} error={errors.accessKeyId}>
+          <Field label={t.connectionForm.accessKeyId} error={errors.accessKeyId}>
             <input
               type="text"
               value={accessKeyId}
@@ -340,7 +342,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
           </Field>
 
           {/* Secret Access Key */}
-          <Field label={provider === "b2" ? "Application Key" : "Secret Access Key"} error={errors.secretAccessKey}>
+          <Field label={t.connectionForm.secretAccessKey} error={errors.secretAccessKey}>
             <input
               type="text"
               value={secretAccessKey}
@@ -358,7 +360,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
                 type="text"
                 value={bucket}
                 onChange={(e) => setBucket(e.target.value)}
-                placeholder="my-bucket"
+                placeholder={t.connectionForm.bucketPlaceholder}
                 className={INPUT_CLASS}
               />
             </Field>
@@ -383,7 +385,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
               {testStatus === "error" && (
                 <XCircle size={16} className="shrink-0 mt-0.5" />
               )}
-              <span className="break-all">{testMessage || "Testing…"}</span>
+              <span className="break-all">{testMessage || t.connectionForm.testing}</span>
             </div>
           )}
 
@@ -400,7 +402,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              {testStatus === "testing" ? "Testing…" : "Test Connection"}
+              {testStatus === "testing" ? t.connectionForm.testing : t.connectionForm.testConnection}
             </button>
             <button
               type="submit"
@@ -412,7 +414,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
               "
             >
               <Save size={15} />
-              {isEditMode ? "Save Changes" : "Save Connection"}
+              {isEditMode ? t.connectionForm.updateButton : t.connectionForm.saveButton}
             </button>
           </div>
         </form>
