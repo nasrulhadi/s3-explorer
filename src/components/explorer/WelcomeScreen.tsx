@@ -132,7 +132,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
       {/* Left column - Form area */}
       <div className="w-2/5 flex items-center justify-center px-8">
         <div className="w-full max-w-sm">
-          <h2 className="font-bold text-gray-700 mb-10">
+          <h2 className="font-bold text-gray-700 dark:text-gray-200 mb-10">
             <span className="block text-4xl">{t.welcome.titleLine1}</span>
             <span className="block text-5xl">{t.welcome.titleLine2}</span>
           </h2>
@@ -193,7 +193,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
 
       {/* Right column - Hero card */}
       <div className="w-3/5 pt-1 px-6 pb-6">
-        <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center">
+        <div className="w-full h-full bg-white dark:bg-white/5 backdrop-blur-2xl dark:border dark:border-white/7 rounded-2xl flex items-center justify-center">
           <div className="text-center max-w-md">
             <img
               src={welcomeScreenImg}
@@ -201,7 +201,7 @@ export default function WelcomeScreen({ onAddConnection }: WelcomeScreenProps) {
               draggable={false}
               className="w-1/2 min-w-[26.5rem] max-w-[40rem] h-auto mx-auto opacity-90 dark:opacity-80 pointer-events-none"
             />
-            <p className="mt-6 text-base text-gray-500 leading-relaxed">
+            <p className="mt-6 text-base text-gray-500 dark:text-gray-300 leading-relaxed">
               {t.welcome.caption}
             </p>
           </div>

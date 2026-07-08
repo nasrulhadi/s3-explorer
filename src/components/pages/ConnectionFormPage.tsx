@@ -355,7 +355,7 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
 
           {/* Bucket Name (R2/B2) */}
           {showBucket && (
-            <Field label="Bucket Name" error={errors.bucket}>
+            <Field label={t.connectionForm.defaultBucket} error={errors.bucket}>
               <input
                 type="text"
                 value={bucket}

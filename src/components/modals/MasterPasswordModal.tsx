@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { useT } from "../../i18n";
 
 export type MasterPasswordMode = "enable" | "disable" | "change";
 
@@ -16,24 +17,6 @@ interface MasterPasswordModalProps {
   onCancel: () => void;
 }
 
-const COPY: Record<MasterPasswordMode, { title: string; description: string; confirm: string }> = {
-  enable: {
-    title: "Enable Master Password",
-    description: "Encrypt saved connections and require this password when S3 Explorer starts.",
-    confirm: "Enable Protection",
-  },
-  disable: {
-    title: "Disable Master Password",
-    description: "Enter your current master password to decrypt and store connections normally again.",
-    confirm: "Disable Protection",
-  },
-  change: {
-    title: "Change Master Password",
-    description: "Re-encrypt saved connections with a new master password.",
-    confirm: "Change Password",
-  },
-};
-
 export default function MasterPasswordModal({
   mode,
   externalError,
@@ -41,6 +24,7 @@ export default function MasterPasswordModal({
   onConfirm,
   onCancel,
 }: MasterPasswordModalProps) {
+  const t = useT();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -51,7 +35,21 @@ export default function MasterPasswordModal({
 
   const needsCurrent = mode === "disable" || mode === "change";
   const needsNew = mode === "enable" || mode === "change";
-  const copy = COPY[mode];
+
+  const title =
+    mode === "enable" ? t.settings.enableMasterPassword :
+    mode === "disable" ? t.settings.disableMasterPassword :
+    t.settings.changeMasterPassword;
+
+  const description =
+    mode === "enable" ? "Encrypt saved connections and require this password when S3 Explorer starts." :
+    mode === "disable" ? "Enter your current master password to decrypt and store connections normally again." :
+    "Re-encrypt saved connections with a new master password.";
+
+  const confirmBtn =
+    mode === "enable" ? "Enable Protection" :
+    mode === "disable" ? "Disable Protection" :
+    "Change Password";
 
   const clearError = () => setError("");
 
@@ -97,11 +95,11 @@ export default function MasterPasswordModal({
           <div className="flex items-center gap-2">
             <LockKeyhole size={18} className="text-[var(--s3-accent-text)]" />
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-              {copy.title}
+              {title}
             </h3>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-            {copy.description}
+            {description}
           </p>
         </div>
 
@@ -160,14 +158,14 @@ export default function MasterPasswordModal({
             disabled={isBusy}
             className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:opacity-60 transition-colors cursor-pointer"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isBusy}
             className="flex-1 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] disabled:opacity-60 transition-colors cursor-pointer"
           >
-            {isBusy ? "Working…" : copy.confirm}
+            {isBusy ? "Working…" : confirmBtn}
           </button>
         </div>
       </div>

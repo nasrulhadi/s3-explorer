@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useT } from "../../i18n";
 
 interface InfoModalProps {
   data: { title: string; type: string; rows: { label: string; value: string }[] } | null;
@@ -7,6 +8,7 @@ interface InfoModalProps {
 }
 
 export default function InfoModal({ data, onClose }: InfoModalProps) {
+  const t = useT();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -30,7 +32,7 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">
             {data.title}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{data.type} Info</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{data.type === "Folder" ? t.modals.info.folderInfo : t.modals.info.fileInfo}</p>
         </div>
 
         <div className="px-5 pb-2 space-y-1 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
@@ -65,7 +67,7 @@ export default function InfoModal({ data, onClose }: InfoModalProps) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer mt-4"
           >
-            Close
+            {t.modals.info.close}
           </button>
         </div>
       </div>

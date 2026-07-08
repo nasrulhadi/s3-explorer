@@ -148,8 +148,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
               className="w-1/2 min-w-[26.5rem] max-w-[40rem] h-auto mx-auto opacity-90 dark:opacity-80 pointer-events-none"
             />
             <p className="mt-6 text-base text-gray-500 dark:text-gray-400 leading-relaxed">
-              Your saved connections are safely encrypted.
-              Enter your master password to access them.
+              {t.unlock.caption}
             </p>
           </div>
         </div>

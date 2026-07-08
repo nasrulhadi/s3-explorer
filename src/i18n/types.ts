@@ -42,6 +42,13 @@ export interface Translations {
   toolbar: {
     filterPlaceholder: string;
     disconnect: string;
+    breadcrumbs: string;
+    breadcrumbsDesc: string;
+    filter: string;
+    filterDesc: string;
+    uploadButton: string;
+    newFolderButton: string;
+    reloadButton: string;
   };
   connectionForm: {
     pageTitleAdd: string;
@@ -79,12 +86,19 @@ export interface Translations {
     restoreLastSessionDesc: string;
     appearance: string;
     theme: string;
+    themeSystem: string;
+    themeLight: string;
+    themeDark: string;
     language: string;
     accentColor: string;
     security: string;
+    securityDescEnabled: string;
+    securityDescDisabled: string;
+    securityWarning: string;
     data: string;
     exportConnections: string;
     exportDesc: string;
+    exportDescWithMaster: string;
     importConnections: string;
     importDesc: string;
     about: string;
@@ -100,6 +114,10 @@ export interface Translations {
     masterPasswordDesc: string;
     disableMasterPassword: string;
     changeMasterPassword: string;
+    changePasswordLabel: string;
+    disableLabel: string;
+    enableLabel: string;
+    toolbarLabel: string;
   };
   modals: {
     newFolder: { title: string; description: string; placeholder: string; cancel: string; creating: string; create: string };

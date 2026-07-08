@@ -1,39 +1,21 @@
 import { useState } from "react";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { useT } from "../../i18n";
 import type { S3Connection } from "../../types";
 import { useConnectionStore } from "../../store/connectionStore";
-
-// ─── Provider label helper ──────────────────────────────────
-
-function providerLabel(p: string) {
-  return p === "r2"
-    ? "Cloudflare R2"
-    : p === "b2"
-    ? "Backblaze B2"
-    : p === "minio"
-    ? "MinIO"
-    : p === "s3"
-    ? "AWS S3"
-    : "Custom S3";
-}
 
 // ─── Types ──────────────────────────────────────────────────
 
 interface ImportPreview {
   connection: S3Connection;
   action: "new" | "update" | "skip";
-  /** For update: which existing connection name is being overwritten */
   existingName?: string;
 }
 
 interface Props {
-  /** Parsed connections ready to import */
   preview: ImportPreview[];
-  /** Whether imported data will be saved into an encrypted local vault */
   isMasterPasswordEnabled?: boolean;
-  /** Called when user wants to protect imported connections after import */
   onEnableMasterPassword?: () => void;
-  /** Called when user cancels (before or after import) */
   onClose: () => void;
 }
 
@@ -45,6 +27,7 @@ export default function ImportConnectionsModal({
   onEnableMasterPassword,
   onClose,
 }: Props) {
+  const t = useT();
   const [result, setResult] = useState<{ added: number; updated: number; skipped: number } | null>(null);
 
   const newCount = preview.filter((p) => p.action === "new").length;
@@ -72,10 +55,10 @@ export default function ImportConnectionsModal({
           {/* Header */}
           <div className="px-5 pt-5 pb-4">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-              Import Complete
+              {t.modals.importConnections.importComplete}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {total} connection{total !== 1 ? "s" : ""} processed
+              {t.modals.importConnections.processed.replace("TOTAL", String(total))}
             </p>
           </div>
 
@@ -84,19 +67,19 @@ export default function ImportConnectionsModal({
             {result.added > 0 && (
               <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                 <Plus size={14} />
-                <span>{result.added} new connection{result.added !== 1 ? "s" : ""} added</span>
+                <span>{t.modals.importConnections.added.replace("ITEMS", String(result.added))}</span>
               </div>
             )}
             {result.updated > 0 && (
               <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
                 <RefreshCw size={14} />
-                <span>{result.updated} connection{result.updated !== 1 ? "s" : ""} updated</span>
+                <span>{t.modals.importConnections.updated.replace("ITEMS", String(result.updated))}</span>
               </div>
             )}
             {result.skipped > 0 && (
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <AlertCircle size={14} />
-                <span>{result.skipped} duplicate{result.skipped !== 1 ? "s" : ""} skipped</span>
+                <span>{t.modals.importConnections.skipped.replace("ITEMS", String(result.skipped))}</span>
               </div>
             )}
           </div>
@@ -104,14 +87,14 @@ export default function ImportConnectionsModal({
           {!isMasterPasswordEnabled && result.added + result.updated > 0 && (
             <div className="mx-5 mb-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 p-3">
               <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
-                Imported connections are stored without master password protection. Enable master password to encrypt them on this device.
+                {t.modals.importConnections.masterPasswordWarning}
               </p>
               {onEnableMasterPassword && (
                 <button
                   onClick={() => { onClose(); onEnableMasterPassword(); }}
                   className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 transition-colors cursor-pointer"
                 >
-                  Enable Master Password
+                  {t.modals.importConnections.enableMasterPassword}
                 </button>
               )}
             </div>
@@ -123,7 +106,7 @@ export default function ImportConnectionsModal({
               onClick={onClose}
               className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
             >
-              Done
+              {t.modals.importConnections.done}
             </button>
           </div>
         </div>
@@ -142,12 +125,12 @@ export default function ImportConnectionsModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-4">
+        <div className="px-5 pt-5 mt-1">
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            Import Connections
+            {t.modals.importConnections.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {preview.length} connection{preview.length !== 1 ? "s" : ""} found in file
+            {t.modals.importConnections.found.replace("ITEMS", String(preview.length))}
           </p>
         </div>
 
@@ -155,17 +138,17 @@ export default function ImportConnectionsModal({
         <div className="px-5 pb-1 flex items-center gap-3 text-xs">
           {newCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-              <Plus size={10} /> {newCount} new
+              <Plus size={10} /> {newCount} {t.modals.importConnections.insert.toLowerCase()}
             </span>
           )}
           {updateCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-              <RefreshCw size={10} /> {updateCount} update{updateCount !== 1 ? "s" : ""}
+              <RefreshCw size={10} /> {updateCount} {t.modals.importConnections.update.toLowerCase()}
             </span>
           )}
           {skipCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-              <AlertCircle size={10} /> {skipCount} skipped
+              <AlertCircle size={10} /> {skipCount} {t.modals.importConnections.skip.toLowerCase()}
             </span>
           )}
         </div>
@@ -175,27 +158,25 @@ export default function ImportConnectionsModal({
           {preview.map((p) => {
             const badge =
               p.action === "new"
-                ? { label: "Insert", cls: "border-green-500 text-green-600 dark:text-green-400" }
+                ? { label: t.modals.importConnections.insert, cls: "border-green-500 text-green-600 dark:text-green-400" }
                 : p.action === "update"
-                ? { label: "Update", cls: "border-amber-500 text-amber-600 dark:text-amber-400" }
-                : { label: "Skip", cls: "border-gray-400 text-gray-500 dark:text-gray-400" };
+                ? { label: t.modals.importConnections.update, cls: "border-amber-500 text-amber-600 dark:text-amber-400" }
+                : { label: t.modals.importConnections.skip, cls: "border-gray-400 text-gray-500 dark:text-gray-400" };
             return (
               <div
                 key={p.connection.id}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-sm"
               >
-                {/* Icon */}
-                {/* Label */}
                 <div className="min-w-0 flex-1">
                   <span className="text-gray-800 dark:text-gray-200 truncate block">
                     {p.connection.name}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {providerLabel(p.connection.provider)}
+                    {t.providers[p.connection.provider as keyof typeof t.providers]}
                     {p.action === "update" && p.existingName
-                      ? ` — replaces "${p.existingName}"`
+                      ? t.modals.importConnections.replaces.replace("NAME", p.existingName)
                       : p.action === "skip"
-                      ? " — duplicate"
+                      ? t.modals.importConnections.duplicate
                       : ""}
                   </span>
                 </div>
@@ -216,13 +197,13 @@ export default function ImportConnectionsModal({
             onClick={onClose}
             className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
-            Cancel
+            {t.modals.importConnections.cancel}
           </button>
           <button
             onClick={handleImport}
             className="flex-1 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
           >
-            Import
+            {t.modals.importConnections.import}
           </button>
         </div>
       </div>

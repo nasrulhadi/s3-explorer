@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCh
 import { useSettingsStore } from "../../store/settingsStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useSecurityStore } from "../../store/securityStore";
+import { useT } from "../../i18n";
 import type { S3Connection } from "../../types";
 import { check } from "@tauri-apps/plugin-updater";
 import { useUpdateStore } from "../../store/updateStore";
@@ -138,6 +139,7 @@ function AccentColorSelect({
 // ─── Main Component ─────────────────────────────────────────
 
 export default function SettingsPage({ onDone }: SettingsPageProps) {
+  const t = useT();
   const store = useSettingsStore();
   const connections = useConnectionStore((s) => s.connections);
   const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
@@ -383,7 +385,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
         >
           <ArrowLeft size={18} />
         </button>
-        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">Settings</h2>
+        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">{t.settings.pageTitle}</h2>
       </div>
 
       {/* ── Scrollable content ──────────────────────────── */}
@@ -393,12 +395,12 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── General ─────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              General
+              {t.settings.general}
             </h3>
             <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2">
               <ToggleRow
-                label="Restore last session"
-                description="Reopen the last viewed bucket and folder on startup"
+                label={t.settings.restoreLastSession}
+                description={t.settings.restoreLastSessionDesc}
                 checked={store.restoreLastSession}
                 onChange={store.setRestoreLastSession}
               />
@@ -408,18 +410,18 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── Appearance ──────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              Appearance
+              {t.settings.appearance}
             </h3>
             <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
-                  <div className="text-sm text-gray-700 dark:text-gray-200">Theme</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">{t.settings.theme}</div>
                 </div>
                 <div className="flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
                   {([
-                    { value: "system", icon: Monitor, label: "System" },
-                    { value: "light", icon: Sun, label: "Light" },
-                    { value: "dark", icon: Moon, label: "Dark" },
+                    { value: "system", icon: Monitor, label: t.settings.themeSystem },
+                    { value: "light", icon: Sun, label: t.settings.themeLight },
+                    { value: "dark", icon: Moon, label: t.settings.themeDark },
                   ] as const).map(({ value, icon: Icon, label }) => (
                     <button
                       key={value}
@@ -442,13 +444,13 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 </div>
               </div>
               <AccentColorSelect
-                label="Accent Color"
+                label={t.settings.accentColor}
                 value={store.accentColor}
                 onChange={store.setAccentColor}
               />
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
-                  <div className="text-sm text-gray-700 dark:text-gray-200">Language</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">{t.settings.language}</div>
                 </div>
                 <div className="flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
                   {([
@@ -480,7 +482,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── Security ────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              Security
+              {t.settings.security}
             </h3>
             <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 py-3">
               <div className="flex items-start justify-between gap-4">
@@ -491,18 +493,18 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                     ) : (
                       <LockKeyhole size={15} className="text-gray-400" />
                     )}
-                    <span>Master Password</span>
+                    <span>{t.settings.security}</span>
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
                     {isMasterPasswordEnabled
-                      ? "Saved connections are encrypted and require your master password on startup."
-                      : "Optionally encrypt saved connections and require a password when the app starts."}
+                      ? t.settings.securityDescEnabled
+                      : t.settings.securityDescDisabled}
                   </p>
                   {!isMasterPasswordEnabled && connections.length > 0 && (
                     <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 px-3 py-2">
                       <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
                       <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
-                        Your saved connections are currently stored without master password protection.
+                        {t.settings.securityWarning}
                       </p>
                     </div>
                   )}
@@ -514,13 +516,13 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                       onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("change"); }}
                       className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                     >
-                      Change
+                      {t.settings.changePasswordLabel}
                     </button>
                     <button
                       onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("disable"); }}
                       className="px-3 py-1.5 text-sm rounded-md border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
                     >
-                      Disable
+                      {t.settings.disableLabel}
                     </button>
                   </div>
                 ) : (
@@ -528,7 +530,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                     onClick={() => { setMasterPasswordError(""); setMasterPasswordMode("enable"); }}
                     className="shrink-0 px-3 py-1.5 text-sm rounded-md bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
                   >
-                    Enable
+                    {t.settings.enableLabel}
                   </button>
                 )}
               </div>
@@ -538,33 +540,33 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── Toolbar ─────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              Toolbar
+              {t.settings.toolbarLabel}
             </h3>
             <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
               <ToggleRow
-                label="Breadcrumbs"
-                description="Show folder path navigation"
+                label={t.toolbar.breadcrumbs}
+                description={t.toolbar.breadcrumbsDesc}
                 checked={store.showBreadcrumbs}
                 onChange={store.setShowBreadcrumbs}
               />
               <ToggleRow
-                label="Filter"
-                description="Show search/filter input field"
+                label={t.toolbar.filter}
+                description={t.toolbar.filterDesc}
                 checked={store.showFilter}
                 onChange={store.setShowFilter}
               />
               <ToggleRow
-                label="Upload button"
+                label={t.toolbar.uploadButton}
                 checked={store.showUpload}
                 onChange={store.setShowUpload}
               />
               <ToggleRow
-                label="New Folder button"
+                label={t.toolbar.newFolderButton}
                 checked={store.showNewFolder}
                 onChange={store.setShowNewFolder}
               />
               <ToggleRow
-                label="Reload button"
+                label={t.toolbar.reloadButton}
                 checked={store.showReload}
                 onChange={store.setShowReload}
               />
@@ -574,15 +576,15 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── Data ────────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              Data
+              {t.settings.data}
             </h3>
             <div className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 pb-2 divide-y divide-gray-200 dark:divide-zinc-700">
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
-                  <div className="text-sm text-gray-700 dark:text-gray-200">Export Connections</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">{t.settings.exportConnections}</div>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                     {isMasterPasswordEnabled
-                      ? "Requires your master password, then creates a separate encrypted backup file"
+                      ? t.settings.exportDescWithMaster
                       : "Save all connections to an encrypted backup file"}
                   </div>
                 </div>
@@ -591,33 +593,33 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   disabled={connections.length === 0}
                   className="
                     flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                    border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300
+                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
                     hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer
                     disabled:opacity-40 disabled:cursor-not-allowed
                   "
                 >
                   <Download size={14} />
-                  Export
+                  {t.settings.export}
                 </button>
               </div>
 
               <div className="flex items-center justify-between py-3">
                 <div className="min-w-0 flex-1 pr-4">
-                  <div className="text-sm text-gray-700 dark:text-gray-200">Import Connections</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">{t.settings.importConnections}</div>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    Merge connections from an encrypted .enc backup
+                    {t.settings.importDesc}
                   </div>
                 </div>
                 <button
                   onClick={handleImportClick}
                   className="
                     flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                    border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300
+                    border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
                     hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer
                   "
                 >
                   <Upload size={14} />
-                  Import
+                  {t.settings.import}
                 </button>
               </div>
             </div>
@@ -626,7 +628,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           {/* ── About ───────────────────────────────────── */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-              About
+              {t.settings.about}
             </h3>
             <div className="rounded-lg bg-[var(--s3-sidebar-bg)] p-6">
               <div className="space-y-4">
@@ -656,7 +658,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 {/* Buy Me a Coffee */}
                 <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-                    Support this project
+                    {t.settings.support}
                   </p>
                   <a
                     href="https://ko-fi.com/nasrulhadi"
@@ -683,7 +685,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                     className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <RefreshCw size={12} className={updateChecking ? "animate-spin" : ""} />
-                    {updateChecking ? "Checking..." : "Check for Updates"}
+                    {updateChecking ? t.settings.checking : t.settings.checkForUpdates}
                   </button>
                   {updateStatus && (
                     <p className={`mt-1.5 text-xs ${updateStatus.error ? "text-red-400" : "text-green-500 dark:text-green-400"}`}>{updateStatus.text}</p>

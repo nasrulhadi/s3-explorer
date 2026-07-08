@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
+import { useT } from "../../i18n";
 
 interface Props {
-  /** "export" shows confirm-passphrase field; "import" shows single field */
   mode: "export" | "import";
-  /** External error from failed crypto operation (e.g. wrong passphrase) */
   externalError?: string;
-  /** Export-only: require current master password before creating a backup */
   requireMasterPassword?: boolean;
   onConfirm: (passphrase: string, masterPassword?: string) => void;
   onCancel: () => void;
@@ -19,6 +17,7 @@ export default function PassphraseModal({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
   const [masterPassword, setMasterPassword] = useState("");
   const [pass, setPass] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -64,32 +63,31 @@ export default function PassphraseModal({
           <div className="flex items-center gap-2">
             <Lock size={18} className="text-[var(--s3-accent-text)]" />
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-              {mode === "export" ? "Encrypt Export" : "Decrypt Import"}
+              {mode === "export" ? t.modals.passphrase.encryptExport : t.modals.passphrase.decryptImport}
             </h3>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {mode === "export"
               ? requireMasterPassword
-                ? "Enter your master password, then set a separate passphrase for the backup file."
-                : "Set a passphrase to encrypt your connection backup file."
-              : "Enter the passphrase used when this file was exported."}
+                ? t.modals.passphrase.exportDescWithMaster
+                : t.modals.passphrase.exportDesc
+              : t.modals.passphrase.importDesc}
           </p>
         </div>
 
         {/* Inputs */}
         <div className="px-5 pb-1 space-y-3">
-          {/* Master password (export only, when enabled) */}
           {mode === "export" && requireMasterPassword && (
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Master Password
+                {t.modals.passphrase.masterPasswordLabel}
               </label>
               <div className="relative">
                 <input
                   type={showMasterPassword ? "text" : "password"}
                   value={masterPassword}
                   onChange={(e) => { setMasterPassword(e.target.value); setError(""); }}
-                  placeholder="Enter master password"
+                  placeholder={t.unlock.placeholder}
                   autoFocus
                   className="
                     w-full pl-3 pr-9 py-2 text-sm
@@ -118,7 +116,7 @@ export default function PassphraseModal({
           {/* Passphrase */}
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Passphrase
+              {t.modals.passphrase.passphraseLabel}
             </label>
             <div className="relative">
               <input
@@ -154,14 +152,14 @@ export default function PassphraseModal({
           {mode === "export" && (
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Confirm Passphrase
+                {t.modals.passphrase.confirmLabel}
               </label>
               <div className="relative">
                 <input
                   type={showConfirm ? "text" : "password"}
                   value={confirm}
                   onChange={(e) => { setConfirm(e.target.value); setError(""); }}
-                  placeholder="Re-enter passphrase"
+                  placeholder={t.modals.passphrase.confirmPlaceholder}
                   className="
                     w-full pl-3 pr-9 py-2 text-sm
                     border border-gray-300 dark:border-zinc-700 rounded-lg
@@ -198,13 +196,13 @@ export default function PassphraseModal({
             onClick={onCancel}
             className="flex-1 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
-            Cancel
+            {t.modals.passphrase.cancel}
           </button>
           <button
             onClick={handleSubmit}
             className="flex-1 py-2 text-sm font-medium rounded-lg bg-[var(--s3-accent-active)] text-white hover:bg-[var(--s3-accent-hover)] transition-colors cursor-pointer"
           >
-            {mode === "export" ? "Encrypt & Save" : "Decrypt & Continue"}
+            {mode === "export" ? t.modals.passphrase.encryptSave : t.modals.passphrase.decryptContinue}
           </button>
         </div>
       </div>
