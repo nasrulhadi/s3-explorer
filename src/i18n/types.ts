@@ -1,0 +1,120 @@
+export interface Translations {
+  welcome: {
+    titleLine1: string;
+    titleLine2: string;
+    addFirstConnection: string;
+    importConnections: string;
+    or: string;
+    caption: string;
+  };
+  unlock: {
+    title: string;
+    badge: string;
+    masterPassword: string;
+    placeholder: string;
+    unlockButton: string;
+    unlocking: string;
+    forgotPassword: string;
+    caption: string;
+    errorEmpty: string;
+    errorWrong: string;
+    resetTitle: string;
+    resetDescription: string;
+    cancel: string;
+    resetButton: string;
+  };
+  emptyState: {
+    title: string;
+    caption: string;
+    shortcuts: { f5: string; back: string; ctrlU: string };
+  };
+  sidebar: {
+    header: string;
+    searchPlaceholder: string;
+    noConnections: string;
+    noMatch: string;
+    noMatchHint: string;
+    addConnection: string;
+    settings: string;
+    loadingBuckets: string;
+    noBuckets: string;
+  };
+  toolbar: {
+    filterPlaceholder: string;
+    disconnect: string;
+  };
+  connectionForm: {
+    pageTitleAdd: string;
+    pageTitleEdit: string;
+    connectionName: string;
+    namePlaceholder: string;
+    provider: string;
+    endpointUrl: string;
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    defaultBucket: string;
+    bucketPlaceholder: string;
+    testConnection: string;
+    testing: string;
+    testSuccess: string;
+    bucketListingNote: string;
+    saveButton: string;
+    updateButton: string;
+    errors: { nameRequired: string; bucketRequired: string };
+  };
+  deletePage: {
+    pageTitle: string;
+    warning: string;
+    warningDesc: string;
+    connectionToDelete: string;
+    confirmPrompt: string;
+    cancel: string;
+    deleteButton: string;
+  };
+  settings: {
+    pageTitle: string;
+    general: string;
+    restoreLastSession: string;
+    restoreLastSessionDesc: string;
+    appearance: string;
+    theme: string;
+    language: string;
+    accentColor: string;
+    security: string;
+    data: string;
+    exportConnections: string;
+    exportDesc: string;
+    importConnections: string;
+    importDesc: string;
+    about: string;
+    version: string;
+    checkForUpdates: string;
+    checking: string;
+    upToDate: string;
+    updateError: string;
+    support: string;
+    import: string;
+    export: string;
+    enableMasterPassword: string;
+    masterPasswordDesc: string;
+    disableMasterPassword: string;
+    changeMasterPassword: string;
+  };
+  modals: {
+    newFolder: { title: string; description: string; placeholder: string; cancel: string; creating: string; create: string };
+    rename: { titleFile: string; titleFolder: string; placeholder: string; cancel: string; rename: string };
+    deleteConfirm: { titleFile: string; titleFolder: string; titleBulk: string; confirmText: string; confirmBulkText: string; folderWarning: string; cannotUndo: string; cancel: string; delete: string };
+    info: { close: string; fileInfo: string; folderInfo: string };
+    url: { close: string };
+    upload: { title: string; reviewTitle: string; uploadFile: string; uploadFolder: string; browseFiles: string; browseFolders: string; selectedFiles: string; cancel: string; upload: string; uploading: string; maxSize: string };
+    passphrase: { encryptExport: string; decryptImport: string; masterPasswordLabel: string; passphraseLabel: string; confirmLabel: string; confirmPlaceholder: string; cancel: string; encryptSave: string; decryptContinue: string; exportDesc: string; exportDescWithMaster: string; importDesc: string };
+    importConnections: { title: string; found: string; importComplete: string; processed: string; added: string; updated: string; skipped: string; masterPasswordWarning: string; enableMasterPassword: string; done: string; cancel: string; import: string; insert: string; update: string; skip: string; replaces: string; duplicate: string };
+    updateAvailable: { title: string; description: string; remindLater: string; installRelaunch: string; installing: string; failed: string };
+  };
+  statusBar: { items: string; filtered: string; selected: string; activity: { loading: string; transfers: string; none: string } };
+  transferPanel: { title: string; noTransfers: string };
+  contextMenu: { copy: string; paste: string; rename: string; delete: string; download: string; downloadZip: string; getUrl: string; getInfo: string; upload: string; newFolder: string; reload: string };
+  providers: { aws: string; minio: string; r2: string; b2: string; custom: string };
+  common: { name: string; provider: string; endpoint: string; region: string; bucket: string; file: string; folder: string; cancel: string; close: string; save: string; back: string };
+}

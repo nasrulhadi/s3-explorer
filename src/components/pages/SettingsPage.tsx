@@ -446,6 +446,34 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 value={store.accentColor}
                 onChange={store.setAccentColor}
               />
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 flex-1 pr-4">
+                  <div className="text-sm text-gray-700 dark:text-gray-200">Language</div>
+                </div>
+                <div className="flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+                  {([
+                    { value: "en" as const, label: "English" },
+                    { value: "id" as const, label: "Indonesia" },
+                  ]).map(({ value, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => store.setLanguage(value)}
+                      title={label}
+                      className={`
+                        flex items-center gap-1.5 px-2.5 py-1.5 text-xs
+                        border-r border-gray-200 dark:border-zinc-700 last:border-r-0
+                        transition-colors cursor-pointer
+                        ${store.language === value
+                          ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                        }
+                      `}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 

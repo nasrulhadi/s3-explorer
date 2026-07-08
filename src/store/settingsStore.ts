@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ColumnWidths } from "../types";
+import type { Language } from "../i18n";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -17,6 +18,7 @@ interface SettingsState {
   // Appearance
   theme: ThemeMode;
   accentColor: string;  // Accent color ID (default: "brown")
+  language: Language;
   // Column widths (persisted, resizable via header drag)
   columnWidths: ColumnWidths;
   // Toolbar
@@ -31,6 +33,7 @@ interface SettingsActions {
   setRestoreLastSession: (value: boolean) => void;
   setTheme: (value: ThemeMode) => void;
   setAccentColor: (value: string) => void;
+  setLanguage: (value: Language) => void;
   setColumnWidths: (value: ColumnWidths) => void;
   setShowFilter: (value: boolean) => void;
   setShowUpload: (value: boolean) => void;
@@ -48,6 +51,7 @@ export const useSettingsStore = create<SettingsStore>()(
       restoreLastSession: false,
       theme: "system",
       accentColor: "brown",  // Default accent color (easily changeable)
+      language: "en",
       columnWidths: { ...DEFAULT_COL_WIDTHS },
       showFilter: true,
       showUpload: true,
@@ -59,6 +63,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setRestoreLastSession: (value) => set({ restoreLastSession: value }),
       setTheme: (value) => set({ theme: value }),
       setAccentColor: (value) => set({ accentColor: value }),
+      setLanguage: (value) => set({ language: value }),
       setColumnWidths: (value) => set({ columnWidths: value }),
       setShowFilter: (value) => set({ showFilter: value }),
       setShowUpload: (value) => set({ showUpload: value }),
