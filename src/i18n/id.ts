@@ -129,9 +129,9 @@ export const id = {
     deleteConfirm: {
       titleFile: "Hapus File",
       titleFolder: "Hapus Folder",
-      titleBulk: "Hapus ITEMS Item",
-      confirmText: "Anda yakin ingin menghapus NAMA?",
-      confirmBulkText: "Anda yakin ingin menghapus JUMLAH item?",
+      titleBulk: "Hapus {count} Item",
+      confirmText: "Anda yakin ingin menghapus {name}?",
+      confirmBulkText: "Anda yakin ingin menghapus {count} item?",
       folderWarning: "Semua isi di dalamnya akan dihapus permanen.",
       cannotUndo: "Tindakan ini tidak dapat dibatalkan.",
       cancel: "Batal",

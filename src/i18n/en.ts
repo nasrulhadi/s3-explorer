@@ -129,9 +129,9 @@ export const en = {
     deleteConfirm: {
       titleFile: "Delete File",
       titleFolder: "Delete Folder",
-      titleBulk: "Delete ITEMS Items",
-      confirmText: "Are you sure you want to delete NAME?",
-      confirmBulkText: "Are you sure you want to delete COUNT items?",
+      titleBulk: "Delete {count} Items",
+      confirmText: "Are you sure you want to delete {name}?",
+      confirmBulkText: "Are you sure you want to delete {count} items?",
       folderWarning: "All contents inside will be permanently removed.",
       cannotUndo: "This action cannot be undone.",
       cancel: "Cancel",
