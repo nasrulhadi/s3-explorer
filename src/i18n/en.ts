@@ -47,6 +47,7 @@ export const en = {
     deleteConnectionTitle: "Delete connection",
     searchConnectionsTitle: "Search connections",
     clearTitle: "Clear",
+    lockApp: "Lock App",
   },
   toolbar: {
     filterPlaceholder: "Filter…",

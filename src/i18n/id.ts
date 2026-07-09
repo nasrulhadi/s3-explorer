@@ -47,6 +47,7 @@ export const id = {
     deleteConnectionTitle: "Hapus koneksi",
     searchConnectionsTitle: "Cari koneksi",
     clearTitle: "Bersihkan",
+    lockApp: "Kunci Aplikasi",
   },
   toolbar: {
     filterPlaceholder: "Filter…",

@@ -2,7 +2,7 @@
 
 **A modern desktop application for managing S3-compatible object storage**
 
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
+[![Version](https://img.shields.io/badge/version-1.9.1-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#)
 
@@ -102,7 +102,7 @@ Get the latest release from [GitHub Releases](https://github.com/nasrulhadi/s3-e
 - **[Tailwind CSS v4](https://tailwindcss.com)** — Utility-first styling (CSS-based config)
 - **[TanStack Query v5](https://tanstack.com/query/latest)** — Data fetching & caching
 - **[TanStack Virtual v3](https://tanstack.com/virtual/latest)** — Virtualized lists
-- **[Zustand v5](https://docs.pmnd.rs/zustand)** — State management (5 stores)
+- **[Zustand v5](https://docs.pmnd.rs/zustand)** — State management (7 stores)
 - **[Lucide React](https://lucide.dev)** — Beautiful icons
 - **[Sonner](https://sonner.emilkowal.ski)** — Toast notifications
 - **[Radix UI](https://www.radix-ui.com)** — Context menu
@@ -164,29 +164,49 @@ s3-explorer/
 │   ├── main.tsx                      # Entry point, QueryClient setup
 │   ├── App.tsx                       # Root layout, view routing, theme/accent
 │   ├── App.css                       # Tailwind v4 + CSS custom properties
+│   ├── i18n/                         # Multi-language (EN + ID)
+│   │   ├── index.ts                  # Translations interface + useT hook
+│   │   ├── en.ts                     # English dictionary
+│   │   └── id.ts                     # Indonesian dictionary
+│   ├── assets/                       # Provider icons, brand images
 │   ├── components/
 │   │   ├── pages/                    # ConnectionFormPage, DeleteConnectionPage, SettingsPage
-│   │   ├── explorer/                 # FileList, FileRow, FolderRow, EmptyState, ColumnHeader, ExplorerContextMenu
+│   │   │   ├── ConnectionFormPage.tsx    # Add/edit connection (page)
+│   │   │   ├── DeleteConnectionPage.tsx  # Delete confirmation (page)
+│   │   │   └── SettingsPage.tsx          # Settings: theme, accent, language, security, data
+│   │   ├── explorer/
+│   │   │   ├── FileList.tsx          # Core file list (virtualized)
+│   │   │   ├── FileRow.tsx           # Single file row
+│   │   │   ├── FolderRow.tsx         # Single folder row
+│   │   │   ├── ColumnHeader.tsx      # Resizable column headers
+│   │   │   ├── EmptyState.tsx        # Empty state with shortcut hints
+│   │   │   ├── ExplorerContextMenu.tsx  # Unified context menu
+│   │   │   ├── WelcomeScreen.tsx     # Onboarding screen
+│   │   │   ├── UnlockScreen.tsx      # Master password unlock screen
 │   │   │   └── hooks/                # useFileSelection, useFileClipboard, useDragMove
 │   │   ├── layout/                   # TitleBar, Sidebar, Toolbar, TransferPanel
-│   │   └── modals/                   # NewFolderModal, RenameModal, DeleteConfirmModal, InfoModal, UrlModal, ZipErrorModal, UploadModal, UpdateModal, EmojiPicker, PassphraseModal, ImportConnectionsModal
+│   │   └── modals/                   # NewFolder, Rename, DeleteConfirm, Info, Url, ZipError, 
+│   │                                 # Upload, Update, EmojiPicker, MasterPassword,
+│   │                                 # Passphrase, ImportConnections
 │   ├── hooks/
 │   │   ├── useS3.ts                  # S3 operations (queries + mutations)
-│   │   ├── useUpdateChecker.ts        # Automatic update detection
+│   │   ├── useUpdateChecker.ts       # Automatic update detection
 │   │   ├── useDownload.ts            # Download progress tracking
 │   │   └── useKeyboardShortcuts.ts   # Global keyboard shortcuts
-│   ├── store/                        # Zustand state stores
+│   ├── store/                        # Zustand state stores (7 stores)
 │   │   ├── connectionStore.ts        # S3 connections (persisted)
 │   │   ├── navigationStore.ts        # View state & history (partially persisted)
 │   │   ├── transferStore.ts          # Upload/download/move queue
-│   │   ├── settingsStore.ts          # User preferences (persisted)
+│   │   ├── settingsStore.ts          # User preferences, language, column widths (persisted)
 │   │   ├── clipboardStore.ts         # Copy/paste items
+│   │   ├── securityStore.ts          # Master password state (persisted)
 │   │   └── updateStore.ts            # Auto-update state
 │   ├── lib/
 │   │   ├── s3Client.ts               # S3 client factory + CORS-bypass handler
 │   │   ├── s3FolderOps.ts            # B2-safe recursive folder operations
 │   │   ├── utils.ts                  # Helper functions
 │   │   ├── crypto.ts                 # AES-256-GCM encryption for export/import
+│   │   ├── secureVault.ts            # PBKDF2 + AES-256-GCM local vault
 │   │   ├── accentColors.ts           # Accent color definitions
 │   │   ├── emojis.ts                 # Curated emoji list for connection icons
 │   │   └── menuStyles.ts             # Shared context menu styling constants
@@ -196,7 +216,7 @@ s3-explorer/
 ├── src-tauri/                        # Rust backend (minimal shell)
 │   ├── src/
 │   │   ├── main.rs                   # Binary entry point
-│   │   └── lib.rs                    # Tauri builder + plugins
+│   │   └── lib.rs                    # Tauri builder + plugins (http, opener, updater)
 │   ├── icons/                        # App icons (generated from source PNG)
 │   ├── Cargo.toml                    # Rust dependencies + author
 │   ├── tauri.conf.json               # App config (frameless, 1200x800)

@@ -42,6 +42,7 @@ export interface Translations {
     deleteConnectionTitle: string;
     searchConnectionsTitle: string;
     clearTitle: string;
+    lockApp: string;
   };
   toolbar: {
     filterPlaceholder: string;

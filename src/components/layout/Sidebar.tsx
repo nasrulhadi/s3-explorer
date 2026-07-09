@@ -10,9 +10,11 @@ import {
   Search,
   X,
   Circle,
+  Lock,
 } from "lucide-react";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useNavigationStore } from "../../store/navigationStore";
+import { useSecurityStore } from "../../store/securityStore";
 import { useS3 } from "../../hooks/useS3";
 import { useT } from "../../i18n";
 import type { S3Connection, S3Provider } from "../../types";
@@ -194,6 +196,8 @@ export default function Sidebar({
   const setActiveConnection = useConnectionStore((s) => s.setActiveConnection);
   const setConnectionId = useNavigationStore((s) => s.setConnectionId);
   const setBucket = useNavigationStore((s) => s.setBucket);
+  const isMasterPasswordEnabled = useSecurityStore((s) => s.isMasterPasswordEnabled);
+  const lock = useSecurityStore((s) => s.lock);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -258,7 +262,7 @@ export default function Sidebar({
           </h1>
           {hasConnections && (
             <span className="text-xs text-gray-400 dark:text-gray-500">
-              {connections.length}
+              {filteredConnections.length}
             </span>
           )}
         </div>
@@ -377,6 +381,23 @@ export default function Sidebar({
         >
           <Settings size={14} />
         </button>
+        {isMasterPasswordEnabled && (
+          <button
+            onClick={lock}
+            title={t.sidebar.lockApp}
+            className="
+              flex items-center justify-center
+              w-9 h-9 rounded-full
+              bg-white dark:bg-zinc-800
+              border border-gray-200 dark:border-zinc-700
+              text-gray-700 dark:text-gray-200
+              hover:bg-gray-50 dark:hover:bg-zinc-700
+              transition-colors cursor-pointer
+            "
+          >
+            <Lock size={14} />
+          </button>
+        )}
       </div>
     </aside>
   );

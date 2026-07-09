@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.9.1] - 2026-07-09
+
+### Added
+- **Lock App Button**: Lock icon in sidebar footer that immediately locks the app (shows UnlockScreen)
+  - Only visible when master password vault is enabled
+  - Same button style (round, bordered) as Settings button
+- **Docs Sync Script**: `scripts/sync-docs.mjs` — auto-scans project structure, detects stale references, updates structure trees, store counts, and dates across 5 documentation files
+
+### Changed
+- **Dynamic Sidebar Count**: Connection count in sidebar header now follows active filter (was always showing total)
+- **Documentation Synced**: All 5 docs (README, PROJECT, CONVENTIONS, CLAUDE, .cursorrules) updated to match actual codebase — 7 stores, pages/ subdir, regenerated file structure trees, removed stale references (`useConnectivity`, `AddConnectionModal`, `greet`, `~2300 lines`)
+
+### Fixed
+- **Column Header Labels**: Translate column headers directly in fields array (remove labelMap)
+- **Column Header Keys**: labelMap keys now match fields array (`lastModified`, `storageClass`)
+- **Documentation Store Count**: Fixed "5 stores" → "7 stores" across all docs (missed `securityStore` + `updateStore`)
+
+---
+
+## [1.9.1] - 2026-07-09
+
+### Added
+- **Lock App Button**: Lock icon in sidebar footer that immediately locks the app (shows UnlockScreen)
+  - Only visible when master password vault is enabled
+  - Same button style (round, bordered) as Settings button
+- **Docs Sync Script**: `scripts/sync-docs.mjs` — auto-scans project structure, detects stale references, updates structure trees, store counts, and dates across 5 documentation files
+
+### Changed
+- **Dynamic Sidebar Count**: Connection count in sidebar header now follows active filter (was always showing total)
+- **Documentation Synced**: All 5 docs (README, PROJECT, CONVENTIONS, CLAUDE, .cursorrules) updated to match actual codebase — 7 stores, pages/ subdir, regenerated file structure trees, removed stale references (`useConnectivity`, `AddConnectionModal`, `greet`, `~2300 lines`)
+
+### Fixed
+- **Column Header Labels**: Translate column headers directly in fields array (remove labelMap)
+- **Column Header Keys**: labelMap keys now match fields array (`lastModified`, `storageClass`)
+- **Documentation Store Count**: Fixed "5 stores" → "7 stores" across all docs (missed `securityStore` + `updateStore`)
+
+---
+
 ## [1.9.0] - 2026-07-09
 
 ### Added
