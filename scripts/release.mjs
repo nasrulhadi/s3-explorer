@@ -89,4 +89,19 @@ replace(
   `Current Version: ${vVersion}`,
 );
 
+// 8. update.json — version + pub_date
+{
+  const today = new Date().toISOString().split("T")[0] + "T00:00:00Z";
+  let content = readFileSync("update.json", "utf8");
+  const before = content;
+  content = content.replace(/"version":\s*"[^"]*"/, `"version": "${version}"`);
+  content = content.replace(/"pub_date":\s*"[^"]*"/, `"pub_date": "${today}"`);
+  if (content !== before) {
+    writeFileSync("update.json", content, "utf8");
+    console.log("  ✓  update.json");
+  } else {
+    console.warn("  ⚠  update.json: no changes (already up to date?)");
+  }
+}
+
 console.log(`\nDone. Review changes, then:\n  git add -A && git commit -m "docs: bump version to ${vVersion}" && git tag -a ${vVersion} -m "${vVersion}"\n`);
