@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -6,10 +6,11 @@ import tailwindcss from "@tailwindcss/vite";
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
-// Single source of truth: app version from latest git tag
+// Read version from package.json (synced by scripts/release.mjs)
 function getVersion(): string {
   try {
-    return execSync("git describe --tags --abbrev=0", { encoding: "utf-8" }).trim();
+    const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
+    return pkg.version || "0.0.0";
   } catch {
     return "0.0.0";
   }
