@@ -5,22 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
-## [1.9.1] - 2026-07-09
+## [1.9.2] - 2026-07-09
 
 ### Added
-- **Lock App Button**: Lock icon in sidebar footer that immediately locks the app (shows UnlockScreen)
-  - Only visible when master password vault is enabled
-  - Same button style (round, bordered) as Settings button
-- **Docs Sync Script**: `scripts/sync-docs.mjs` — auto-scans project structure, detects stale references, updates structure trees, store counts, and dates across 5 documentation files
-
-### Changed
-- **Dynamic Sidebar Count**: Connection count in sidebar header now follows active filter (was always showing total)
-- **Documentation Synced**: All 5 docs (README, PROJECT, CONVENTIONS, CLAUDE, .cursorrules) updated to match actual codebase — 7 stores, pages/ subdir, regenerated file structure trees, removed stale references (`useConnectivity`, `AddConnectionModal`, `greet`, `~2300 lines`)
+- **In-App Changelog**: "What's new" link in Settings → About opens a changelog modal showing the latest version's release notes
+  - Markdown-like rendering with inline `code` badges for technical terms
+  - Version displayed as accent-colored pill badge
+  - "View full changelog on GitHub" footer link opens in system browser via opener plugin
+  - CHANGELOG.md embedded at build time via Vite `define`
+- **`update.json` in release.mjs**: Version sync script now also updates `update.json` version + `pub_date`
 
 ### Fixed
-- **Column Header Labels**: Translate column headers directly in fields array (remove labelMap)
-- **Column Header Keys**: labelMap keys now match fields array (`lastModified`, `storageClass`)
-- **Documentation Store Count**: Fixed "5 stores" → "7 stores" across all docs (missed `securityStore` + `updateStore`)
+- **App Version Source**: Settings page now reads version from `package.json` instead of `git describe` (works without git)
+- **Changelog External Link**: Uses `@tauri-apps/plugin-opener` for reliable browser opening
+- **Accent Link Visibility**: "What's new" and "View full changelog" use `--s3-accent-active` (brighter) instead of `--s3-accent-base` (washed out in dark mode)
+- **Duplicate v1.9.1**: Removed duplicate changelog entry from CHANGELOG.md
 
 ---
 

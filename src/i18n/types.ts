@@ -117,6 +117,7 @@ export interface Translations {
     importDesc: string;
     about: string;
     version: string;
+    whatsNew: string;
     checkForUpdates: string;
     checking: string;
     upToDate: string;
@@ -151,5 +152,6 @@ export interface Translations {
   providers: { aws: string; minio: string; r2: string; b2: string; custom: string };
   emojiPicker: { searchPlaceholder: string; noResults: string; reset: string; cancel: string; select: string };
   common: { name: string; key: string; type: string; size: string; lastModified: string; contentType: string; storageClass: string; modified: string; class: string; provider: string; endpoint: string; region: string; bucket: string; file: string; folder: string; cancel: string; close: string; save: string; back: string };
+  changelog: { title: string; viewFull: string };
   masterPassword: { currentPasswordLabel: string; newPasswordLabel: string; confirmPasswordLabel: string; enterCurrentPassword: string; chooseStrongPassword: string; reEnterPassword: string; working: string; enableProtection: string; disableProtection: string; changePassword: string; encryptDescription: string; disableDescription: string; changeDescription: string; forgotPasswordWarning: string; currentPasswordRequired: string; newPasswordRequired: string; passwordTooShort: string; passwordsDontMatch: string; errorWrongOrCorrupted: string; };
 }

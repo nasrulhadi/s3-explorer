@@ -127,6 +127,7 @@ export const id = {
     about: "Tentang",
     version: "S3 Explorer VERSI",
     checkForUpdates: "Periksa Pembaruan",
+    whatsNew: "Apa yang baru",
     checking: "Memeriksa…",
     upToDate: "Sudah versi terbaru (vVERSI)",
     updateError: "Tidak dapat menjangkau server pembaruan",
@@ -334,5 +335,9 @@ export const id = {
     passwordTooShort: "Kata sandi utama harus minimal 8 karakter.",
     passwordsDontMatch: "Kata sandi utama tidak cocok.",
     errorWrongOrCorrupted: "Kata sandi utama salah atau vault rusak.",
+  },
+  changelog: {
+    title: "Changelog",
+    viewFull: "Lihat changelog lengkap di GitHub",
   },
 } as const satisfies import("./types").Translations;

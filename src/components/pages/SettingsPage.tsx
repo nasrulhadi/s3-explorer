@@ -9,6 +9,7 @@ import { check } from "@tauri-apps/plugin-updater";
 import { useUpdateStore } from "../../store/updateStore";
 import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
+import ChangelogModal from "../modals/ChangelogModal";
 import MasterPasswordModal, {
   type MasterPasswordMode,
   type MasterPasswordPayload,
@@ -186,6 +187,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
   const [masterPasswordMode, setMasterPasswordMode] = useState<MasterPasswordMode | null>(null);
   const [masterPasswordError, setMasterPasswordError] = useState("");
   const [masterPasswordBusy, setMasterPasswordBusy] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   // ── Master Password ─────────────────────────────────────
   const handleMasterPasswordConfirm = async (payload: MasterPasswordPayload) => {
@@ -682,9 +684,17 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
 
                 {/* Version */}
                 <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    S3 Explorer {__APP_VERSION__}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      S3 Explorer {__APP_VERSION__}
+                    </p>
+                    <button
+                      onClick={() => setChangelogOpen(true)}
+                      className="text-xs text-[var(--s3-accent-active)] hover:underline cursor-pointer font-medium"
+                    >
+                      {t.settings.whatsNew}
+                    </button>
+                  </div>
                   <button
                     onClick={handleCheckForUpdate}
                     disabled={updateChecking}
@@ -744,6 +754,12 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
           onCancel={() => { setMasterPasswordMode(null); setMasterPasswordError(""); }}
         />
       )}
+
+      {/* Changelog modal */}
+      <ChangelogModal
+        open={changelogOpen}
+        onClose={() => setChangelogOpen(false)}
+      />
     </div>
   );
 }

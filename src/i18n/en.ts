@@ -127,6 +127,7 @@ export const en = {
     about: "About",
     version: "S3 Explorer VERSION",
     checkForUpdates: "Check for Updates",
+    whatsNew: "What's new",
     checking: "Checking…",
     upToDate: "Already up to date (vVERSION)",
     updateError: "Could not reach update server",
@@ -334,5 +335,9 @@ export const en = {
     passwordTooShort: "Master password must be at least 8 characters.",
     passwordsDontMatch: "Master passwords do not match.",
     errorWrongOrCorrupted: "Wrong master password or corrupted vault.",
+  },
+  changelog: {
+    title: "Changelog",
+    viewFull: "View full changelog on GitHub",
   },
 } as const satisfies import("./types").Translations;

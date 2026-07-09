@@ -16,10 +16,20 @@ function getVersion(): string {
   }
 }
 
+// Embed CHANGELOG.md for in-app display
+function getChangelog(): string {
+  try {
+    return readFileSync("CHANGELOG.md", "utf-8");
+  } catch {
+    return "# Changelog\n\nNot available.";
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   define: {
     __APP_VERSION__: JSON.stringify(getVersion()),
+    __CHANGELOG__: JSON.stringify(getChangelog()),
   },
   plugins: [react(), tailwindcss()],
 
