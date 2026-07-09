@@ -70,10 +70,10 @@ export default function ColumnHeader({
   );
 
   const fields: { key: SortField; label: string; resizeKey?: ResizeTarget }[] = [
-    { key: "name", label: "Name", resizeKey: "name" },
-    { key: "size", label: "Size", resizeKey: "size" },
-    { key: "lastModified", label: "Modified", resizeKey: "modified" },
-    { key: "storageClass", label: "Class" },
+    { key: "name", label: t.common.name, resizeKey: "name" },
+    { key: "size", label: t.common.size, resizeKey: "size" },
+    { key: "lastModified", label: t.common.modified, resizeKey: "modified" },
+    { key: "storageClass", label: t.common.class },
   ];
 
   const BASE = "grid items-center h-10 px-3 gap-2 border-b border-[var(--s3-window-border)] bg-[var(--s3-statusbar-bg)] text-xs font-medium text-[var(--s3-window-muted)] shrink-0 select-none";
