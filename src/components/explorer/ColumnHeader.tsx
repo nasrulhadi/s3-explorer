@@ -22,7 +22,7 @@ export default function ColumnHeader({
 }: ColumnHeaderProps) {
   const t = useT();
   const columnWidths = useSettingsStore((s) => s.columnWidths);
-  const labelMap: Record<string, string> = { name: t.common.name, size: t.common.size, modified: t.common.modified, class: t.common.class };
+  const labelMap: Record<string, string> = { name: t.common.name, size: t.common.size, lastModified: t.common.modified, storageClass: t.common.class };
 
   const [resizing, setResizing] = useState<ResizeTarget | null>(null);
   const startXRef = useRef(0);
