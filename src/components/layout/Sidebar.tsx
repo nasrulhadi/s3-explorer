@@ -391,7 +391,7 @@ export default function Sidebar({
               bg-white dark:bg-zinc-800
               border border-gray-200 dark:border-zinc-700
               text-gray-700 dark:text-gray-200
-              hover:bg-gray-50 dark:hover:bg-zinc-700
+              hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20
               transition-colors cursor-pointer
             "
           >
