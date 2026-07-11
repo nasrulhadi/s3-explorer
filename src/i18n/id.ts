@@ -107,6 +107,7 @@ export const id = {
     general: "Umum",
     restoreLastSession: "Pulihkan sesi terakhir",
     restoreLastSessionDesc: "Buka lagi bucket dan folder terakhir saat aplikasi dijalankan",
+    keyboardShortcuts: "Pintasan Keyboard",
     appearance: "Tampilan",
     theme: "Tema",
     themeSystem: "Sistem",
@@ -339,5 +340,13 @@ export const id = {
   changelog: {
     title: "Changelog",
     viewFull: "Lihat changelog lengkap di GitHub",
+  },
+  shortcuts: {
+    title: "Pintasan Keyboard",
+    refresh: "Segarkan folder saat ini",
+    back: "Kembali",
+    upload: "Unggah file",
+    deleteItems: "Hapus item terpilih",
+    closeOrDeselect: "Tutup modal / hapus pilihan",
   },
 } as const satisfies import("./types").Translations;

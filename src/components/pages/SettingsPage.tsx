@@ -10,6 +10,7 @@ import { useUpdateStore } from "../../store/updateStore";
 import ImportConnectionsModal from "../modals/ImportConnectionsModal";
 import PassphraseModal from "../modals/PassphraseModal";
 import ChangelogModal from "../modals/ChangelogModal";
+import ShortcutsModal from "../modals/ShortcutsModal";
 import MasterPasswordModal, {
   type MasterPasswordMode,
   type MasterPasswordPayload,
@@ -188,6 +189,7 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
   const [masterPasswordError, setMasterPasswordError] = useState("");
   const [masterPasswordBusy, setMasterPasswordBusy] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // ── Master Password ─────────────────────────────────────
   const handleMasterPasswordConfirm = async (payload: MasterPasswordPayload) => {
@@ -412,6 +414,12 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                 checked={store.restoreLastSession}
                 onChange={store.setRestoreLastSession}
               />
+              <button
+                onClick={() => setShortcutsOpen(true)}
+                className="w-full flex items-center justify-between px-0 py-3 border-t border-gray-100 dark:border-zinc-700/50 text-xs text-[var(--s3-accent-active)] hover:underline cursor-pointer font-medium"
+              >
+                {t.settings.keyboardShortcuts}
+              </button>
             </div>
           </section>
 
@@ -759,6 +767,12 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
       <ChangelogModal
         open={changelogOpen}
         onClose={() => setChangelogOpen(false)}
+      />
+
+      {/* Shortcuts modal */}
+      <ShortcutsModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
       />
     </div>
   );

@@ -98,6 +98,7 @@ export interface Translations {
     general: string;
     restoreLastSession: string;
     restoreLastSessionDesc: string;
+    keyboardShortcuts: string;
     appearance: string;
     theme: string;
     themeSystem: string;
@@ -153,5 +154,6 @@ export interface Translations {
   emojiPicker: { searchPlaceholder: string; noResults: string; reset: string; cancel: string; select: string };
   common: { name: string; key: string; type: string; size: string; lastModified: string; contentType: string; storageClass: string; modified: string; class: string; provider: string; endpoint: string; region: string; bucket: string; file: string; folder: string; cancel: string; close: string; save: string; back: string };
   changelog: { title: string; viewFull: string };
+  shortcuts: { title: string; refresh: string; back: string; upload: string; deleteItems: string; closeOrDeselect: string };
   masterPassword: { currentPasswordLabel: string; newPasswordLabel: string; confirmPasswordLabel: string; enterCurrentPassword: string; chooseStrongPassword: string; reEnterPassword: string; working: string; enableProtection: string; disableProtection: string; changePassword: string; encryptDescription: string; disableDescription: string; changeDescription: string; forgotPasswordWarning: string; currentPasswordRequired: string; newPasswordRequired: string; passwordTooShort: string; passwordsDontMatch: string; errorWrongOrCorrupted: string; };
 }

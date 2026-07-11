@@ -107,6 +107,7 @@ export const en = {
     general: "General",
     restoreLastSession: "Restore last session",
     restoreLastSessionDesc: "Reopen the last viewed bucket and folder on startup",
+    keyboardShortcuts: "Keyboard Shortcuts",
     appearance: "Appearance",
     theme: "Theme",
     themeSystem: "System",
@@ -339,5 +340,13 @@ export const en = {
   changelog: {
     title: "Changelog",
     viewFull: "View full changelog on GitHub",
+  },
+  shortcuts: {
+    title: "Keyboard Shortcuts",
+    refresh: "Refresh current folder",
+    back: "Go back",
+    upload: "Upload files",
+    deleteItems: "Delete selected items",
+    closeOrDeselect: "Close modal / clear selection",
   },
 } as const satisfies import("./types").Translations;
