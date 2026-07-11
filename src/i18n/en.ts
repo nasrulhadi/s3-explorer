@@ -108,6 +108,7 @@ export const en = {
     restoreLastSession: "Restore last session",
     restoreLastSessionDesc: "Reopen the last viewed bucket and folder on startup",
     keyboardShortcuts: "Keyboard Shortcuts",
+    keyboardShortcutsDesc: "View available keyboard shortcuts",
     appearance: "Appearance",
     theme: "Theme",
     themeSystem: "System",

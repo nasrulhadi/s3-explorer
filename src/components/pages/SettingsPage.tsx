@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck, RefreshCw, Sun, Moon, Monitor } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Mail, Download, Upload, LockKeyhole, ShieldCheck, RefreshCw, Sun, Moon, Monitor, ChevronRight } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
 import { useConnectionStore } from "../../store/connectionStore";
 import { useSecurityStore } from "../../store/securityStore";
@@ -416,9 +416,13 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
               />
               <button
                 onClick={() => setShortcutsOpen(true)}
-                className="w-full flex items-center justify-between px-0 py-3 border-t border-gray-100 dark:border-zinc-700/50 text-xs text-[var(--s3-accent-active)] hover:underline cursor-pointer font-medium"
+                className="w-full flex items-center justify-between px-0 py-3 border-t border-gray-100 dark:border-zinc-700/50 text-left hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer rounded-b-lg"
               >
-                {t.settings.keyboardShortcuts}
+                <div className="min-w-0">
+                  <p className="text-xs text-[var(--s3-window-text)]">{t.settings.keyboardShortcuts}</p>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{t.settings.keyboardShortcutsDesc}</p>
+                </div>
+                <ChevronRight size={14} className="shrink-0 text-gray-400 ml-3" />
               </button>
             </div>
           </section>

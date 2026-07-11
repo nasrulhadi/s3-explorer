@@ -99,6 +99,7 @@ export interface Translations {
     restoreLastSession: string;
     restoreLastSessionDesc: string;
     keyboardShortcuts: string;
+    keyboardShortcutsDesc: string;
     appearance: string;
     theme: string;
     themeSystem: string;

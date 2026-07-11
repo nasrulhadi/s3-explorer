@@ -108,6 +108,7 @@ export const id = {
     restoreLastSession: "Pulihkan sesi terakhir",
     restoreLastSessionDesc: "Buka lagi bucket dan folder terakhir saat aplikasi dijalankan",
     keyboardShortcuts: "Pintasan Keyboard",
+    keyboardShortcutsDesc: "Lihat pintasan keyboard yang tersedia",
     appearance: "Tampilan",
     theme: "Tema",
     themeSystem: "Sistem",
