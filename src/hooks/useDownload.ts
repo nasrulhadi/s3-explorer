@@ -110,9 +110,8 @@ export function useDownload() {
 
         const response = await tauriFetch(url, {
           method: "GET",
-          // Tauri's fetch doesn't support AbortController signal the same way,
-          // but we keep the reference for the cancel logic below.
-        } as RequestInit & { signal?: AbortSignal });
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
