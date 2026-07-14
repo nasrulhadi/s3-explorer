@@ -19,6 +19,7 @@ import { useSettingsStore } from "./store/settingsStore";
 import { useSecurityStore } from "./store/securityStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUpdateChecker } from "./hooks/useUpdateChecker";
+import { useIdleLock } from "./hooks/useIdleLock";
 import { getAccentColor } from "./lib/accentColors";
 import "./App.css";
 
@@ -152,6 +153,9 @@ function AppLayout() {
 
   // ── Update checker ────────────────────────────────────────
   useUpdateChecker();
+
+  // ── Auto-lock the vault after idle timeout ─────────────────
+  useIdleLock();
 
   // ── Keyboard shortcuts ─────────────────────────────────────
 

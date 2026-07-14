@@ -18,6 +18,8 @@ export const en = {
     caption: "Your saved connections are safely encrypted. Enter your master password to access them.",
     errorEmpty: "Enter your master password to continue.",
     errorWrong: "Incorrect master password. Your connections are still locked.",
+    cooldownNotice: "That's a few misses in a row. Let's take a short breather — you can try again in {time}.",
+    cooldownWait: "Try again in {time}",
     resetTitle: "Reset saved connections?",
     resetDescription:
       "This disables the master password and permanently deletes local saved connections. Existing encrypted backup files can still be imported with their backup passphrase.",
@@ -85,6 +87,7 @@ export const en = {
     testing: "Testing…",
     testSuccess: "Connection OK!",
     bucketListingNote: "Bucket listing not supported — enter bucket name in the sidebar.",
+    httpWarning: "This endpoint uses plain HTTP. Your access key and secret will be sent unencrypted and can be intercepted. Use HTTPS unless this is a trusted local network.",
     saveButton: "Save Connection",
     updateButton: "Update Connection",
     errors: {
@@ -120,6 +123,10 @@ export const en = {
     securityDescEnabled: "Saved connections are encrypted and require your master password on startup.",
     securityDescDisabled: "Optionally encrypt saved connections and require a password when the app starts.",
     securityWarning: "Your saved connections are currently stored without master password protection.",
+    autoLock: "Auto-lock when idle",
+    autoLockDesc: "Automatically lock the vault after a period of inactivity, requiring your master password again.",
+    autoLockNever: "Never",
+    autoLockMinutesLabel: "N min",
     data: "Data",
     exportConnections: "Export Connections",
     exportDesc: "Save all connections to an encrypted .enc backup",

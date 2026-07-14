@@ -113,7 +113,10 @@ export async function moveFolderRecursive(
 
   if (allObjects.length === 0) return;
 
-  // 2. Copy each object to the new prefix (preserving relative paths)
+  // 2. Copy each object to the new prefix (preserving relative paths).
+  //    Track failures so we never delete the source unless every object was
+  //    copied — otherwise a partial copy followed by a full delete loses data.
+  const failed: string[] = [];
   for (const obj of allObjects) {
     const relativeKey = obj.key.slice(sourcePrefix.length);
     const destKey = `${destPrefix}${relativeKey}`;
@@ -126,11 +129,20 @@ export async function moveFolderRecursive(
         }),
       );
     } catch (_) {
-      // Skip failed copies — attempt as many as possible
+      failed.push(obj.key);
     }
   }
 
-  // 3. Delete source folder + all contents
+  // 3. Abort the delete if any copy failed — the source stays intact so no
+  //    data is lost. The caller surfaces this error to the user.
+  if (failed.length > 0) {
+    throw new Error(
+      `Move aborted: ${failed.length} of ${allObjects.length} object(s) failed to copy. ` +
+        `The source folder was left untouched to avoid data loss.`,
+    );
+  }
+
+  // 4. All objects copied — safe to delete source folder + all contents.
   await deleteFolderRecursive(client, bucket, sourcePrefix, provider);
 }
 

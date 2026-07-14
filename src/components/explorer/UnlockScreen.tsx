@@ -1,7 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import unlockScreenImg from "../../assets/unlockScreen.webp";
 import { useT } from "../../i18n";
+import {
+  getRemainingCooldownSeconds,
+  registerFailedAttempt,
+  resetThrottle,
+} from "../../lib/unlockThrottle";
+
+/** Format a second count into a friendly "1m 30s" / "45s" string. */
+function formatCooldown(totalSeconds: number): string {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+}
 
 interface UnlockScreenProps {
   onUnlock: (password: string) => Promise<void>;
@@ -15,9 +28,25 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
   const [error, setError] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [cooldownLeft, setCooldownLeft] = useState(() => getRemainingCooldownSeconds());
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const isCoolingDown = cooldownLeft > 0;
+
+  // Tick the cooldown down to zero once a second while it's active.
+  useEffect(() => {
+    if (cooldownLeft <= 0) return;
+    tickRef.current = setInterval(() => {
+      setCooldownLeft(getRemainingCooldownSeconds());
+    }, 1000);
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
+  }, [cooldownLeft > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUnlock = async () => {
     setError("");
+    if (isCoolingDown) return;
     if (!password) {
       setError(t.unlock.errorEmpty);
       return;
@@ -26,14 +55,24 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
     setIsUnlocking(true);
     try {
       await onUnlock(password);
+      resetThrottle();
+      setCooldownLeft(0);
     } catch {
-      setError(t.unlock.errorWrong);
+      const cooldown = registerFailedAttempt();
+      if (cooldown > 0) {
+        setCooldownLeft(cooldown);
+        setError("");
+      } else {
+        setError(t.unlock.errorWrong);
+      }
     } finally {
       setIsUnlocking(false);
     }
   };
 
   const handleReset = () => {
+    resetThrottle();
+    setCooldownLeft(0);
     onResetConnections();
   };
 
@@ -60,6 +99,7 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(""); }}
               placeholder={t.unlock.placeholder}
+              disabled={isCoolingDown}
               autoFocus
               className="
                 w-full pl-3 pr-10 py-2.5 text-sm
@@ -82,10 +122,15 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
             </button>
           </div>
           {error && <p className="mt-2 text-xs text-red-500 dark:text-red-400">{error}</p>}
+          {isCoolingDown && (
+            <p className="mt-2 text-xs leading-relaxed text-amber-600 dark:text-amber-400">
+              {t.unlock.cooldownNotice.replace("{time}", formatCooldown(cooldownLeft))}
+            </p>
+          )}
 
           <button
             onClick={() => void handleUnlock()}
-            disabled={isUnlocking}
+            disabled={isUnlocking || isCoolingDown}
             className="
               mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5
               text-sm font-medium text-white bg-[var(--s3-accent-active)] rounded-lg
@@ -95,7 +140,11 @@ export default function UnlockScreen({ onUnlock, onResetConnections }: UnlockScr
             "
           >
             <LockKeyhole size={16} />
-            {isUnlocking ? t.unlock.unlocking : t.unlock.unlockButton}
+            {isCoolingDown
+              ? t.unlock.cooldownWait.replace("{time}", formatCooldown(cooldownLeft))
+              : isUnlocking
+              ? t.unlock.unlocking
+              : t.unlock.unlockButton}
           </button>
 
           {!confirmReset ? (

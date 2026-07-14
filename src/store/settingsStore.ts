@@ -15,6 +15,8 @@ export const DEFAULT_COL_WIDTHS: ColumnWidths = {
 interface SettingsState {
   // Startup
   restoreLastSession: boolean;
+  // Security — auto-lock the vault after N minutes idle (0 = never)
+  autoLockMinutes: number;
   // Appearance
   theme: ThemeMode;
   accentColor: string;  // Accent color ID (default: "brown")
@@ -31,6 +33,7 @@ interface SettingsState {
 
 interface SettingsActions {
   setRestoreLastSession: (value: boolean) => void;
+  setAutoLockMinutes: (value: number) => void;
   setTheme: (value: ThemeMode) => void;
   setAccentColor: (value: string) => void;
   setLanguage: (value: Language) => void;
@@ -49,6 +52,7 @@ export const useSettingsStore = create<SettingsStore>()(
     (set) => ({
       // ── State (all defaults) ────────────────────────────────
       restoreLastSession: false,
+      autoLockMinutes: 15,
       theme: "system",
       accentColor: "brown",  // Default accent color (easily changeable)
       language: "en",
@@ -61,6 +65,7 @@ export const useSettingsStore = create<SettingsStore>()(
 
       // ── Actions ─────────────────────────────────────────────
       setRestoreLastSession: (value) => set({ restoreLastSession: value }),
+      setAutoLockMinutes: (value) => set({ autoLockMinutes: value }),
       setTheme: (value) => set({ theme: value }),
       setAccentColor: (value) => set({ accentColor: value }),
       setLanguage: (value) => set({ language: value }),

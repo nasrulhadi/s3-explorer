@@ -6,8 +6,12 @@ const MAGIC = new Uint8Array([0x53, 0x33, 0x58, 0x50, 0x4c, 0x52]); // "S3XPLR"
 const SALT_LEN = 16;
 const IV_LEN = 12; // AES-GCM nonce
 
-/** PBKDF2 iterations — balances speed (~100ms) and brute-force resistance */
-const PBKDF2_ITERATIONS = 100_000;
+/**
+ * PBKDF2 iterations for backup exports. Matches the secure vault (300k) so
+ * an exported `.enc` file — the artifact most likely to leave the device —
+ * gets the same brute-force resistance as the on-device vault.
+ */
+const PBKDF2_ITERATIONS = 300_000;
 
 // ─── Helpers ────────────────────────────────────────────────
 

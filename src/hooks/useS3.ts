@@ -397,7 +397,6 @@ export function useS3() {
       const client = createS3Client(getConnection(connectionId));
 
       // 1. Copy to new key
-      console.log("Rename:", { bucket, oldKey, newKey });
       const copyRes = await client.send(
         new CopyObjectCommand({
           Bucket: bucket,

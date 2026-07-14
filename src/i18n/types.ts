@@ -18,6 +18,8 @@ export interface Translations {
     caption: string;
     errorEmpty: string;
     errorWrong: string;
+    cooldownNotice: string;
+    cooldownWait: string;
     resetTitle: string;
     resetDescription: string;
     cancel: string;
@@ -80,6 +82,7 @@ export interface Translations {
     testing: string;
     testSuccess: string;
     bucketListingNote: string;
+    httpWarning: string;
     saveButton: string;
     updateButton: string;
     errors: { nameRequired: string; bucketRequired: string };
@@ -111,6 +114,10 @@ export interface Translations {
     securityDescEnabled: string;
     securityDescDisabled: string;
     securityWarning: string;
+    autoLock: string;
+    autoLockDesc: string;
+    autoLockNever: string;
+    autoLockMinutesLabel: string;
     data: string;
     exportConnections: string;
     exportDesc: string;

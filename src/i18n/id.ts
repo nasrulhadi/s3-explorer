@@ -18,6 +18,8 @@ export const id = {
     caption: "Koneksi kamu saat ini aman, sudah dienkripsi dengan baik. Masukkan kata sandi utama untuk membukanya.",
     errorEmpty: "Masukkan kata sandi utama untuk melanjutkan.",
     errorWrong: "Kata sandi utama salah. Koneksi Anda masih terkunci.",
+    cooldownNotice: "Sudah beberapa kali meleset nih. Istirahat sebentar dulu ya — bisa dicoba lagi dalam {time}.",
+    cooldownWait: "Coba lagi dalam {time}",
     resetTitle: "Hapus semua koneksi?",
     resetDescription:
       "Ini akan menonaktifkan kata sandi utama dan menghapus permanen semua koneksi yang tersimpan. File cadangan yang sudah ada tetap dapat diimpor.",
@@ -85,6 +87,7 @@ export const id = {
     testing: "Menguji…",
     testSuccess: "Koneksi OK!",
     bucketListingNote: "Pencatatan bucket tidak didukung — masukkan nama bucket di sidebar.",
+    httpWarning: "Endpoint ini memakai HTTP polos. Access key dan secret Anda akan dikirim tanpa enkripsi dan bisa disadap. Gunakan HTTPS kecuali ini jaringan lokal yang tepercaya.",
     saveButton: "Simpan Koneksi",
     updateButton: "Perbarui Koneksi",
     errors: {
@@ -120,6 +123,10 @@ export const id = {
     securityDescEnabled: "Data Koneksimu saat ini sudah aman, dienkripsi dengan baik. Jadi perlu kata sandi setiap kali buka aplikasi.",
     securityDescDisabled: "Amankan data koneksi kamu dengan kata sandi, biar cuma kamu yang bisa buka aplikasi ini.",
     securityWarning: "Data Koneksi kamu saat ini belum aman, proteksi dengan kata sandi utama. (cuma kamu yang bisa membuka)",
+    autoLock: "Kunci otomatis saat idle",
+    autoLockDesc: "Kunci vault secara otomatis setelah periode tidak aktif, sehingga kata sandi utama diminta lagi.",
+    autoLockNever: "Tidak pernah",
+    autoLockMinutesLabel: "N mnt",
     data: "Data",
     exportConnections: "Ekspor Koneksi",
     exportDesc: "Simpan semua koneksi ke file cadangan .enc",

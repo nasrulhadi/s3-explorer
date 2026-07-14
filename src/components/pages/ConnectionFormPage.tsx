@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save, Smile, Cloud, Server, Globe, HardDrive, Box } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Save, Smile, Cloud, Server, Globe, HardDrive, Box, AlertTriangle } from "lucide-react";
 import { ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { createS3Client } from "../../lib/s3Client";
 import { useConnectionStore } from "../../store/connectionStore";
@@ -40,6 +40,29 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 
 const INPUT_CLASS =
   "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-zinc-700 rounded-lg outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-all bg-zinc-50/30 dark:bg-zinc-800/30 text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600";
+
+/**
+ * Detect an endpoint that would send credentials over plaintext HTTP to a
+ * non-local host. Loopback hosts (localhost / 127.0.0.1 / ::1) are fine for
+ * local MinIO, so they are not flagged.
+ */
+function isInsecureHttpEndpoint(raw: string): boolean {
+  const value = raw.trim();
+  if (!/^http:\/\//i.test(value)) return false;
+  let host: string;
+  try {
+    host = new URL(value).hostname.toLowerCase();
+  } catch {
+    return false; // incomplete/invalid URL — nothing to warn about yet
+  }
+  const loopback =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "[::1]" ||
+    host.endsWith(".localhost");
+  return !loopback;
+}
 
 // ─── Component ──────────────────────────────────────────────
 
@@ -301,6 +324,12 @@ export default function ConnectionFormPage({ onDone, editConnection }: Connectio
                 placeholder={endpointPlaceholder(provider)}
                 className={INPUT_CLASS}
               />
+              {isInsecureHttpEndpoint(endpoint) && (
+                <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-xs leading-relaxed">
+                  <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                  <span>{t.connectionForm.httpWarning}</span>
+                </div>
+              )}
             </Field>
           )}
 

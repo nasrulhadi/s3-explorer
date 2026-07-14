@@ -554,6 +554,29 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                   </button>
                 )}
               </div>
+
+              {isMasterPasswordEnabled && (
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-700 flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-gray-700 dark:text-gray-200">{t.settings.autoLock}</div>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
+                      {t.settings.autoLockDesc}
+                    </p>
+                  </div>
+                  <select
+                    value={store.autoLockMinutes}
+                    onChange={(e) => store.setAutoLockMinutes(Number(e.target.value))}
+                    className="shrink-0 px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                  >
+                    <option value={0}>{t.settings.autoLockNever}</option>
+                    <option value={1}>{t.settings.autoLockMinutesLabel.replace("N", "1")}</option>
+                    <option value={5}>{t.settings.autoLockMinutesLabel.replace("N", "5")}</option>
+                    <option value={15}>{t.settings.autoLockMinutesLabel.replace("N", "15")}</option>
+                    <option value={30}>{t.settings.autoLockMinutesLabel.replace("N", "30")}</option>
+                    <option value={60}>{t.settings.autoLockMinutesLabel.replace("N", "60")}</option>
+                  </select>
+                </div>
+              )}
             </div>
           </section>
 
