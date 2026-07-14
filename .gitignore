@@ -39,3 +39,7 @@ PROJECT.md
 # Backup files
 *.backup
 *.bak
+
+# Signing keys — NEVER commit. Keep private key in a secret manager / CI secret.
+signer/
+*.key
