@@ -64,7 +64,7 @@
       "endpoints": [
         "https://raw.githubusercontent.com/nasrulhadi/s3-explorer/main/update.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2MDREQzBGQTNDMEI5MjUKUldRbHVjQ2pEOXdFRnFYcmVuSnF0VWx2NCtSTmxETTRIOHlEVXF2L2JpbWJvcWIvRyswTDlrT0UK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlEOTE0MjMzQTIzRUQ1MDEKUldRQjFUNmlNMEtSbmJSL0RSS3A0NHpDeFR6Skc1d1FCQUJNRFRFRlFYNnpGMW1NcWROM0RlUkYK",
       "windows": {
         "installMode": "passive"
       }
