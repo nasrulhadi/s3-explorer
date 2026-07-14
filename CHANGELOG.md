@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.10.0] - 2026-07-14
+
+### Added
+- **Auto-Lock When Idle**: The vault now locks automatically after a period of inactivity, returning to the UnlockScreen and requiring the master password again
+  - Configurable in Settings → Security (Never / 1 / 5 / 15 / 30 / 60 minutes), default 15 minutes
+  - Only active when a master password is enabled and the vault is unlocked
+  - Idle timer resets on mouse, keyboard, scroll, wheel, and touch activity
+- **Unlock Rate Limiting**: A gentle progressive cooldown after repeated wrong master-password attempts, to slow casual guessing
+  - First 4 wrong attempts are free; the 5th onward triggers a growing pause (30s → 1m → 2m → 5m → 10m)
+  - Counter persists in `localStorage` so it survives closing and reopening the app
+  - Friendly, non-robotic countdown message; cleared on successful unlock or connection reset
+- **Insecure Endpoint Warning**: The connection form now warns when an endpoint uses plain `http://` to a non-local host, since credentials would be sent unencrypted (loopback hosts like `localhost` are not flagged)
+
+### Changed
+- **Stronger Backup Encryption**: Encrypted export (`.enc`) files now use 300,000 PBKDF2 iterations (up from 100,000), matching the on-device vault for consistent brute-force resistance
+- **Updater Signing Key Rotated**: Generated a fresh update-signing keypair; the private key now lives outside the repository (never committed)
+
+### Fixed
+- **Safe Folder Move**: Moving a folder no longer deletes the source when one or more objects fail to copy — the move aborts and leaves the source intact to prevent data loss
+- **Reduced Log Noise**: Removed a debug log that printed bucket and object keys during rename
+
+### Security
+- Removed the signing key material and its passphrase from the repository and rewrote git history so they are no longer recoverable
+- Added `signer/` and `*.key` to `.gitignore`; deleted stale `.bak`/`.backup` source files
+
+---
+
 ## [1.9.2] - 2026-07-09
 
 ### Added

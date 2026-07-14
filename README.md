@@ -2,7 +2,7 @@
 
 **A modern desktop application for managing S3-compatible object storage**
 
-[![Version](https://img.shields.io/badge/version-1.9.2-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
+[![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#)
 
@@ -47,8 +47,11 @@
 ### 🔐 Security & Privacy
 - **Optional Master Password** — Lock the app on startup and encrypt saved connections at rest
 - **Encrypted Local Vault** — Protect connection credentials with PBKDF2 SHA-256 + AES-256-GCM when master password is enabled
-- **Encrypted Export/Import** — Backup connections with AES-256-GCM encryption (PBKDF2 key derivation)
+- **Encrypted Export/Import** — Backup connections with AES-256-GCM encryption (300,000-iteration PBKDF2 key derivation)
 - **Export Guard** — Require the master password before exporting connections when local vault protection is enabled
+- **Auto-Lock When Idle** — Automatically re-lock the vault after a configurable period of inactivity (default 15 minutes)
+- **Unlock Rate Limiting** — Progressive cooldown after repeated wrong master-password attempts to slow casual guessing
+- **Insecure Endpoint Warning** — Flags plain `http://` endpoints to non-local hosts before credentials are sent unencrypted
 - **Local Storage** — Credentials stay on your device; without master password protection they are stored via Zustand persist
 - **No Telemetry** — Your data stays private
 - **Open Source** — Full transparency with MIT license
