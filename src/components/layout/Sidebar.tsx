@@ -146,24 +146,29 @@ function BucketList({ connectionId }: { connectionId: string }) {
   }
 
   return (
-    <div className="ml-[3px] border-l border-gray-200/60 dark:border-zinc-700/60">
-      {data.map((bucket) => {
+    <div className="pl-8 pr-1 space-y-0.5">
+      {data.map((bucket, idx) => {
         const isActive =
           activeConnId === connectionId && activeBucket === bucket.name;
+        const isLast = idx === data.length - 1;
+        const prefix = isLast ? "└──" : "├──";
 
         return (
           <button
             key={bucket.key}
             onClick={() => setBucket(connectionId, bucket.name)}
             className={`
-              w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm text-left rounded-r-lg
-              transition-all duration-150 border-l-[3px] -ml-[1px]
+              w-full flex items-center gap-1.5 py-1.5 pr-2 text-sm text-left rounded-md
+              transition-colors duration-150
               ${isActive
-                ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
-                : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)] hover:border-l-gray-300 dark:hover:border-l-zinc-500"
+                ? "text-[var(--s3-accent-active)] font-semibold"
+                : "text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
               }
             `}
           >
+            <span className="shrink-0 text-[11px] font-mono text-gray-300 dark:text-zinc-600 leading-none mt-px">
+              {prefix}
+            </span>
             <Database size={13} className="shrink-0 opacity-60" />
             <span className="truncate">{bucket.name}</span>
           </button>
