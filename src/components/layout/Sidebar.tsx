@@ -146,7 +146,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
   }
 
   return (
-    <div className="ml-[3px] border-l border-gray-200 dark:border-zinc-700">
+    <div className="ml-[3px] border-l border-gray-200/60 dark:border-zinc-700/60">
       {data.map((bucket) => {
         const isActive =
           activeConnId === connectionId && activeBucket === bucket.name;
@@ -156,11 +156,11 @@ function BucketList({ connectionId }: { connectionId: string }) {
             key={bucket.key}
             onClick={() => setBucket(connectionId, bucket.name)}
             className={`
-              w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm text-left
-              transition-colors duration-150 border-l-[3px]
+              w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm text-left rounded-r-lg
+              transition-all duration-150 border-l-[3px] -ml-[1px]
               ${isActive
                 ? "border-l-[var(--s3-accent-active)] bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
-                : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
+                : "border-l-transparent text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)] hover:border-l-gray-300 dark:hover:border-l-zinc-500"
               }
             `}
           >
