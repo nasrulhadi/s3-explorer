@@ -28,7 +28,7 @@ export const ACCENT_COLORS: AccentColor[] = [
     light: {
       base: "#dbeafe",      // Soft pastel blue
       hover: "#bfdbfe",
-      active: "#93c5fd",
+      active: "#60a5fa",    // Sharper blue (was #93c5fd)
       text: "#1e40af",
     },
     dark: {
@@ -44,7 +44,7 @@ export const ACCENT_COLORS: AccentColor[] = [
     light: {
       base: "#d1fae5",      // Soft pastel green
       hover: "#a7f3d0",
-      active: "#6ee7b7",
+      active: "#10b981",    // Sharper green (was #6ee7b7)
       text: "#065f46",
     },
     dark: {
@@ -60,7 +60,7 @@ export const ACCENT_COLORS: AccentColor[] = [
     light: {
       base: "#fef3c7",      // Soft pastel yellow
       hover: "#fde68a",
-      active: "#fcd34d",
+      active: "#f59e0b",    // Sharper amber (was #fcd34d)
       text: "#92400e",
     },
     dark: {
@@ -76,7 +76,7 @@ export const ACCENT_COLORS: AccentColor[] = [
     light: {
       base: "#fed7aa",      // Soft pastel brown/peach
       hover: "#fdba74",
-      active: "#fb923c",
+      active: "#f97316",    // Sharper orange (was #fb923c)
       text: "#7c2d12",
     },
     dark: {
@@ -92,7 +92,7 @@ export const ACCENT_COLORS: AccentColor[] = [
     light: {
       base: "#e7e5e4",      // Soft pastel stone/gray
       hover: "#d6d3d1",
-      active: "#a8a29e",
+      active: "#78716c",    // Sharper stone (was #a8a29e)
       text: "#44403c",
     },
     dark: {

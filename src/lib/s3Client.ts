@@ -46,18 +46,22 @@ const tauriHttpHandler = {
     const body =
       method === "GET" || method === "HEAD" ? undefined : request.body;
 
-    // Build Headers object, skipping "host" (forbidden in fetch, derived from URL)
-    const headers = new Headers();
+    // Build headers as plain object, skipping "host" (derived from URL).
+    // Use plain object instead of Headers() so forbidden headers like
+    // "content-length" can pass through when needed.
+    const headers: Record<string, string> = {};
     for (const [key, value] of Object.entries(request.headers)) {
       if (key.toLowerCase() === "host") continue;
-      headers.set(key, value);
+      headers[key.toLowerCase()] = value;
     }
+
+    const fetchBody = body !== undefined ? body : undefined;
 
     // Use Tauri's native fetch (bypasses CORS)
     const response = await tauriFetch(url, {
       method,
       headers,
-      body: body ?? undefined,
+      body: fetchBody,
     });
 
     // Read the full response body as ArrayBuffer → Uint8Array

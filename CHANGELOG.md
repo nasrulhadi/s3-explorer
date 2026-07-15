@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.11.0] - 2026-07-15
+
+### Added
+- **Upload Progress + Cancellation**: Real-time upload progress tracking with cancel support via `@aws-sdk/lib-storage`
+  - New `useUpload` hook using `Upload` class (multipart under the hood, 8 MB parts)
+  - `httpUploadProgress` events feed real-time bytes to TransferPanel progress bar
+  - Uploads are now cancellable — cancel button in TransferPanel stops the transfer mid-flight
+  - Transfers from previous versions (fire-and-forget) no longer block the UI without feedback
+
+### Changed
+- **Bucket List Redesign**: Tree-style layout with `├──` / `└──` branch prefixes
+  - Active bucket: bold accent text only, no background (cleaner)
+  - Hover: font-weight change instead of background
+  - Green dot indicator for active bucket
+  - Tighter vertical spacing, softer tree guide line
+- **Accent Colors**: Sharpened light-mode `active` tones across all 5 colors (blue/green/yellow/brown/stone)
+
+### Fixed
+- **Custom S3 New Folder**: Folders now create correctly on servers that require `Content-Length` header (e.g. nevaobjects.id)
+  - Custom HTTP handler uses plain object headers instead of `Headers()` API (unstrips forbidden headers)
+  - SDK-computed `content-length` now passes through to strict S3-compatible servers
+- **New Folder & Rename Cursor Jump**: Input field no longer jumps cursor to end while typing
+  - State moved entirely inside modals (no parent re-renders during typing)
+  - Modals now use JSX fragment instead of nested `function Modals()` component (prevents unmount/remount)
+- **Sidebar Bucket Click**: Clicking a bucket from any page (Settings, Forms, etc.) now correctly navigates back to explorer
+- **TransferPanel Cancel**: Cancel button now routes correctly per transfer type (upload → `cancelUpload`, download → `cancelDownload`)
+
+---
+
 ## [1.10.0] - 2026-07-14
 
 ### Added

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTransferStore } from "../../store/transferStore";
 import { useDownload } from "../../hooks/useDownload";
+import { useUpload } from "../../hooks/useUpload";
 import { useT } from "../../i18n";
 import { formatFileSize } from "../../lib/utils";
 import type { Transfer } from "../../types";
@@ -32,6 +33,7 @@ function formatSpeed(bytesPerSecond: number): string {
 function TransferRow({ transfer }: { transfer: Transfer }) {
   const t = useT();
   const { cancelDownload } = useDownload();
+  const { cancelUpload } = useUpload();
   const removeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track bytes over time to compute live speed
@@ -152,22 +154,32 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       </div>
 
       {/* ── Cancel / dismiss button ───────────────────────── */}
-      <button
-        onClick={() => {
-          if (removeRef.current) clearTimeout(removeRef.current);
-          isActive
-            ? cancelDownload(transfer.id)
-            : useTransferStore.getState().removeTransfer(transfer.id);
-        }}
-        className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
-        title={isActive ? t.transferPanel.cancel : t.transferPanel.remove}
-      >
-        {isActive ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <X size={14} />
-        )}
-      </button>
+      {/* Move transfers have no cancel support (recursive copy+delete is not
+          safely interruptible), so only show the button for upload/download. */}
+      {isActive && isMove ? (
+        <div className="w-6 shrink-0" />
+      ) : (
+        <button
+          onClick={() => {
+            if (removeRef.current) clearTimeout(removeRef.current);
+            if (!isActive) {
+              useTransferStore.getState().removeTransfer(transfer.id);
+            } else if (transfer.type === "upload") {
+              cancelUpload(transfer.id);
+            } else {
+              cancelDownload(transfer.id);
+            }
+          }}
+          className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+          title={isActive ? t.transferPanel.cancel : t.transferPanel.remove}
+        >
+          {isActive ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <X size={14} />
+          )}
+        </button>
+      )}
     </div>
   );
 }

@@ -1,31 +1,31 @@
+import { useState } from "react";
 import { useT } from "../../i18n";
 import type { S3Item } from "../../types";
 
 interface RenameModalProps {
   open: boolean;
   item: S3Item | null;
-  name: string;
   loading: boolean;
   error?: string | null;
-  onNameChange: (value: string) => void;
-  onConfirm: () => void;
+  onConfirm: (newName: string) => void;
   onCancel: () => void;
 }
 
 export default function RenameModal({
   open,
   item,
-  name,
   loading,
   error,
-  onNameChange,
   onConfirm,
   onCancel,
 }: RenameModalProps) {
   const t = useT();
+  const [value, setValue] = useState(item?.name ?? "");
+
   if (!open || !item) return null;
 
   const isFolder = item.type === "folder";
+  const handleConfirm = () => { if (value.trim()) onConfirm(value.trim()); };
 
   return (
     <div
@@ -53,14 +53,13 @@ export default function RenameModal({
         <div className="px-5 pb-6">
           <input
             type="text"
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && name.trim() && !loading) {
-                onConfirm();
-              }
+              if (e.key === "Enter" && value.trim() && !loading) handleConfirm();
               if (e.key === "Escape") onCancel();
             }}
+            disabled={loading}
             placeholder={t.modals.rename.placeholder}
             autoFocus
             className="
@@ -95,8 +94,8 @@ export default function RenameModal({
             {t.modals.rename.cancel}
           </button>
           <button
-            onClick={onConfirm}
-            disabled={!name.trim() || loading}
+            onClick={handleConfirm}
+            disabled={!value.trim() || loading}
             className="
               px-4 py-2 text-sm font-medium rounded-lg
               bg-[var(--s3-accent-active)] text-white

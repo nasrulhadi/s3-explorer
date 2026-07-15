@@ -2,7 +2,7 @@
 
 **A modern desktop application for managing S3-compatible object storage**
 
-[![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
+[![Version](https://img.shields.io/badge/version-1.11.0-blue.svg)](https://github.com/nasrulhadi/s3-explorer/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#)
 
@@ -116,6 +116,8 @@ Get the latest release from [GitHub Releases](https://github.com/nasrulhadi/s3-e
 - **[Tauri v2](https://v2.tauri.app)** — Desktop framework (frameless window)
 - **[Rust](https://www.rust-lang.org)** — Native performance
 - **[@aws-sdk/client-s3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)** — S3 operations (runs in frontend, HTTP routed through Rust)
+- **[@aws-sdk/lib-storage](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_storage.html)** — Multipart upload with progress + cancellation
+- **[@aws-sdk/s3-request-presigner](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)** — Presigned URL generation
 
 ### Development
 - **[Vite v7](https://vitejs.dev)** — Build tool

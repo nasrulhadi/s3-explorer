@@ -216,36 +216,33 @@ export default function FileList({
   const [deleteTarget, setDeleteTarget] = useState<S3Item | null>(null);
   const [bulkDeleteItems, setBulkDeleteItems] = useState<S3Item[] | null>(null);
   const [renameTarget, setRenameTarget] = useState<S3Item | null>(null);
-  const [renameName, setRenameName] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [renameKey, setRenameKey] = useState(0);
   const [dropFiles, setDropFiles] = useState<Array<{ file: File; relativePath: string; size: number }> | undefined>(undefined);
   const [infoData, setInfoData] = useState<{ title: string; type: string; rows: { label: string; value: string }[] } | null>(null);
   const [urlData, setUrlData] = useState<string | null>(null);
   const [zipError, setZipError] = useState<string | null>(null);
-  const [newFolderName, setNewFolderName] = useState("");
   const [newFolderCreating, setNewFolderCreating] = useState(false);
 
   // ── New Folder ──
-  useEffect(() => { if (newFolderOpen) setNewFolderName(""); }, [newFolderOpen]);
 
   const handleNewFolder = useCallback(() => {
     if (!connectionId || !bucket) return;
-    setNewFolderName("");
     onNewFolderOpen();
   }, [connectionId, bucket, onNewFolderOpen]);
 
-  const confirmNewFolder = useCallback(async () => {
-    if (!connectionId || !bucket || !newFolderName.trim()) return;
+  const confirmNewFolder = useCallback(async (folderName: string) => {
+    if (!connectionId || !bucket || !folderName.trim()) return;
     setNewFolderCreating(true);
     try {
-      await createFolder.mutateAsync({ connectionId, bucket, prefix, folderName: newFolderName.trim() });
+      await createFolder.mutateAsync({ connectionId, bucket, prefix, folderName: folderName.trim() });
       onNewFolderClose();
       queryClient.invalidateQueries({ queryKey: ["s3", "objects", connectionId, bucket, prefix] });
     } catch (_) { /* silent */ } finally {
       setNewFolderCreating(false);
     }
-  }, [connectionId, bucket, prefix, newFolderName, createFolder, queryClient, onNewFolderClose]);
+  }, [connectionId, bucket, prefix, createFolder, queryClient, onNewFolderClose]);
 
   // ── Refresh ──
   const handleRefresh = useCallback(() => {
@@ -264,13 +261,13 @@ export default function FileList({
   // ── Rename ──
   const handleRename = useCallback((item: S3Item) => {
     setRenameError(null);
-    setRenameName(item.name);
     setRenameTarget(item);
+    setRenameKey((k) => k + 1);
   }, []);
 
-  const confirmRename = useCallback(async () => {
-    if (!connectionId || !bucket || !renameTarget || !renameName.trim()) return;
-    if (renameName.trim() === renameTarget.name) { setRenameTarget(null); return; }
+  const confirmRename = useCallback(async (newName: string) => {
+    if (!connectionId || !bucket || !renameTarget || !newName.trim()) return;
+    if (newName.trim() === renameTarget.name) { setRenameTarget(null); return; }
     setRenameLoading(true);
     setRenameError(null);
     const conn = getConnection(connectionId);
@@ -278,7 +275,7 @@ export default function FileList({
     const isFolder = renameTarget.key.endsWith("/");
     const baseKey = isFolder ? renameTarget.key.slice(0, -1) : renameTarget.key;
     const lastSlash = baseKey.lastIndexOf("/");
-    const newKeyBase = lastSlash === -1 ? renameName.trim() : baseKey.slice(0, lastSlash + 1) + renameName.trim();
+    const newKeyBase = lastSlash === -1 ? newName.trim() : baseKey.slice(0, lastSlash + 1) + newName.trim();
     const newKey = isFolder ? newKeyBase + "/" : newKeyBase;
     const oldKey = renameTarget.key;
     try {
@@ -301,7 +298,7 @@ export default function FileList({
       console.error("Rename failed:", err);
       setRenameError("Rename failed. The operation may have partially completed.");
     } finally { setRenameLoading(false); }
-  }, [connectionId, bucket, renameTarget, renameName, renameItem, getConnection, queryClient, prefix, setSelectedKeys]);
+  }, [connectionId, bucket, renameTarget, renameItem, getConnection, queryClient, prefix, setSelectedKeys]);
 
   // ── Delete ──
   const handleDelete = useCallback((item: S3Item) => setDeleteTarget(item), []);
@@ -450,19 +447,22 @@ export default function FileList({
   }
 
   // ── Shared modals rendered ONCE for all states ───────────
-  function Modals() {
-    return (
-      <>
-        <NewFolderModal open={newFolderOpen} name={newFolderName} creating={newFolderCreating} onNameChange={setNewFolderName} onConfirm={confirmNewFolder} onCancel={onNewFolderClose} />
-        <DeleteConfirmModal open={deleteTarget !== null || bulkDeleteItems !== null} item={deleteTarget} bulkCount={bulkDeleteItems?.length ?? 0} onConfirm={handleDeleteConfirm} onCancel={handleDeleteCancel} />
-        <RenameModal open={renameTarget !== null} item={renameTarget} name={renameName} loading={renameLoading} error={renameError} onNameChange={setRenameName} onConfirm={confirmRename} onCancel={() => { setRenameError(null); setRenameTarget(null); }} />
-        <InfoModal data={infoData} onClose={() => setInfoData(null)} />
-        <UrlModal url={urlData} onClose={() => setUrlData(null)} />
-        <ZipErrorModal message={zipError} onClose={() => setZipError(null)} />
-        <UploadModal open={uploadOpen} connectionId={connectionId} bucket={bucket} prefix={prefix} getConnection={getConnection} dropFiles={dropFiles} onClose={() => { setDropFiles(undefined); onUploadClose(); }} onUploadComplete={handleUploadComplete} />
-      </>
-    );
-  }
+  // NOTE: This is a JSX fragment, not a nested function component.
+  // Defining it as `function Modals() {...}` would recreate the function
+  // identity on every FileList re-render, causing React to unmount/remount
+  // all modals below (losing their internal state, e.g. RenameModal's
+  // input value) any time FileList re-renders for an unrelated reason.
+  const modals = (
+    <>
+      <NewFolderModal key={newFolderOpen ? "open" : "closed"} open={newFolderOpen} creating={newFolderCreating} onConfirm={confirmNewFolder} onCancel={onNewFolderClose} />
+      <DeleteConfirmModal open={deleteTarget !== null || bulkDeleteItems !== null} item={deleteTarget} bulkCount={bulkDeleteItems?.length ?? 0} onConfirm={handleDeleteConfirm} onCancel={handleDeleteCancel} />
+      <RenameModal key={renameKey} open={renameTarget !== null} item={renameTarget} loading={renameLoading} error={renameError} onConfirm={confirmRename} onCancel={() => { setRenameError(null); setRenameTarget(null); }} />
+      <InfoModal data={infoData} onClose={() => setInfoData(null)} />
+      <UrlModal url={urlData} onClose={() => setUrlData(null)} />
+      <ZipErrorModal message={zipError} onClose={() => setZipError(null)} />
+      <UploadModal open={uploadOpen} connectionId={connectionId} bucket={bucket} prefix={prefix} getConnection={getConnection} dropFiles={dropFiles} onClose={() => { setDropFiles(undefined); onUploadClose(); }} onUploadComplete={handleUploadComplete} />
+    </>
+  );
 
   // ─── Render ─────────────────────────────────────────────────
 
@@ -477,7 +477,7 @@ export default function FileList({
           </div>
           <StatusBar />
         </div>
-        <Modals />
+        {modals}
       </>
     );
   }
@@ -491,7 +491,7 @@ export default function FileList({
           <p className="text-sm font-medium text-[var(--s3-danger)]">Failed to load contents</p>
           <p className="text-xs text-[var(--s3-window-muted)] mt-1 max-w-xs">{(error as Error).message}</p>
         </div>
-        <Modals />
+        {modals}
       </>
     );
   }
@@ -523,7 +523,7 @@ export default function FileList({
           </ContextMenu.Trigger>
           <ExplorerContextMenu displayedItems={displayedItems} selectedKeys={selectedKeys} contextTarget={contextTarget} clipboardCount={clipboard.items.length} onCopy={handleCopy} onPaste={handlePaste} onUpload={handleUpload} onNewFolder={handleNewFolder} onRefresh={handleRefresh} onRename={handleRename} onDelete={handleDelete} onBulkDelete={(items) => setBulkDeleteItems(items)} onDownloadItem={handleDownloadItem} onDownloadZip={handleDownloadZip} onGetUrl={handleGetUrl} onGetInfo={handleGetInfo} />
         </ContextMenu.Root>
-        <Modals />
+        {modals}
       </>
     );
   }
@@ -574,7 +574,7 @@ export default function FileList({
         <ExplorerContextMenu displayedItems={displayedItems} selectedKeys={selectedKeys} contextTarget={contextTarget} clipboardCount={clipboard.items.length} onCopy={handleCopy} onPaste={handlePaste} onUpload={handleUpload} onNewFolder={handleNewFolder} onRefresh={handleRefresh} onRename={handleRename} onDelete={handleDelete} onBulkDelete={(items) => setBulkDeleteItems(items)} onDownloadItem={handleDownloadItem} onDownloadZip={handleDownloadZip} onGetUrl={handleGetUrl} onGetInfo={handleGetInfo} />
       </ContextMenu.Root>
 
-      <Modals />
+      {modals}
     </>
   );
 }

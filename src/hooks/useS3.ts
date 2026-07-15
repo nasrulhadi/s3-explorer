@@ -346,7 +346,7 @@ export function useS3() {
         : `${prefix}${folderName}/`;
 
       await client.send(
-        new PutObjectCommand({ Bucket: bucket, Key: key, Body: "" }),
+        new PutObjectCommand({ Bucket: bucket, Key: key, Body: new Uint8Array(1) }),
       );
     },
   });

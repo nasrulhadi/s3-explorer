@@ -1,23 +1,25 @@
+import { useState, useEffect } from "react";
 import { useT } from "../../i18n";
 
 interface NewFolderModalProps {
   open: boolean;
-  name: string;
   creating: boolean;
-  onNameChange: (value: string) => void;
-  onConfirm: () => void;
+  onConfirm: (name: string) => void;
   onCancel: () => void;
 }
 
 export default function NewFolderModal({
   open,
-  name,
   creating,
-  onNameChange,
   onConfirm,
   onCancel,
 }: NewFolderModalProps) {
   const t = useT();
+  const [value, setValue] = useState("");
+
+  // Reset when modal opens
+  useEffect(() => { if (open) setValue(""); }, [open]);
+
   if (!open) return null;
 
   return (
@@ -41,14 +43,13 @@ export default function NewFolderModal({
         <div className="px-5 pb-6">
           <input
             type="text"
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && name.trim() && !creating) {
-                onConfirm();
-              }
+              if (e.key === "Enter" && value.trim() && !creating) onConfirm(value.trim());
               if (e.key === "Escape") onCancel();
             }}
+            disabled={creating}
             placeholder={t.modals.newFolder.placeholder}
             autoFocus
             className="
@@ -76,8 +77,8 @@ export default function NewFolderModal({
             {t.modals.newFolder.cancel}
           </button>
           <button
-            onClick={onConfirm}
-            disabled={!name.trim() || creating}
+            onClick={() => { if (value.trim()) onConfirm(value.trim()); }}
+            disabled={!value.trim() || creating}
             className="
               px-4 py-2 text-sm font-medium rounded-lg
               bg-[var(--s3-accent-active)] text-white

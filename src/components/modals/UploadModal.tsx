@@ -2,8 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, FolderUp, X, FileIcon, AlertCircle } from "lucide-react";
 import { useTransferStore } from "../../store/transferStore";
 import type { S3Connection } from "../../types";
-import { createS3Client } from "../../lib/s3Client";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { useUpload } from "../../hooks/useUpload";
 import { useT } from "../../i18n";
 
 // ─── Constants ──────────────────────────────────────────────
@@ -38,12 +37,13 @@ export default function UploadModal({
   connectionId,
   bucket,
   prefix,
-  getConnection,
+  getConnection: _getConnection,
   onClose,
   onUploadComplete,
   dropFiles,
 }: UploadModalProps) {
   const t = useT();
+  const { startUpload } = useUpload();
 
   type Stage = "choice" | "review";
   const [stage, setStage] = useState<Stage>("choice");
@@ -156,29 +156,9 @@ export default function UploadModal({
         connectionId,
       });
 
-      try {
-        const conn = getConnection(connectionId);
-        if (!conn) continue;
-        const client = createS3Client(conn);
-        const fileBuffer = await pf.file.arrayBuffer();
-        await client.send(
-          new PutObjectCommand({
-            Bucket: bucket,
-            Key: key,
-            Body: new Uint8Array(fileBuffer),
-            ContentType: pf.file.type || "application/octet-stream",
-          }),
-        );
-        transferStore.updateTransfer(id, {
-          status: "done",
-          transferredBytes: pf.size,
-        });
-      } catch (err) {
-        transferStore.updateTransfer(id, {
-          status: "error",
-          error: (err as Error).message,
-        });
-      }
+      // startUpload itself marks the transfer "done"/"error" in the store
+      // as it progresses/finishes — no extra handling needed here.
+      await startUpload(id, connectionId, bucket, key, pf.file);
     }
 
     onUploadComplete();
@@ -188,7 +168,7 @@ export default function UploadModal({
     prefix,
     pendingFiles,
     uploading,
-    getConnection,
+    startUpload,
     onUploadComplete,
     onClose,
     reset,

@@ -41,7 +41,7 @@ function ConnectionItem({
   return (
       <div
         className={`
-          relative w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left
+          relative w-full flex items-center gap-2 px-3 py-2 text-sm text-left
           transition-colors duration-150 group rounded-xl
           ${isActive
             ? "bg-[var(--s3-accent-base)] text-[var(--s3-accent-text)]"
@@ -110,7 +110,7 @@ function ConnectionItem({
 }
 
 /** Bucket list rendered under an expanded connection (non-R2/B2 only) */
-function BucketList({ connectionId }: { connectionId: string }) {
+function BucketList({ connectionId, onSelectConnection }: { connectionId: string; onSelectConnection?: () => void }) {
   const t = useT();
   const { listBuckets } = useS3();
   const { data, isLoading, error } = listBuckets(connectionId);
@@ -146,7 +146,7 @@ function BucketList({ connectionId }: { connectionId: string }) {
   }
 
   return (
-    <div className="pl-8 pr-1 space-y-0.5">
+    <div className="pl-5 pr-1 space-y-0 mt-2">
       {data.map((bucket, idx) => {
         const isActive =
           activeConnId === connectionId && activeBucket === bucket.name;
@@ -156,13 +156,13 @@ function BucketList({ connectionId }: { connectionId: string }) {
         return (
           <button
             key={bucket.key}
-            onClick={() => setBucket(connectionId, bucket.name)}
+            onClick={() => { onSelectConnection?.(); setBucket(connectionId, bucket.name); }}
             className={`
-              w-full flex items-center gap-1.5 py-1.5 pr-2 text-sm text-left rounded-md
+              w-full flex items-center gap-1.5 py-1 pr-2 text-sm text-left rounded-md
               transition-colors duration-150
               ${isActive
                 ? "text-[var(--s3-accent-active)] font-semibold"
-                : "text-[var(--s3-sidebar-text)] hover:bg-[var(--s3-sidebar-item-hover)]"
+                : "text-[var(--s3-sidebar-text)] hover:font-semibold"
               }
             `}
           >
@@ -170,7 +170,10 @@ function BucketList({ connectionId }: { connectionId: string }) {
               {prefix}
             </span>
             <Database size={13} className="shrink-0 opacity-60" />
-            <span className="truncate">{bucket.name}</span>
+            <span className="truncate flex-1">{bucket.name}</span>
+            {isActive && (
+              <Circle size={4} className="shrink-0 text-emerald-400/70 ml-auto" fill="currentColor" />
+            )}
           </button>
         );
       })}
@@ -346,7 +349,7 @@ export default function Sidebar({
                   onDelete={() => onDeleteConnection?.(conn.id)}
                 />
                 {expandedId === conn.id && conn.provider !== "r2" && conn.provider !== "b2" && (
-                  <BucketList connectionId={conn.id} />
+                  <BucketList connectionId={conn.id} onSelectConnection={onSelectConnection} />
                 )}
               </div>
             ))}

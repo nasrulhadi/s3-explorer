@@ -1,7 +1,7 @@
 {
   "name": "s3-explorer",
   "private": true,
-  "version": "1.10.0",
+  "version": "1.11.0",
   "author": "Nasrul Hadi",
   "type": "module",
   "scripts": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1070.0",
+    "@aws-sdk/lib-storage": "3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1070.0",
     "@fontsource/onest": "^5.2.11",
     "@radix-ui/react-context-menu": "^2.3.1",
@@ -20,8 +21,8 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-http": "^2.5.9",
     "@tauri-apps/plugin-opener": "^2",
-    "@tauri-apps/plugin-updater": "^2",
     "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-updater": "^2",
     "jszip": "^3.10.1",
     "lucide-react": "^1.20.0",
     "react": "^19.1.0",
