@@ -256,8 +256,10 @@ export const id = {
   },
   statusBar: {
     items: "ITEMS item",
+    itemsOne: "1 item",
     filtered: " (difilter)",
     selected: "ITEMS dipilih",
+    selectedOne: "1 dipilih",
     activity: {
       loading: "Memuat folder…",
       transfers: "ITEM transfer sedang berlangsung",

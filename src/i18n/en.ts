@@ -255,12 +255,14 @@ export const en = {
     },
   },
   statusBar: {
-    items: "ITEMS item(s)",
+    items: "ITEMS items",
+    itemsOne: "1 item",
     filtered: " (filtered)",
     selected: "ITEMS selected",
+    selectedOne: "1 selected",
     activity: {
       loading: "Loading folder…",
-      transfers: "ITEMS transfer(s) in progress",
+      transfers: "ITEMS transfers in progress",
       none: "No activity",
     },
   },

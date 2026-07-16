@@ -155,7 +155,7 @@ export interface Translations {
     updateAvailable: { title: string; description: string; remindLater: string; installRelaunch: string; installing: string; failed: string };
     zipError: { title: string; close: string };
   };
-  statusBar: { items: string; filtered: string; selected: string; activity: { loading: string; transfers: string; none: string } };
+  statusBar: { items: string; itemsOne: string; filtered: string; selected: string; selectedOne: string; activity: { loading: string; transfers: string; none: string } };
   transferPanel: { title: string; noTransfers: string; done: string; error: string; moving: string; cancel: string; remove: string; clearCompleted: string; expand: string; collapse: string };
   contextMenu: { copy: string; paste: string; rename: string; delete: string; download: string; downloadZip: string; getUrl: string; getInfo: string; upload: string; newFolder: string; reload: string };
   providers: { aws: string; minio: string; r2: string; b2: string; custom: string };

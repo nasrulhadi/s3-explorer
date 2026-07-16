@@ -431,10 +431,10 @@ export default function FileList({
   function StatusBar() {
     return (
 	      <div className="flex items-center justify-between px-4 h-8 border-t border-[var(--s3-statusbar-border)] bg-[var(--s3-statusbar-bg)] text-xs text-[var(--s3-window-muted)] shrink-0">
-	        <span>{t.statusBar.items.replace("ITEMS", String(displayedItems.length))}{filterQuery ? t.statusBar.filtered : ""}</span>
-	        <div className="flex items-center gap-3">
-	          {selectedKeys.size > 0 && (
-	            <span className="text-[var(--s3-accent-text)] font-medium">{t.statusBar.selected.replace("ITEMS", String(selectedKeys.size))}</span>
+		        <span>{displayedItems.length === 1 ? t.statusBar.itemsOne : t.statusBar.items.replace("ITEMS", String(displayedItems.length))}{filterQuery ? t.statusBar.filtered : ""}</span>
+		        <div className="flex items-center gap-3">
+		          {selectedKeys.size > 0 && (
+		            <span className="text-[var(--s3-accent-text)] font-medium">{selectedKeys.size === 1 ? t.statusBar.selectedOne : t.statusBar.selected.replace("ITEMS", String(selectedKeys.size))}</span>
 	          )}
           <div className="flex items-center gap-2 justify-end">
             <div className="flex items-center gap-1" title={activityTooltip}>
