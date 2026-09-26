@@ -43,3 +43,11 @@ PROJECT.md
 # Signing keys — NEVER commit. Keep private key in a secret manager / CI secret.
 signer/
 *.key
+
+# Generated / local-only
+graphify-out/
+.zcodeignore
+PROMPT-APP-DOCS.md
+scripts/
+docs/
+.github/
