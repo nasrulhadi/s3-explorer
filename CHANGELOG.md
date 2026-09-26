@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.11.1] - 2026-09-26
+
+### Fixed
+- **About Page Repo Link**: The GitHub link in Settings → About now points to the full repository (`github.com/nasrulhadi/s3-explorer`) instead of the profile only
+
+---
+
 ## [1.11.0] - 2026-07-15
 
 ### Added
