@@ -688,13 +688,13 @@ export default function SettingsPage({ onDone }: SettingsPageProps) {
                     <span>si.nasrul@gmail.com</span>
                   </a>
                   <a
-                    href="https://github.com/nasrulhadi"
+                    href="https://github.com/nasrulhadi/s3-explorer"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
                   >
                     <GithubIcon size={14} />
-                    <span>github.com/nasrulhadi</span>
+                    <span>github.com/nasrulhadi/s3-explorer</span>
                   </a>
                 </div>
 
