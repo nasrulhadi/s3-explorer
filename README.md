@@ -352,4 +352,8 @@ If you find this project useful, please consider giving it a star! It helps othe
 
 [Report Bug](https://github.com/nasrulhadi/s3-explorer/issues) · [Request Feature](https://github.com/nasrulhadi/s3-explorer/issues/new)
 
+<a href="https://ko-fi.com/nasrulhadi">
+  <img src="src/assets/buymeacoffee.png" alt="Buy Me a Coffee" width="220">
+</a>
+
 </div>
