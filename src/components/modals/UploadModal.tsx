@@ -203,7 +203,6 @@ export default function UploadModal({
         <input
           type="file"
           ref={folderInputRef}
-          // @ts-expect-error webkitdirectory is a non-standard attribute
           webkitdirectory=""
           onChange={handleFolderChange}
           className="hidden"

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.11.2] - 2026-11-27
+
+### Changed
+- **Dependencies Updated**: Refreshed core libraries to latest stable
+  - Tauri core `2.11.3 → 2.12.7` and plugins: updater `2.14.1`, http `2.9.0`, opener `2.7.3`, process `2.4.0`
+  - AWS SDK `3.1070 → 3.1178` (~100 releases of S3-compatibility fixes)
+  - React `19.3.1`, TanStack Virtual `3.14.28`, TanStack Query `5.108.4`, Tailwind CSS `4.3.5`, and other patch updates
+- Normalized `@aws-sdk/lib-storage` version range to `^` to match the other AWS SDK packages (was exact-pinned)
+
+### Fixed
+- Removed a now-unneeded `@ts-expect-error` directive in UploadModal (resolved by newer type definitions)
+
+---
+
 ## [1.11.1] - 2026-09-26
 
 ### Fixed

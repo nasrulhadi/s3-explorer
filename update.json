@@ -1,6 +1,6 @@
 {
-  "version": "1.11.1",
-  "pub_date": "2026-09-26T00:00:00Z",
+  "version": "1.11.2",
+  "pub_date": "2026-11-27T00:00:00Z",
   "url": "https://github.com/nasrulhadi/s3-explorer/releases/download/v1.11.1/s3-explorer_1.11.1_x64-setup.exe",
   "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQjFUNmlNMEtSbllXSXlhcmtSbXJxdzhNQWNiYjZUSmZkcUxGMDRmM2RQUHJLNHdHUm5zY21CRVkwa3hJcm9pTWdGdk5lNEljaG8xaGgwemU4eis5Z0laWTdSckJPcndjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwNDI0NzYyCWZpbGU6czMtZXhwbG9yZXJfMS4xMS4xX3g2NC1zZXR1cC5leGUKd2lBN1VUR253RVY2bmo0aFNqdHpLUDBKUmRva0ZHR1d2KzJuSktZaUpkeVp2cXJML3BjRjFzclpxTmRZNFl3UzhoSnhFZ0VKUlc1c3U1Y2lrQjBOQnc9PQo=",
   "notes": "Fixed: About page repo link now points to the full repository. See release notes for recent highlights."
