@@ -1,7 +1,7 @@
 {
   "version": "1.11.2",
   "pub_date": "2026-11-27T00:00:00Z",
-  "url": "https://github.com/nasrulhadi/s3-explorer/releases/download/v1.11.1/s3-explorer_1.11.1_x64-setup.exe",
-  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQjFUNmlNMEtSbllXSXlhcmtSbXJxdzhNQWNiYjZUSmZkcUxGMDRmM2RQUHJLNHdHUm5zY21CRVkwa3hJcm9pTWdGdk5lNEljaG8xaGgwemU4eis5Z0laWTdSckJPcndjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwNDI0NzYyCWZpbGU6czMtZXhwbG9yZXJfMS4xMS4xX3g2NC1zZXR1cC5leGUKd2lBN1VUR253RVY2bmo0aFNqdHpLUDBKUmRva0ZHR1d2KzJuSktZaUpkeVp2cXJML3BjRjFzclpxTmRZNFl3UzhoSnhFZ0VKUlc1c3U1Y2lrQjBOQnc9PQo=",
-  "notes": "Fixed: About page repo link now points to the full repository. See release notes for recent highlights."
+  "url": "https://github.com/nasrulhadi/s3-explorer/releases/download/v1.11.2/s3-explorer_1.11.2_x64-setup.exe",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQjFUNmlNMEtSblVpU2VLWUtrWU85RDljUGNDUXpFWlkzM2dGMWNSMm1tVWdJcW82clcrVDFMWDBrNE9MSURxRUpvdjMwaC9EakxhTjZvTUE0YVZRcnRvZFZyS1FUMXdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1Nzk1OTE3CWZpbGU6czMtZXhwbG9yZXJfMS4xMS4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjExLjIKWkhhOC9IQjhQekxlQmpScEdhbUVwTjBOWHEzTm1OQmtJQTR6eUh3VGtDdTlDUWlCekkrVHJOcklnSEsyd0tobGJabkxxbGUyd2dnQXA2bWxUWVFDQ0E9PQo=",
+  "notes": "Dependencies updated: Tauri 2.12.7, AWS SDK 3.1178, React 19.3.1 and more. See release notes."
 }
